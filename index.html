@@ -7,411 +7,754 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#0a0e17; --surface:#111827; --surface2:#1a2236; --border:#1e3a5f;
-  --accent:#00d4ff; --accent2:#ff6b35; --green:#00ff9f; --yellow:#ffd60a;
-  --red:#ff3b3b; --text:#e2eaf7; --muted:#6b8cae;
-  --mono:'Share Tech Mono',monospace; --sans:'Barlow',sans-serif;
-  --hh:58px;
+:root{
+  --bg:#0a0e17;--sf:#111827;--sf2:#1a2236;--bd:#1e3a5f;
+  --ac:#00d4ff;--a2:#ff6b35;--gn:#00ff9f;--yw:#ffd60a;--rd:#ff3b3b;--pu:#a78bfa;
+  --tx:#e2eaf7;--mt:#6b8cae;
+  --mono:'Share Tech Mono',monospace;--sans:'Barlow',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);display:flex;flex-direction:column;}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);display:flex;flex-direction:column;}
 
-header{height:var(--hh);flex-shrink:0;background:linear-gradient(90deg,#0a0e17,#0d1f33 50%,#0a0e17);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:12px;z-index:1000;}
-.logo{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#006fa8);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-header h1{font-family:var(--mono);font-size:1rem;color:var(--accent);letter-spacing:2px;text-transform:uppercase;}
-header p{font-size:.68rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
-.status-pill{margin-left:auto;font-family:var(--mono);font-size:.65rem;background:rgba(0,212,255,.1);border:1px solid var(--accent);color:var(--accent);padding:3px 9px;border-radius:20px;white-space:nowrap;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.4);}50%{box-shadow:0 0 0 5px rgba(0,212,255,0);}}
+/* HEADER */
+header{height:52px;flex-shrink:0;background:linear-gradient(90deg,#0a0e17,#0d1f33 50%,#0a0e17);
+  border-bottom:1px solid var(--bd);padding:0 14px;display:flex;align-items:center;gap:10px;}
+.logo{width:30px;height:30px;background:linear-gradient(135deg,var(--ac),#006fa8);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+header h1{font-family:var(--mono);font-size:.9rem;color:var(--ac);letter-spacing:2px;text-transform:uppercase;}
+header small{font-size:.6rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;}
+.spill{margin-left:auto;font-family:var(--mono);font-size:.6rem;background:rgba(0,212,255,.1);
+  border:1px solid var(--ac);color:var(--ac);padding:2px 8px;border-radius:20px;white-space:nowrap;
+  animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.4);}50%{box-shadow:0 0 0 4px rgba(0,212,255,0);}}
 
-.app-layout{flex:1;display:flex;overflow:hidden;}
-
-.sidebar{width:370px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;-webkit-overflow-scrolling:touch;}
-.sidebar::-webkit-scrollbar{width:4px;}
-.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
-
-.map-wrapper{flex:1;position:relative;min-width:0;}
+/* LAYOUT */
+.app{flex:1;display:flex;overflow:hidden;}
+.sb{width:375px;flex-shrink:0;background:var(--sf);border-right:1px solid var(--bd);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.sb::-webkit-scrollbar{width:3px;}
+.sb::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px;}
+.mwrap{flex:1;position:relative;min-width:0;}
 #map{width:100%;height:100%;background:#0d1520;}
 
-@media(max-width:800px){
+@media(max-width:820px){
   html,body{overflow:auto;}
-  .app-layout{flex-direction:column;overflow:visible;}
-  .sidebar{width:100%;overflow:visible;height:auto;}
-  .map-wrapper{height:56vw;min-height:280px;flex:none;}
+  .app{flex-direction:column;overflow:visible;}
+  .sb{width:100%;overflow:visible;height:auto;}
+  .mwrap{height:52vw;min-height:260px;flex:none;}
 }
 
-.section{border-bottom:1px solid var(--border);}
-.section-header{padding:13px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;transition:background .2s;}
-.section-header:hover{background:var(--surface2);}
-.section-label{font-family:var(--mono);font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);flex:1;}
-.section-icon{font-size:15px;width:20px;text-align:center;}
-.chevron{font-size:9px;color:var(--muted);transition:transform .25s;}
-.section.open .chevron{transform:rotate(180deg);}
-.section-body{display:none;padding:14px 16px;background:rgba(0,0,0,.2);}
-.section.open .section-body{display:block;}
+/* SECTIONS */
+.sec{border-bottom:1px solid var(--bd);}
+.sh{padding:11px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;transition:background .2s;}
+.sh:hover{background:var(--sf2);}
+.sl{font-family:var(--mono);font-size:.67rem;letter-spacing:2px;text-transform:uppercase;color:var(--mt);flex:1;}
+.si{font-size:14px;width:18px;text-align:center;}
+.cv{font-size:9px;color:var(--mt);transition:transform .25s;}
+.sec.open .cv{transform:rotate(180deg);}
+.sbody{display:none;padding:12px 14px;background:rgba(0,0,0,.2);}
+.sec.open .sbody{display:block;}
 
-.form-row{margin-bottom:13px;}
-.form-row label{display:block;font-family:var(--mono);font-size:.65rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}
-.form-row input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.9rem;padding:9px 11px;border-radius:6px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none;}
-.form-row input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,212,255,.15);}
-.form-row input::placeholder{color:var(--muted);}
-.btn-row{display:flex;gap:8px;margin-top:4px;}
-.btn{flex:1;padding:11px;border:none;border-radius:6px;font-family:var(--mono);font-size:.78rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
-.btn-primary{background:linear-gradient(135deg,var(--accent),#006fa8);color:#000;font-weight:700;}
-.btn-primary:hover,.btn-primary:active{opacity:.85;transform:translateY(-1px);}
-.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--muted);}
-.btn-secondary:hover,.btn-secondary:active{border-color:var(--accent);color:var(--accent);}
-.btn-full{width:100%;margin-bottom:8px;}
+/* FORM */
+.fr{margin-bottom:11px;}
+.fr label{display:block;font-family:var(--mono);font-size:.6rem;color:var(--mt);
+  letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
+.fr input,.fr select{width:100%;background:var(--bg);border:1px solid var(--bd);color:var(--tx);
+  font-family:var(--mono);font-size:.86rem;padding:8px 10px;border-radius:6px;outline:none;
+  transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none;}
+.fr input:focus,.fr select:focus{border-color:var(--ac);box-shadow:0 0 0 2px rgba(0,212,255,.15);}
+.fr input::placeholder{color:var(--mt);}
+.fr select option{background:var(--sf2);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.br{display:flex;gap:7px;margin-top:3px;}
+.btn{flex:1;padding:10px;border:none;border-radius:6px;font-family:var(--mono);font-size:.73rem;
+  letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.bp{background:linear-gradient(135deg,var(--ac),#006fa8);color:#000;font-weight:700;}
+.bp:hover,.bp:active{opacity:.85;transform:translateY(-1px);}
+.bs{background:transparent;border:1px solid var(--bd);color:var(--mt);}
+.bs:hover,.bs:active{border-color:var(--ac);color:var(--ac);}
+.bfw{width:100%;margin-bottom:7px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
 
-.ap-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:13px;position:relative;overflow:hidden;margin-bottom:10px;}
-.ap-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
-.ap-card.dep::before{background:var(--green);}
-.ap-card.arr::before{background:var(--accent2);}
-.ap-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
-.icao-badge{font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--accent);background:rgba(0,212,255,.1);padding:3px 9px;border-radius:4px;letter-spacing:2px;}
-.ap-name{font-size:.78rem;color:var(--muted);}
-.dep-lbl{font-family:var(--mono);font-size:.62rem;color:var(--green);letter-spacing:1px;text-transform:uppercase;}
-.arr-lbl{font-family:var(--mono);font-size:.62rem;color:var(--accent2);letter-spacing:1px;text-transform:uppercase;}
+/* AIRCRAFT CARDS */
+.ac-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+.ac-card{background:var(--bg);border:2px solid var(--bd);border-radius:7px;padding:8px 10px;
+  cursor:pointer;transition:all .2s;text-align:center;}
+.ac-card:hover{border-color:var(--mt);}
+.ac-card.sel{border-color:var(--ac);background:rgba(0,212,255,.06);}
+.ac-ico{font-size:1.3rem;margin-bottom:2px;}
+.ac-nm{font-family:var(--mono);font-size:.63rem;color:var(--tx);letter-spacing:1px;}
+.ac-tp{font-size:.58rem;color:var(--mt);}
+.perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 
-.wx-title{font-family:var(--mono);font-size:.62rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
-.wx-raw{font-family:var(--mono);font-size:.72rem;color:var(--text);background:rgba(0,0,0,.4);padding:8px 9px;border-radius:4px;line-height:1.5;word-break:break-all;white-space:pre-wrap;margin-bottom:8px;}
-.wx-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
-.chip{display:flex;align-items:center;gap:4px;background:var(--surface2);padding:4px 7px;border-radius:4px;font-size:.75rem;}
+/* ROUTE / WAYPOINTS */
+.wpt-list{display:flex;flex-direction:column;gap:4px;margin-top:7px;}
+.wpt{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--bd);
+  border-radius:5px;padding:6px 9px;}
+.wdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.wname{font-family:var(--mono);font-size:.7rem;flex:1;}
+.wdesc{font-size:.6rem;color:var(--mt);font-style:italic;}
+.wdist{font-family:var(--mono);font-size:.63rem;color:var(--mt);}
+.whdg{font-family:var(--mono);font-size:.63rem;color:var(--ac);}
+.rpt-banner{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.2);border-radius:6px;
+  padding:8px 10px;margin-bottom:8px;font-size:.72rem;line-height:1.6;}
+.rpt-banner b{color:var(--ac);}
+
+/* WX */
+.wxcard{background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:11px;
+  position:relative;overflow:hidden;margin-bottom:9px;}
+.wxcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.wxcard.dep::before{background:var(--gn);}
+.wxcard.arr::before{background:var(--a2);}
+.wxh{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.icaob{font-family:var(--mono);font-size:.95rem;font-weight:700;color:var(--ac);
+  background:rgba(0,212,255,.1);padding:2px 8px;border-radius:4px;letter-spacing:2px;}
+.wx-raw{font-family:var(--mono);font-size:.69rem;color:var(--tx);background:rgba(0,0,0,.4);
+  padding:6px 8px;border-radius:4px;line-height:1.5;word-break:break-all;white-space:pre-wrap;margin:4px 0;}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0;}
+.chip{display:flex;align-items:center;gap:3px;background:var(--sf2);padding:3px 6px;border-radius:4px;font-size:.7rem;}
 .chip .v{font-family:var(--mono);font-weight:600;}
-.c-vfr{color:var(--green);} .c-mvfr{color:var(--yellow);} .c-ifr{color:var(--red);}
+.cv-vfr{color:var(--gn);}.cv-mvfr{color:var(--yw);}.cv-ifr{color:var(--rd);}
 
-.notam-list{display:flex;flex-direction:column;gap:7px;}
-.notam-item{background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--yellow);border-radius:6px;padding:9px 11px;}
-.notam-item.crit{border-left-color:var(--red);}
-.notam-id{font-family:var(--mono);font-size:.68rem;color:var(--yellow);}
-.notam-item.crit .notam-id{color:var(--red);}
-.notam-txt{font-size:.76rem;color:var(--text);margin-top:3px;line-height:1.5;}
-.notam-src{font-size:.62rem;color:var(--muted);margin-top:4px;font-family:var(--mono);}
+/* NOTAM */
+.ntm-list{display:flex;flex-direction:column;gap:6px;}
+.ntm{background:var(--bg);border:1px solid var(--bd);border-left:3px solid var(--yw);border-radius:5px;padding:8px 10px;}
+.ntm.crit{border-left-color:var(--rd);}
+.ntmid{font-family:var(--mono);font-size:.63rem;color:var(--yw);}
+.ntm.crit .ntmid{color:var(--rd);}
+.ntmtxt{font-size:.72rem;color:var(--tx);margin-top:2px;line-height:1.5;}
+.ntmsrc{font-size:.58rem;color:var(--mt);margin-top:3px;font-family:var(--mono);}
 
-.zone-list{display:flex;flex-direction:column;gap:5px;}
-.zone-item{display:flex;align-items:center;gap:9px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 11px;}
-.zone-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-.zone-name{font-size:.8rem;flex:1;}
-.zone-type{font-family:var(--mono);font-size:.63rem;color:var(--muted);}
-.zone-alt{font-family:var(--mono);font-size:.65rem;color:var(--accent);text-align:right;}
+/* ZONES */
+.zn-list{display:flex;flex-direction:column;gap:4px;}
+.zn{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--bd);border-radius:5px;padding:6px 9px;}
+.zndot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.znnm{font-size:.76rem;flex:1;}
+.zntp{font-family:var(--mono);font-size:.58rem;color:var(--mt);}
+.znalt{font-family:var(--mono);font-size:.6rem;color:var(--ac);text-align:right;}
 
-.sum-card{background:linear-gradient(135deg,rgba(0,212,255,.05),rgba(0,255,159,.05));border:1px solid var(--accent);border-radius:8px;padding:14px;}
-.sum-title{font-family:var(--mono);font-size:.68rem;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;}
-.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.sum-lbl{font-size:.63rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
-.sum-val{font-family:var(--mono);font-size:.92rem;font-weight:600;}
-.go{color:var(--green)!important;} .caution{color:var(--yellow)!important;} .nogo{color:var(--red)!important;}
+/* SUMMARY */
+.sum-card{background:linear-gradient(135deg,rgba(0,212,255,.05),rgba(0,255,159,.05));
+  border:1px solid var(--ac);border-radius:8px;padding:12px;}
+.sum-ttl{font-family:var(--mono);font-size:.63rem;color:var(--ac);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.slbl{font-size:.58rem;color:var(--mt);text-transform:uppercase;letter-spacing:1px;}
+.sval{font-family:var(--mono);font-size:.86rem;font-weight:600;}
+.go{color:var(--gn)!important;}.caution{color:var(--yw)!important;}.nogo{color:var(--rd)!important;}
 
-.ov{position:absolute;inset:0;background:rgba(10,14,23,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:500;gap:12px;backdrop-filter:blur(3px);}
-.spin{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;}
+/* LOADING */
+.ov{position:absolute;inset:0;background:rgba(10,14,23,.88);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;z-index:500;gap:11px;backdrop-filter:blur(3px);}
+.spin{width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--ac);
+  border-radius:50%;animation:sp .8s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg);}}
-.ov-txt{font-family:var(--mono);font-size:.78rem;color:var(--accent);letter-spacing:2px;}
-.ov-sub{font-size:.7rem;color:var(--muted);}
+.ovt{font-family:var(--mono);font-size:.73rem;color:var(--ac);letter-spacing:2px;}
+.ovs{font-size:.66rem;color:var(--mt);}
 
-.toast{position:fixed;bottom:16px;right:16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 16px;font-family:var(--mono);font-size:.78rem;color:var(--text);z-index:9999;transform:translateX(220%);transition:transform .3s;max-width:280px;}
+/* TOAST */
+.toast{position:fixed;bottom:14px;right:14px;background:var(--sf2);border:1px solid var(--bd);
+  border-radius:7px;padding:9px 13px;font-family:var(--mono);font-size:.73rem;color:var(--tx);
+  z-index:9999;transform:translateX(220%);transition:transform .3s;max-width:270px;}
 .toast.show{transform:translateX(0);}
-.toast.err{border-color:var(--red);color:var(--red);}
-.toast.ok{border-color:var(--green);color:var(--green);}
+.toast.err{border-color:var(--rd);color:var(--rd);}
+.toast.ok{border-color:var(--gn);color:var(--gn);}
+.toast.warn{border-color:var(--yw);color:var(--yw);}
 
-.empty{padding:24px 16px;text-align:center;color:var(--muted);font-size:.8rem;}
-.empty .ico{font-size:1.8rem;margin-bottom:8px;opacity:.4;}
-.meta{font-family:var(--mono);font-size:.65rem;color:var(--muted);margin-bottom:9px;line-height:1.8;}
-.meta a{font-size:.65rem;}
-a{color:var(--accent);text-decoration:none;}
+/* MISC */
+.empty{padding:20px 12px;text-align:center;color:var(--mt);font-size:.76rem;}
+.empty .ico{font-size:1.6rem;margin-bottom:6px;opacity:.4;}
+.meta{font-family:var(--mono);font-size:.6rem;color:var(--mt);margin-bottom:7px;line-height:1.8;}
+.meta a{font-size:.6rem;}
+a{color:var(--ac);text-decoration:none;}
 a:hover{text-decoration:underline;}
+.dvdr{height:1px;background:var(--bd);margin:9px 0;}
+.badge{display:inline-block;font-family:var(--mono);font-size:.56rem;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;}
+.bwx{background:rgba(0,212,255,.15);color:var(--ac);border:1px solid rgba(0,212,255,.3);}
+.bdemo{background:rgba(255,214,10,.1);color:var(--yw);border:1px solid rgba(255,214,10,.3);}
 </style>
 </head>
 <body>
-
 <header>
   <div class="logo">✈️</div>
-  <div><h1>VFR // FlightPlan</h1><p>PPL Flugplanung · Europa</p></div>
-  <div class="status-pill" id="sysStatus">● BEREIT</div>
+  <div><h1>VFR // FlightPlan</h1><small>PPL · AIP Poland VFR Reporting Points · FIR Warszawa</small></div>
+  <div class="spill" id="sysStatus">● BEREIT</div>
 </header>
+<div class="app">
+<div class="sb">
 
-<div class="app-layout">
-  <div class="sidebar">
-
-    <!-- ROUTE -->
-    <div class="section open" id="secRoute">
-      <div class="section-header" onclick="tog('secRoute')">
-        <span class="section-icon">🗺️</span><span class="section-label">Route eingeben</span><span class="chevron">▼</span>
+  <!-- ① FLUGZEUG -->
+  <div class="sec open" id="sAC">
+    <div class="sh" onclick="tog('sAC')"><span class="si">🛩️</span><span class="sl">Flugzeug</span><span class="cv">▼</span></div>
+    <div class="sbody">
+      <div class="ac-grid" id="acGrid"></div>
+      <div class="dvdr"></div>
+      <div class="perf-grid">
+        <div class="fr"><label>Cruise (kt)</label><input id="pCruise" type="number" value="108" min="40" max="300"></div>
+        <div class="fr"><label>Fuel (l/h)</label><input id="pFuel" type="number" value="18" min="5" max="100"></div>
+        <div class="fr"><label>Tanks (l)</label><input id="pTanks" type="number" value="65" min="20" max="600"></div>
+        <div class="fr"><label>Zuladung (kg)</label><input id="pPax" type="number" value="160" min="50" max="400"></div>
       </div>
-      <div class="section-body">
-        <div class="form-row">
-          <label>Startflugplatz (ICAO)</label>
-          <input id="depI" type="text" placeholder="z.B. LOWW" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
-        </div>
-        <div class="form-row">
-          <label>Zielflugplatz (ICAO)</label>
-          <input id="arrI" type="text" placeholder="z.B. LOWI" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
-        </div>
-        <div class="form-row">
-          <label>Reiseflughöhe (ft MSL)</label>
-          <input id="altI" type="number" value="3500" step="500" min="500" max="17500">
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-primary" id="planBtn" onclick="plan()">▶ PLANEN</button>
-          <button class="btn btn-secondary" onclick="reset()">↺ RESET</button>
-        </div>
-        <div style="margin-top:10px;font-size:.67rem;color:var(--muted);font-family:var(--mono);line-height:1.9;">
-          🇦🇹 LOWW · LOWI · LOWS · LOKL · LOGG · LOAN<br>
-          🇨🇭 LSZH · LSZB · LSGG &nbsp; 🇩🇪 EDDM · EDDN<br>
-          🇨🇿 LKPR &nbsp; 🇸🇮 LJLJ &nbsp; 🇭🇷 LDZA
-        </div>
+      <div class="fr"><label>Kennzeichen</label>
+        <input id="pReg" type="text" value="SP-TPF" autocapitalize="characters" autocorrect="off" spellcheck="false">
       </div>
-    </div>
-
-    <!-- WX DEP -->
-    <div class="section" id="secWxD">
-      <div class="section-header" onclick="tog('secWxD')">
-        <span class="section-icon">🌤️</span><span class="section-label">Wetter Abflug</span><span class="chevron">▼</span>
-      </div>
-      <div class="section-body"><div id="wxD"><div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div></div></div>
-    </div>
-
-    <!-- WX ARR -->
-    <div class="section" id="secWxA">
-      <div class="section-header" onclick="tog('secWxA')">
-        <span class="section-icon">🌦️</span><span class="section-label">Wetter Ziel</span><span class="chevron">▼</span>
-      </div>
-      <div class="section-body"><div id="wxA"><div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div></div></div>
-    </div>
-
-    <!-- NOTAM -->
-    <div class="section" id="secNtm">
-      <div class="section-header" onclick="tog('secNtm')">
-        <span class="section-icon">⚠️</span><span class="section-label">NOTAMs</span><span class="chevron">▼</span>
-      </div>
-      <div class="section-body"><div id="ntmC"><div class="empty"><div class="ico">📋</div>Noch keine Route geplant</div></div></div>
-    </div>
-
-    <!-- ZONES -->
-    <div class="section" id="secZn">
-      <div class="section-header" onclick="tog('secZn')">
-        <span class="section-icon">🚫</span><span class="section-label">Luftraumzonen</span><span class="chevron">▼</span>
-      </div>
-      <div class="section-body"><div id="znC"><div class="empty"><div class="ico">🗂️</div>Noch keine Route geplant</div></div></div>
-    </div>
-
-    <!-- SUMMARY -->
-    <div class="section" id="secSum">
-      <div class="section-header" onclick="tog('secSum')">
-        <span class="section-icon">✅</span><span class="section-label">VFR Zusammenfassung</span><span class="chevron">▼</span>
-      </div>
-      <div class="section-body"><div id="sumC"><div class="empty"><div class="ico">📊</div>Noch keine Route geplant</div></div></div>
-    </div>
-
-    <!-- SETTINGS -->
-    <div class="section" id="secSet">
-      <div class="section-header" onclick="tog('secSet')">
-        <span class="section-icon">⚙️</span><span class="section-label">Einstellungen</span><span class="chevron">▼</span>
-      </div>
-      <div class="section-body">
-        <div class="form-row">
-          <label>OpenAIP API Key <a href="https://www.openaip.net" target="_blank" style="font-size:.62rem;">(kostenlos ↗)</a></label>
-          <input id="aipKey" type="text" placeholder="Dein OpenAIP API Key" autocomplete="off" spellcheck="false">
-        </div>
-        <button class="btn btn-secondary btn-full" onclick="saveAipKey()">💾 OpenAIP Layer aktivieren</button>
-        <div style="font-size:.65rem;color:var(--muted);font-family:var(--mono);line-height:1.7;">
-          Mit API Key: echte Lufträume auf der Karte.<br>
-          Kostenlos: <a href="https://www.openaip.net" target="_blank">openaip.net</a>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /sidebar -->
-
-  <div class="map-wrapper">
-    <div id="map"></div>
-    <div class="ov" id="ov" style="display:none;">
-      <div class="spin"></div>
-      <div class="ov-txt">LADE DATEN</div>
-      <div class="ov-sub" id="ovSub">Bitte warten...</div>
     </div>
   </div>
-</div>
 
+  <!-- ② ROUTE -->
+  <div class="sec open" id="sRT">
+    <div class="sh" onclick="tog('sRT')"><span class="si">🗺️</span><span class="sl">Route</span><span class="cv">▼</span></div>
+    <div class="sbody">
+      <div class="row2">
+        <div class="fr"><label>Abflug (ICAO)</label>
+          <input id="depI" type="text" placeholder="LOWW" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"></div>
+        <div class="fr"><label>Ziel (ICAO)</label>
+          <input id="arrI" type="text" placeholder="LOWI" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"></div>
+      </div>
+      <div class="row2">
+        <div class="fr"><label>Höhe (ft MSL)</label>
+          <input id="altI" type="number" value="4500" step="500" min="1000" max="14500"></div>
+        <div class="fr"><label>Routing</label>
+          <select id="routeType">
+            <option value="rpt" selected>Via Reporting Points</option>
+            <option value="direct">Direkt</option>
+          </select>
+        </div>
+      </div>
+      <div class="br">
+        <button class="btn bp" id="planBtn" onclick="plan()">▶ PLANEN</button>
+        <button class="btn bs" onclick="resetAll()">↺ RESET</button>
+      </div>
+      <div style="margin-top:8px;font-size:.61rem;color:var(--mt);font-family:var(--mono);line-height:1.9;">
+        🇵🇱 EPWA · EPKK · EPKT · EPGD · EPWR · EPPO<br>
+        🇵🇱 EPSC · EPLL · EPRZ · EPBY · EPRA · EPMO<br>
+        🇦🇹 LOWW · LOWI · LOWS &nbsp;🇩🇪 EDDM &nbsp;🇨🇭 LSZH
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ BERECHNETE ROUTE -->
+  <div class="sec" id="sRD">
+    <div class="sh" onclick="tog('sRD')"><span class="si">📍</span><span class="sl">Berechnete Route</span><span class="cv">▼</span></div>
+    <div class="sbody"><div id="rdC"><div class="empty"><div class="ico">📍</div>Noch keine Route berechnet</div></div></div>
+  </div>
+
+  <!-- ④ WETTER DEP -->
+  <div class="sec" id="sWD">
+    <div class="sh" onclick="tog('sWD')"><span class="si">🌤️</span><span class="sl">Wetter Abflug</span><span class="cv">▼</span></div>
+    <div class="sbody"><div id="wxD"><div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div></div></div>
+  </div>
+
+  <!-- ⑤ WETTER ARR -->
+  <div class="sec" id="sWA">
+    <div class="sh" onclick="tog('sWA')"><span class="si">🌦️</span><span class="sl">Wetter Ziel</span><span class="cv">▼</span></div>
+    <div class="sbody"><div id="wxA"><div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div></div></div>
+  </div>
+
+  <!-- ⑥ NOTAMs -->
+  <div class="sec" id="sNT">
+    <div class="sh" onclick="tog('sNT')"><span class="si">⚠️</span><span class="sl">NOTAMs</span><span class="cv">▼</span></div>
+    <div class="sbody"><div id="ntC"><div class="empty"><div class="ico">📋</div>Noch keine Route geplant</div></div></div>
+  </div>
+
+  <!-- ⑦ ZONEN -->
+  <div class="sec" id="sZN">
+    <div class="sh" onclick="tog('sZN')"><span class="si">🚫</span><span class="sl">Luftraumzonen</span><span class="cv">▼</span></div>
+    <div class="sbody"><div id="znC"><div class="empty"><div class="ico">🗂️</div>Noch keine Route geplant</div></div></div>
+  </div>
+
+  <!-- ⑧ SUMMARY -->
+  <div class="sec" id="sSM">
+    <div class="sh" onclick="tog('sSM')"><span class="si">✅</span><span class="sl">Flugplan</span><span class="cv">▼</span></div>
+    <div class="sbody"><div id="smC"><div class="empty"><div class="ico">📊</div>Noch keine Route geplant</div></div></div>
+  </div>
+
+  <!-- ⑨ EINSTELLUNGEN -->
+  <div class="sec" id="sST">
+    <div class="sh" onclick="tog('sST')"><span class="si">⚙️</span><span class="sl">API Keys</span><span class="cv">▼</span></div>
+    <div class="sbody">
+      <div class="fr">
+        <label>CheckWX API Key <a href="https://www.checkwxapi.com" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label>
+        <input id="cwxKey" type="text" placeholder="CheckWX Key – bessere Wetterdaten" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn bs bfw" onclick="saveCwx()">💾 CheckWX speichern</button>
+      <div class="fr" style="margin-top:4px;">
+        <label>OpenAIP Key <a href="https://www.openaip.net" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label>
+        <input id="aipKey" type="text" placeholder="OpenAIP – echte Lufträume auf Karte" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn bs bfw" onclick="saveAip()">💾 OpenAIP aktivieren</button>
+    </div>
+  </div>
+
+</div><!-- /sidebar -->
+<div class="mwrap">
+  <div id="map"></div>
+  <div class="ov" id="ov" style="display:none;">
+    <div class="spin"></div><div class="ovt">LADE DATEN</div>
+    <div class="ovs" id="ovS">Bitte warten...</div>
+  </div>
+</div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 'use strict';
 
-// ── MAP ──────────────────────────────────────────────────────────────────────
-const map = L.map('map', { center:[47.5,13.5], zoom:7 });
-
+// ═══════════════════════════════════════════════════════════
+//  MAP
+// ═══════════════════════════════════════════════════════════
+const map = L.map('map',{center:[47.5,13.5],zoom:7});
 const osmL  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  { attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>', maxZoom:18, opacity:.9 });
+  {attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:18,opacity:.9});
 const topoL = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-  { attribution:'© OpenTopoMap', maxZoom:17, opacity:.9 });
+  {attribution:'© OpenTopoMap',maxZoom:17,opacity:.9});
 osmL.addTo(map);
-L.control.layers({'OpenStreetMap':osmL,'Topo (Gelände)':topoL},{},{ position:'topright' }).addTo(map);
-
-let aipLayer = null;
-let aipKey   = localStorage.getItem('openaip_key') || '';
-function applyAip(k) {
-  if (aipLayer) { map.removeLayer(aipLayer); aipLayer=null; }
-  if (!k) return;
-  aipLayer = L.tileLayer(
-    `https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${k}`,
-    { attribution:'© <a href="https://openaip.net">OpenAIP</a>', maxZoom:14, opacity:.75, errorTileUrl:'' }
-  ).addTo(map);
+L.control.layers({'OpenStreetMap':osmL,'Topo':topoL},{},{position:'topright'}).addTo(map);
+let aipLayer=null;
+function applyAip(k){
+  if(aipLayer){map.removeLayer(aipLayer);aipLayer=null;}
+  if(!k)return;
+  aipLayer=L.tileLayer(`https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${k}`,
+    {attribution:'© OpenAIP',maxZoom:14,opacity:.75,errorTileUrl:''}).addTo(map);
 }
-applyAip(aipKey);
+applyAip(ls('openaip_key'));
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
-let dmk=null, amk=null, rln=null, zps=[];
-let PS = { dep:null, arr:null };
+// ═══════════════════════════════════════════════════════════
+//  AIRCRAFT DATABASE
+// ═══════════════════════════════════════════════════════════
+const AIRCRAFT = [
+  {id:'at3',  ico:'🛩️', nm:'Aero AT-3',   tp:'SP-TPF · Rotax 912S',  cruise:108, fuel:18,  tanks:65,  mtow:582,  vs0:38, vne:127, cat:'VLA'},
+  {id:'c172', ico:'🛩️', nm:'Cessna 172',  tp:'C172 / Skyhawk',        cruise:105, fuel:28,  tanks:200, mtow:1111, vs0:40, vne:163, cat:'SEP'},
+  {id:'pa28', ico:'✈️', nm:'Piper PA-28',  tp:'Cherokee / Archer',     cruise:115, fuel:30,  tanks:189, mtow:1100, vs0:44, vne:171, cat:'SEP'},
+  {id:'da40', ico:'🛸', nm:'Diamond DA40', tp:'DA40 NG',                cruise:135, fuel:20,  tanks:148, mtow:1150, vs0:46, vne:183, cat:'SEP'},
+  {id:'cust', ico:'⚙️', nm:'Eigenes AC',   tp:'Manuelle Eingabe',       cruise:105, fuel:25,  tanks:180, mtow:1200, vs0:45, vne:170, cat:'SEP'},
+];
+let selAC = AIRCRAFT[0];
 
-// ── AIRPORT DB ────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  AIRPORT DATABASE  (mit VFR Reporting Points)
+// ═══════════════════════════════════════════════════════════
 const AP = {
-  LOWW:{n:'Wien Schwechat',     lat:48.1103,lon:16.5697},
-  LOWI:{n:'Innsbruck',          lat:47.2602,lon:11.3439},
-  LOWS:{n:'Salzburg',           lat:47.7933,lon:13.0043},
-  LOKL:{n:'Linz Hörsching',     lat:48.2332,lon:14.1875},
-  LOGG:{n:'Graz',               lat:46.9911,lon:15.4396},
-  LOXZ:{n:'Zeltweg',            lat:47.2028,lon:14.7442},
-  LOAN:{n:'Wr. Neustadt Ost',   lat:47.8433,lon:16.2600},
-  LOAV:{n:'Vöslau',             lat:47.9647,lon:16.2607},
-  LOLF:{n:'St. Pölten',         lat:48.1167,lon:15.6500},
-  LOKU:{n:'Krems',              lat:48.4333,lon:15.5500},
-  LORK:{n:'Klagenfurt',         lat:46.6425,lon:14.3378},
-  LOGP:{n:'Kapfenberg',         lat:47.4281,lon:15.3561},
-  LSZH:{n:'Zürich',             lat:47.4647,lon:8.5492},
-  LSZB:{n:'Bern-Belp',          lat:46.9141,lon:7.4971},
-  LSGG:{n:'Genf',               lat:46.2380,lon:6.1089},
-  LSZA:{n:'Lugano',             lat:45.9758,lon:8.9103},
-  LFLP:{n:'Annecy',             lat:45.9292,lon:6.1006},
-  EDDM:{n:'München',            lat:48.3538,lon:11.7861},
-  EDDN:{n:'Nürnberg',           lat:49.4987,lon:11.0669},
-  EDDF:{n:'Frankfurt',          lat:50.0333,lon:8.5706},
-  LKPR:{n:'Prag',               lat:50.1008,lon:14.2600},
-  LJLJ:{n:'Ljubljana',          lat:46.2237,lon:14.4576},
-  LDZA:{n:'Zagreb',             lat:45.7429,lon:16.0688},
-  LYBE:{n:'Belgrad',            lat:44.8184,lon:20.3091},
-  EPKK:{n:'Krakau',             lat:50.0778,lon:19.7847},
+  // ════ POLEN (primär) ════════════════════════════════════════════════
+  // Quellen: AIP VFR Poland (PANSA/AIS), plvacc.pl, AIRAC 2025
+  EPWA:{n:'Warszawa Chopin',   lat:52.1651,lon:20.9671,elev:362,
+    rpts:{
+      'NOVEMBER': {lat:52.2100,lon:21.0300,desc:'Most Siekierkowski / Siekierkowski Bridge (N)'},
+      'OSCAR':    {lat:52.1950,lon:21.0100,desc:'Węzeł Czerniakowska / Czerniakowska Junction (S)'},
+      'ECHO':     {lat:52.1700,lon:20.9600,desc:'Skrzyżowanie Marynarskiej i S79 (SW)'},
+      'WHISKEY':  {lat:52.1550,lon:20.9200,desc:'Wieża radaru / Radar Tower (W)'},
+      'ROMEO':    {lat:52.1450,lon:20.8700,desc:'Centrum Janki / Janki Shopping Centre (SW)'},
+      'ALFA':     {lat:52.2600,lon:20.9500,desc:'Babice / Babice Airfield area (NW)'},
+      'X-RAY':    {lat:52.1850,lon:20.8200,desc:'Pruszków / S8 junction (W)'},
+      'TANGO':    {lat:51.9800,lon:20.8800,desc:'Tarczyn fabryka / Tarczyn factory (S)'},
+      'GOLF':     {lat:52.0200,lon:21.2200,desc:'Most Wisła Karczew / Vistula bridge Karczew (SE)'},
+      'KILO':     {lat:52.0700,lon:21.1800,desc:'Oczyszczalnia Karczew / Karczew sewage plant (SE)'},
+    }},
+  EPKK:{n:'Kraków Balice',     lat:50.0778,lon:19.7847,elev:791,
+    rpts:{
+      // CTR VFR points (poniżej 2300ft AMSL)
+      'INDIA':    {lat:50.1500,lon:19.6333,desc:'Krzeszowice – kopalnia / mine (NW)'},
+      'OSCAR':    {lat:50.2000,lon:19.8833,desc:'Smardzowice – kościół / church (N)'},
+      'SIERRA':   {lat:49.9833,lon:19.8167,desc:'Skawina (S)'},
+      // TMA points (2300-3450ft AMSL)
+      'BRAVO':    {lat:50.2667,lon:19.4333,desc:'Bukowno (NW – TMA)'},
+      'MIKE':     {lat:50.3500,lon:20.0333,desc:'Miechów (NE – TMA)'},
+      'ROMEO':    {lat:49.9108,lon:19.4129,desc:'Kalwaria Zebrzydowska area (SW – TMA)'},
+      'UNIFORM':  {lat:49.7919,lon:19.7780,desc:'Wadowice area (S – TMA)'},
+      'DELTA':    {lat:49.8569,lon:20.1417,desc:'Dobczyce reservoir (SE – TMA)'},
+    }},
+  EPKT:{n:'Katowice Pyrzowice', lat:50.4744,lon:19.0800,elev:995,
+    rpts:{
+      'BRAVO':    {lat:50.2667,lon:19.4333,desc:'Bukowno (S)'},
+      'CHARLIE':  {lat:50.6167,lon:18.9333,desc:'Koszęcin (N)'},
+      'GOLF':     {lat:50.3833,lon:19.2333,desc:'Rogoźnik – zbiornik / reservoir E end (SE)'},
+      'HOTEL':    {lat:50.3333,lon:19.1000,desc:'Strzemieszyce – skrzyż. S1/94 / S1&94 junction (S)'},
+      'INDIA':    {lat:50.1500,lon:19.6333,desc:'Krzeszowice – kopalnia / mine (SW)'},
+      'JULIETT':  {lat:50.6167,lon:19.4500,desc:'Poraj – jezioro / artificial lake (E)'},
+      'NOVEMBER': {lat:50.5667,lon:19.2333,desc:'Zendek – kościół / church (N holding point)'},
+      'TANGO':    {lat:50.3667,lon:18.9833,desc:'Bytom Karb – skrzyż. E40/94 / E40&94 junction (SW)'},
+      'WHISKEY':  {lat:50.6333,lon:19.1000,desc:'Woźniki – skrzyżowanie / junction (N)'},
+      'X-RAY':    {lat:50.4667,lon:19.1667,desc:'Pyrzowice – skrzyż. S1/913 (CTR W entry)'},
+    }},
+  EPGD:{n:'Gdańsk Lech Wałęsa', lat:54.3776,lon:18.4666,elev:489,
+    rpts:{
+      'ALFA':     {lat:54.4500,lon:18.5500,desc:'Zatoka Gdańska N / Gulf of Gdańsk N (NE)'},
+      'BRAVO':    {lat:54.4000,lon:18.6500,desc:'Sopot / Sopot (NE)'},
+      'CHARLIE':  {lat:54.3500,lon:18.7000,desc:'Gdynia port / Gdynia harbour (N)'},
+      'DELTA':    {lat:54.3000,lon:18.3000,desc:'Żuławy / Vistula delta (W)'},
+      'ECHO':     {lat:54.2500,lon:18.4500,desc:'Pruszcz Gdański (S)'},
+      'FOXTROT':  {lat:54.4500,lon:18.3000,desc:'Reda / Reda (NW)'},
+      'GOLF':     {lat:54.3000,lon:18.6000,desc:'Gdańsk Śródmieście / Gdańsk city centre (E)'},
+    }},
+  EPWR:{n:'Wrocław Strachowice', lat:51.1027,lon:16.8858,elev:404,
+    rpts:{
+      'ALFA':     {lat:51.1800,lon:17.0500,desc:'Długołęka (NE)'},
+      'BRAVO':    {lat:51.0000,lon:17.0500,desc:'Kobierzyce / S8 junction (SE)'},
+      'CHARLIE':  {lat:51.0000,lon:16.7000,desc:'Kąty Wrocławskie (SW)'},
+      'DELTA':    {lat:51.1800,lon:16.7000,desc:'Brzeg Dolny / Oder river NW (NW)'},
+      'ECHO':     {lat:51.2500,lon:16.9000,desc:'Oborniki Śląskie (N)'},
+      'FOXTROT':  {lat:51.0500,lon:16.9500,desc:'Siechnice / Power plant (E)'},
+    }},
+  EPPO:{n:'Poznań Ławica',      lat:52.4210,lon:16.8260,elev:308,
+    rpts:{
+      'ALFA':     {lat:52.5500,lon:16.9500,desc:'Murowana Goślina (NE)'},
+      'BRAVO':    {lat:52.2800,lon:16.9500,desc:'Mosina (SE)'},
+      'CHARLIE':  {lat:52.2800,lon:16.6500,desc:'Śrem (SW)'},
+      'DELTA':    {lat:52.5500,lon:16.6500,desc:'Szamotuły (NW)'},
+      'ECHO':     {lat:52.5000,lon:17.1000,desc:'Skoki / Gniezno road (E)'},
+      'FOXTROT':  {lat:52.4000,lon:16.5500,desc:'Buk / A2 motorway (W)'},
+    }},
+  EPSC:{n:'Szczecin Goleniów',  lat:53.5847,lon:14.9022,elev:154,
+    rpts:{
+      'ALFA':     {lat:53.7000,lon:14.9500,desc:'Goleniów centrum / Goleniów town (N)'},
+      'BRAVO':    {lat:53.6500,lon:15.1500,desc:'Stargard / Stargard (E)'},
+      'CHARLIE':  {lat:53.4000,lon:14.8000,desc:'Police (SW)'},
+      'DELTA':    {lat:53.7000,lon:14.6000,desc:'Wolin island (NW)'},
+      'ECHO':     {lat:53.4500,lon:15.1000,desc:'Stare Czarnowo (SE)'},
+    }},
+  EPLL:{n:'Łódź Lublinek',      lat:51.7219,lon:19.3981,elev:604,
+    rpts:{
+      'ALFA':     {lat:51.8200,lon:19.5000,desc:'Zgierz (N)'},
+      'BRAVO':    {lat:51.6200,lon:19.5000,desc:'Rzgów (SE)'},
+      'CHARLIE':  {lat:51.6200,lon:19.2500,desc:'Pabianice (SW)'},
+      'DELTA':    {lat:51.8200,lon:19.2500,desc:'Aleksandrów Łódzki (NW)'},
+    }},
+  EPRZ:{n:'Rzeszów Jasionka',   lat:50.1100,lon:22.0189,elev:675,
+    rpts:{
+      'ALFA':     {lat:50.2000,lon:22.0500,desc:'Łańcut (NE)'},
+      'BRAVO':    {lat:50.0000,lon:22.1000,desc:'Boguchwała (SE)'},
+      'CHARLIE':  {lat:50.0000,lon:21.9000,desc:'Strzyżów road (SW)'},
+      'DELTA':    {lat:50.2000,lon:21.9000,desc:'Głogów Małopolski (NW)'},
+    }},
+  EPBY:{n:'Bydgoszcz',          lat:53.0968,lon:17.9777,elev:235,
+    rpts:{
+      'ALFA':     {lat:53.2000,lon:18.0500,desc:'Szubin (NE)'},
+      'BRAVO':    {lat:53.0000,lon:18.1500,desc:'Solec Kujawski (SE)'},
+      'CHARLIE':  {lat:53.0000,lon:17.8000,desc:'Koronowo (SW)'},
+      'DELTA':    {lat:53.2000,lon:17.8500,desc:'Nakło nad Notecią (NW)'},
+    }},
+  EPRA:{n:'Warszawa Radom',     lat:51.3892,lon:21.2136,elev:610,
+    rpts:{
+      'ALFA':     {lat:51.5000,lon:21.2500,desc:'Kozienice (N)'},
+      'BRAVO':    {lat:51.2500,lon:21.4000,desc:'Zwoleń (SE)'},
+      'CHARLIE':  {lat:51.2500,lon:21.0000,desc:'Jedlińsk (SW)'},
+      'DELTA':    {lat:51.5000,lon:21.0000,desc:'Białobrzegi (NW)'},
+    }},
+  EPMO:{n:'Warszawa Modlin',    lat:52.4511,lon:20.6519,elev:341,
+    rpts:{
+      'ALFA':     {lat:52.5500,lon:20.7500,desc:'Ciechanów direction (N)'},
+      'BRAVO':    {lat:52.3500,lon:20.7500,desc:'Nowy Dwór Maz. S (SE)'},
+      'CHARLIE':  {lat:52.3500,lon:20.5000,desc:'Sochaczew direction (SW)'},
+      'DELTA':    {lat:52.5500,lon:20.5000,desc:'Płońsk direction (NW)'},
+      'ECHO':     {lat:52.4800,lon:20.9500,desc:'Legionowo (E)'},
+    }},
+  // ════ ÖSTERREICH (sekundär) ════════════════════════════════════════
+  LOWW:{n:'Wien Schwechat',    lat:48.1103,lon:16.5697,elev:183,
+    rpts:{
+      'NOVEMBER': {lat:48.220,lon:16.400,desc:'Klosterneuburg (N)'},
+      'CHARLIE':  {lat:48.080,lon:16.300,desc:'Perchtoldsdorf (SW)'},
+      'PAPA':     {lat:48.200,lon:16.700,desc:'Raasdorf (NE)'},
+      'GOLF':     {lat:48.000,lon:16.600,desc:'Fischamend (SE)'},
+      'SIERRA':   {lat:47.980,lon:16.340,desc:'Baden (S)'},
+      'INDIA':    {lat:48.140,lon:16.200,desc:'Purkersdorf (W)'},
+    }},
+  LOWI:{n:'Innsbruck',         lat:47.2602,lon:11.3439,elev:1906,
+    rpts:{
+      'MIKE1':    {lat:47.310,lon:11.560,desc:'Inn-Tal Ost (E)'},
+      'MIKE3':    {lat:47.270,lon:11.350,desc:'CTR Ost'},
+      'FOXTROT':  {lat:47.220,lon:11.550,desc:'Zillertal (S)'},
+      'NOVEMBER': {lat:47.390,lon:11.380,desc:'Seefeld (N)'},
+      'WHISKEY1': {lat:47.290,lon:11.220,desc:'Inn-Tal West'},
+    }},
+  LOWS:{n:'Salzburg',          lat:47.7933,lon:13.0043,elev:1411,
+    rpts:{
+      'CHARLIE':  {lat:47.830,lon:12.950,desc:'Wals (NW)'},
+      'GOLF':     {lat:47.870,lon:13.010,desc:'Flachgau Nord'},
+      'MARIA PLAIN':{lat:47.850,lon:13.020,desc:'Maria Plain (N)'},
+    }},
+  LOGG:{n:'Graz',              lat:46.9911,lon:15.4396,elev:1115,
+    rpts:{
+      'NOVEMBER': {lat:47.060,lon:15.440,desc:'Graz Nord'},
+      'SIERRA':   {lat:46.920,lon:15.440,desc:'Graz Süd'},
+      'OSCAR':    {lat:46.990,lon:15.560,desc:'Graz Ost'},
+      'WHISKEY':  {lat:46.990,lon:15.310,desc:'Graz West'},
+    }},
+  LORK:{n:'Klagenfurt',        lat:46.6425,lon:14.3378,elev:1474,
+    rpts:{
+      'NOVEMBER': {lat:46.710,lon:14.340,desc:'Krumpendorf (N)'},
+      'SIERRA':   {lat:46.570,lon:14.340,desc:'Völkermarkt (S)'},
+      'OSCAR':    {lat:46.640,lon:14.500,desc:'Viktring (E)'},
+      'WHISKEY':  {lat:46.640,lon:14.200,desc:'Velden (W)'},
+    }},
+  // ════ SCHWEIZ / DEUTSCHLAND ════════════════════════════════════════
+  LSZH:{n:'Zürich',            lat:47.4647,lon:8.5492, elev:1416,
+    rpts:{
+      'NOVEMBER': {lat:47.530,lon:8.550,desc:'Bülach (N)'},
+      'SIERRA':   {lat:47.380,lon:8.540,desc:'Thalwil (S)'},
+      'OSCAR':    {lat:47.460,lon:8.680,desc:'Dübendorf (E)'},
+      'WHISKEY':  {lat:47.460,lon:8.400,desc:'Regensdorf (W)'},
+    }},
+  EDDM:{n:'München',           lat:48.3538,lon:11.7861,elev:1487,
+    rpts:{
+      'NOVEMBER': {lat:48.430,lon:11.790,desc:'Nord'},
+      'SIERRA':   {lat:48.270,lon:11.790,desc:'Dachau (S)'},
+      'OSCAR':    {lat:48.350,lon:11.960,desc:'Ost'},
+      'WHISKEY':  {lat:48.350,lon:11.620,desc:'West'},
+    }},
+  // ════ SONSTIGE ════════════════════════════════════════════════════
+  LSZB:{n:'Bern-Belp',         lat:46.9141,lon:7.4971, elev:1674, rpts:{}},
+  LSGG:{n:'Genf',              lat:46.2380,lon:6.1089, elev:1411, rpts:{}},
+  LFLP:{n:'Annecy',            lat:45.9292,lon:6.1006, elev:1521, rpts:{}},
+  EDDN:{n:'Nürnberg',          lat:49.4987,lon:11.0669,elev:1046, rpts:{}},
+  EDDF:{n:'Frankfurt',         lat:50.0333,lon:8.5706, elev:364,  rpts:{}},
+  LOKL:{n:'Linz Hörsching',    lat:48.2332,lon:14.1875,elev:978,  rpts:{}},
+  LOAN:{n:'Wr. Neustadt Ost',  lat:47.8433,lon:16.2600,elev:896,  rpts:{}},
+  LJLJ:{n:'Ljubljana',         lat:46.2237,lon:14.4576,elev:1273, rpts:{}},
+  LDZA:{n:'Zagreb',            lat:45.7429,lon:16.0688,elev:353,  rpts:{}},
 };
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-function tog(id){ document.getElementById(id).classList.toggle('open'); }
-function opn(id){ document.getElementById(id).classList.add('open'); }
-function showOv(t){ document.getElementById('ov').style.display='flex'; document.getElementById('ovSub').textContent=t||'...'; }
-function hideOv(){ document.getElementById('ov').style.display='none'; }
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let dmk=null,amk=null,rln=null,wptMks=[];
+let zps=[];
+let PS={dep:null,arr:null};
+
+// ═══════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════
+function ls(k){return localStorage.getItem(k)||'';}
+function tog(id){document.getElementById(id).classList.toggle('open');}
+function opn(id){document.getElementById(id).classList.add('open');}
+function showOv(t){document.getElementById('ov').style.display='flex';document.getElementById('ovS').textContent=t||'...';}
+function hideOv(){document.getElementById('ov').style.display='none';}
 function toast(msg,type){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
-  setTimeout(()=>t.classList.remove('show'),3500);
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.className='toast show'+(type?' '+type:'');
+  setTimeout(()=>t.classList.remove('show'),3800);
 }
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function empty(id){ document.getElementById(id).innerHTML='<div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div>'; }
-
-// ── RESET ─────────────────────────────────────────────────────────────────────
-function reset(){
-  document.getElementById('depI').value='';
-  document.getElementById('arrI').value='';
-  [dmk,amk,rln].forEach(l=>{ if(l) map.removeLayer(l); }); dmk=amk=rln=null;
-  zps.forEach(p=>map.removeLayer(p)); zps=[];
-  ['wxD','wxA','ntmC','znC','sumC'].forEach(empty);
-  ['secWxD','secWxA','secNtm','secZn','secSum'].forEach(id=>document.getElementById(id).classList.remove('open'));
-  PS={dep:null,arr:null};
-  map.setView([47.5,13.5],7);
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function deg2rad(d){return d*Math.PI/180;}
+function nmDist(a,b){
+  const R=3440.065,dlat=deg2rad(b.lat-a.lat),dlon=deg2rad(b.lon-a.lon);
+  const x=Math.sin(dlat/2)**2+Math.cos(deg2rad(a.lat))*Math.cos(deg2rad(b.lat))*Math.sin(dlon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+function bearing(a,b){
+  const dl=deg2rad(b.lon-a.lon),la1=deg2rad(a.lat),la2=deg2rad(b.lat);
+  const y=Math.sin(dl)*Math.cos(la2);
+  const x=Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dl);
+  return((Math.atan2(y,x)*180/Math.PI)+360)%360;
 }
 
-// ── MAIN PLAN ─────────────────────────────────────────────────────────────────
-async function plan(){
-  const dep = document.getElementById('depI').value.trim().toUpperCase();
-  const arr = document.getElementById('arrI').value.trim().toUpperCase();
-  const alt = parseInt(document.getElementById('altI').value)||3500;
+// ═══════════════════════════════════════════════════════════
+//  AIRCRAFT UI
+// ═══════════════════════════════════════════════════════════
+function buildAcGrid(){
+  document.getElementById('acGrid').innerHTML=AIRCRAFT.map(ac=>`
+    <div class="ac-card${ac.id===selAC.id?' sel':''}" onclick="pickAC('${ac.id}')">
+      <div class="ac-ico">${ac.ico}</div>
+      <div class="ac-nm">${ac.nm}</div>
+      <div class="ac-tp">${ac.tp}</div>
+    </div>`).join('');
+}
+function pickAC(id){
+  selAC=AIRCRAFT.find(a=>a.id===id)||AIRCRAFT[0];
+  buildAcGrid();
+  document.getElementById('pCruise').value=selAC.cruise;
+  document.getElementById('pFuel').value=selAC.fuel;
+  document.getElementById('pTanks').value=selAC.tanks;
+  if(selAC.id==='at3') document.getElementById('pReg').value='SP-TPF';
+}
+function getPerf(){
+  return {
+    cruise:parseInt(document.getElementById('pCruise').value)||108,
+    fuel:parseFloat(document.getElementById('pFuel').value)||18,
+    tanks:parseInt(document.getElementById('pTanks').value)||65,
+    pax:parseInt(document.getElementById('pPax').value)||160,
+    reg:document.getElementById('pReg').value.trim()||'SP-TPF',
+  };
+}
 
-  if(dep.length<3){ toast('ICAO Abflug eingeben','err'); return; }
-  if(arr.length<3){ toast('ICAO Ziel eingeben','err'); return; }
-  if(dep===arr){ toast('Start ≠ Ziel','err'); return; }
+// ═══════════════════════════════════════════════════════════
+//  VFR ROUTING ENGINE  –  via real Reporting Points
+// ═══════════════════════════════════════════════════════════
+function computeRoute(dep, arr, rType){
+  const base=[
+    {name:dep.icao,lat:dep.lat,lon:dep.lon,type:'apt',color:'#00ff9f',desc:dep.name},
+    {name:arr.icao,lat:arr.lat,lon:arr.lon,type:'apt',color:'#ff6b35',desc:arr.name},
+  ];
 
-  document.getElementById('sysStatus').textContent='● LADEN...';
-  document.getElementById('planBtn').disabled=true;
+  if(rType==='direct') return base;
 
-  try {
-    showOv('Suche Flugplätze...');
-    const dp = AP[dep] ? {lat:AP[dep].lat,lon:AP[dep].lon,name:AP[dep].n} : await geo(dep);
-    const ap = AP[arr] ? {lat:AP[arr].lat,lon:AP[arr].lon,name:AP[arr].n} : await geo(arr);
-    PS.dep={icao:dep,...dp}; PS.arr={icao:arr,...ap};
+  // "Via Reporting Points" mode:
+  // 1. Find departure exit reporting point (closest rpt of dep airport toward arr)
+  // 2. Find arrival entry reporting point  (closest rpt of arr airport from dep)
+  // 3. Add intermediate VRP-referenced waypoints between airports if route passes
+  //    near a known CTR (with its rpts)
 
-    drawRoute(PS.dep,PS.arr);
+  const route=[base[0]];
+  const depRpts = AP[dep.icao]?.rpts || {};
+  const arrRpts = AP[arr.icao]?.rpts || {};
 
-    showOv('Hole METAR / TAF...');
-    const [wd,wa] = await Promise.all([fetchWx(dep),fetchWx(arr)]);
-    renderWx('wxD',dep,dp.name,wd,'dep');
-    renderWx('wxA',arr,ap.name,wa,'arr');
-    opn('secWxD'); opn('secWxA');
-
-    showOv('Hole NOTAMs...');
-    const ntms = await fetchNtm(dep,arr);
-    renderNtm(ntms); opn('secNtm');
-
-    showOv('Berechne Luftraumzonen...');
-    const zones = buildZones(PS.dep,PS.arr,alt);
-    renderZones(zones); drawZones(zones); opn('secZn');
-
-    renderSum(dep,arr,alt,wd,wa,ntms,zones); opn('secSum');
-
-    document.getElementById('sysStatus').textContent='● BEREIT';
-    toast('Flugplanung abgeschlossen ✓','ok');
-    document.querySelector('.sidebar').scrollTop=0;
-
-  } catch(e){
-    console.error(e);
-    toast('Fehler: '+e.message,'err');
-    document.getElementById('sysStatus').textContent='● FEHLER';
+  // Exit point: dep rpt closest in the direction of arr
+  const depExitRpt = closestRptToward(depRpts, dep, arr);
+  if(depExitRpt){
+    route.push({name:depExitRpt.name,lat:depExitRpt.lat,lon:depExitRpt.lon,
+      type:'rpt',color:'#ffd60a',desc:depExitRpt.desc,icao:dep.icao});
   }
-  hideOv();
-  document.getElementById('planBtn').disabled=false;
+
+  // Check if route crosses near any intermediate CTR airports (not dep/arr)
+  const enrouteCtrs = findEnrouteCTRs(dep, arr);
+  enrouteCtrs.forEach(ctricao=>{
+    const ctrAP=AP[ctricao];
+    if(!ctrAP||!ctrAP.rpts) return;
+    const rpts=ctrAP.rpts;
+    // Entry point toward dep
+    const entryRpt=closestRptToward(rpts,ctrAP,dep,true);
+    // Exit point toward arr
+    const exitRpt=closestRptToward(rpts,ctrAP,arr);
+    if(entryRpt) route.push({name:entryRpt.name,lat:entryRpt.lat,lon:entryRpt.lon,
+      type:'rpt',color:'#a78bfa',desc:`${entryRpt.desc} (${ctricao} Entry)`,icao:ctricao});
+    if(exitRpt)  route.push({name:exitRpt.name, lat:exitRpt.lat, lon:exitRpt.lon,
+      type:'rpt',color:'#a78bfa',desc:`${exitRpt.desc} (${ctricao} Exit)`, icao:ctricao});
+  });
+
+  // Entry point at arr: rpt closest in direction from dep
+  const arrEntryRpt = closestRptToward(arrRpts, arr, dep, true);
+  if(arrEntryRpt){
+    route.push({name:arrEntryRpt.name,lat:arrEntryRpt.lat,lon:arrEntryRpt.lon,
+      type:'rpt',color:'#ffd60a',desc:arrEntryRpt.desc,icao:arr.icao});
+  }
+
+  route.push(base[1]);
+
+  // Sort intermediate points by distance from dep (preserve dep & arr at ends)
+  const mid=route.slice(1,route.length-1);
+  mid.sort((a,b)=>nmDist(dep,a)-nmDist(dep,b));
+  // Remove duplicates
+  const seen=new Set();
+  const midUniq=mid.filter(w=>{
+    const k=`${w.lat.toFixed(3)},${w.lon.toFixed(3)}`;
+    if(seen.has(k))return false;seen.add(k);return true;
+  });
+  return [base[0],...midUniq,base[1]];
 }
 
-// ── GEOCODE ───────────────────────────────────────────────────────────────────
-async function geo(icao){
-  const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${icao}+airport&format=json&limit=1`);
-  const d=await r.json();
-  if(d&&d.length) return {lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon),name:d[0].display_name.split(',')[0]};
-  throw new Error(`Flugplatz ${icao} nicht gefunden`);
+// Find departure/arrival RPT that best points toward the target airport
+function closestRptToward(rpts, airport, target, incoming=false){
+  const keys=Object.keys(rpts);
+  if(!keys.length) return null;
+  const targetBearing=bearing(airport,target);
+  let best=null,bestScore=Infinity;
+  keys.forEach(k=>{
+    const rpt=rpts[k];
+    const rptBearing=bearing(airport,rpt);
+    let diff=Math.abs(targetBearing - rptBearing);
+    if(diff>180) diff=360-diff;
+    // For incoming, we want the rpt on the side facing the origin
+    if(incoming) diff=180-diff;
+    if(diff<bestScore){bestScore=diff;best={name:k,...rpt};}
+  });
+  return best;
 }
 
-// ── WEATHER ───────────────────────────────────────────────────────────────────
+// Find any known CTR airports that the direct route passes near
+function findEnrouteCTRs(dep,arr){
+  const result=[];
+  Object.keys(AP).forEach(icao=>{
+    if(icao===dep.icao||icao===arr.icao) return;
+    const ap=AP[icao];
+    if(!ap.rpts||Object.keys(ap.rpts).length===0) return;
+    // Is this airport within 50nm of the route midpoint?
+    const mid={lat:(dep.lat+arr.lat)/2,lon:(dep.lon+arr.lon)/2};
+    const dToMid=nmDist(mid,ap);
+    if(dToMid>60) return;
+    // Is it near the direct track line?
+    const t=closestParamOnLine(dep,arr,ap);
+    if(t<=0.05||t>=0.95) return;
+    const cp={lat:dep.lat+(arr.lat-dep.lat)*t,lon:dep.lon+(arr.lon-dep.lon)*t};
+    const perp=nmDist(cp,ap);
+    if(perp<25) result.push(icao);
+  });
+  return result;
+}
+
+function closestParamOnLine(a,b,p){
+  const dx=b.lon-a.lon,dy=b.lat-a.lat;
+  const len2=dx*dx+dy*dy;
+  if(len2===0)return 0;
+  const t=((p.lon-a.lon)*dx+(p.lat-a.lat)*dy)/len2;
+  return Math.max(0,Math.min(1,t));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  WEATHER
+// ═══════════════════════════════════════════════════════════
 async function fetchWx(icao){
+  const key=document.getElementById('cwxKey').value.trim()||ls('checkwx_key');
+
+  // 1) CheckWX (decoded, CORS-ok)
+  if(key){
+    try{
+      const rm=await fetch(`https://api.checkwx.com/metar/${icao}/decoded`,{headers:{'X-API-Key':key}});
+      const dm=rm.ok?await rm.json():null;
+      const metar=dm?.data?.[0]?.raw_text||null;
+      const decoded=dm?.data?.[0]||null;
+      const flightCat=decoded?.flight_category||null;
+      // TAF
+      let taf=null;
+      try{
+        const rt=await fetch(`https://api.checkwx.com/taf/${icao}/decoded`,{headers:{'X-API-Key':key}});
+        const dt=rt.ok?await rt.json():null;
+        taf=dt?.data?.[0]?.raw_text||null;
+      }catch(e){}
+      if(metar) return{metar,taf,decoded,flightCat,icao,src:'CheckWX'};
+    }catch(e){}
+  }
+
+  // 2) aviationweather.gov fallback
   let metar=null,taf=null;
   try{
     const r=await fetch(`https://aviationweather.gov/api/data/metar?ids=${icao}&format=raw&taf=false&hours=2`);
-    if(r.ok){ const t=await r.text(); const l=t.trim().split('\n').filter(x=>x.trim()&&!x.startsWith('#')); if(l.length) metar=l[0].trim(); }
+    if(r.ok){const t=await r.text();const l=t.trim().split('\n').filter(x=>x.trim()&&!x.startsWith('#'));if(l.length)metar=l[0].trim();}
   }catch(e){}
   try{
     const r=await fetch(`https://aviationweather.gov/api/data/taf?ids=${icao}&format=raw`);
-    if(r.ok){ const t=await r.text(); const l=t.trim().split('\n').filter(x=>x.trim()&&!x.startsWith('#')); if(l.length) taf=l.slice(0,8).join('\n').trim(); }
+    if(r.ok){const t=await r.text();const l=t.trim().split('\n').filter(x=>x.trim()&&!x.startsWith('#'));if(l.length)taf=l.slice(0,8).join('\n').trim();}
   }catch(e){}
-  return {metar,taf,icao};
+  return{metar,taf,decoded:null,flightCat:null,icao,src:metar?'aviationweather.gov':'–'};
 }
 
-function vfrCls(m){
+function vfrCls(wx){
+  if(wx.flightCat){
+    const f=wx.flightCat.toLowerCase();
+    return f==='lifr'?'ifr':f; // treat LIFR as IFR for simplicity
+  }
+  const m=wx.metar;
   if(!m) return 'unknown';
   if(/\bCAVOK\b/.test(m)) return 'vfr';
-  const vm=m.match(/\b(\d{4})\b/); const vis=vm?parseInt(vm[1]):9999;
-  if(vis<1500||/\bOVC0[0-3]\d\b/.test(m)) return 'ifr';
+  const vm=m.match(/\b(\d{4})\b/);const vis=vm?parseInt(vm[1]):9999;
+  if(vis<1500||/\bOVC00[0-3]\b/.test(m)) return 'ifr';
   if(vis<5000||/\bBKN0[0-3]\d\b/.test(m)) return 'mvfr';
   return 'vfr';
 }
 
-function chips(m,cls){
-  const cn=cls==='vfr'?'c-vfr':cls==='mvfr'?'c-mvfr':'c-ifr';
+function wxChips(wx){
+  const cls=vfrCls(wx);
+  const cn=cls==='vfr'?'cv-vfr':cls==='mvfr'?'cv-mvfr':'cv-ifr';
   const lb=cls==='vfr'?'✅ VFR':cls==='mvfr'?'⚠️ MVFR':'❌ IFR';
   let r=`<div class="chip"><span class="v ${cn}">${lb}</span></div>`;
+  if(!wx.metar) return r;
+  const m=wx.metar;
   const w=m.match(/\b(\d{3}|VRB)(\d{2,3})(G\d{2,3})?KT\b/);
-  if(w) r+=`<div class="chip">🌬️ <span class="v">${w[1]}°/${w[2]}${w[3]||''}KT</span></div>`;
-  if(/\bCAVOK\b/.test(m)) r+=`<div class="chip">👁️ <span class="v c-vfr">CAVOK</span></div>`;
-  else {
+  if(w) r+=`<div class="chip">🌬️ <span class="v">${w[1]}°/${w[2]}${w[3]||''}kt</span></div>`;
+  if(/\bCAVOK\b/.test(m)) r+=`<div class="chip">👁️ <span class="v cv-vfr">CAVOK</span></div>`;
+  else{
     const vi=m.match(/\b(\d{4})\b/);
     if(vi) r+=`<div class="chip">👁️ <span class="v">${(parseInt(vi[1])/1000).toFixed(1)}km</span></div>`;
-    const cl=m.match(/\b(FEW|SCT|BKN|OVC)\d{3}\b/g);
-    if(cl) cl.forEach(c=>r+=`<div class="chip">☁️ <span class="v">${c}</span></div>`);
+    (m.match(/\b(FEW|SCT|BKN|OVC)\d{3}\b/g)||[]).forEach(c=>r+=`<div class="chip">☁️ <span class="v">${c}</span></div>`);
   }
   const td=m.match(/\b(M?\d{2})\/(M?\d{2})\b/);
   if(td) r+=`<div class="chip">🌡️ <span class="v">${td[1]}°/${td[2]}°</span></div>`;
@@ -420,26 +763,36 @@ function chips(m,cls){
   return r;
 }
 
-function renderWx(id,icao,name,wx,type){
-  const el=document.getElementById(id);
-  const cls=vfrCls(wx.metar);
+function renderWx(elId,icao,name,wx,type){
+  const el=document.getElementById(elId);
+  const srcBadge=wx.src&&wx.src!=='–'?`<span class="badge bwx">${wx.src}</span>`:'<span class="badge bdemo">No live data</span>';
   if(!wx.metar&&!wx.taf){
-    el.innerHTML=`<div class="ap-card ${type}"><div class="ap-head"><span class="icao-badge">${esc(icao)}</span><div><div class="${type}-lbl">${type==='dep'?'▲ ABFLUG':'▼ ZIEL'}</div><div class="ap-name">${esc(name||icao)}</div></div></div><div style="color:var(--muted);font-size:.78rem;">⚠️ Keine Wetterdaten.<br><a href="https://metar-taf.com/${icao}" target="_blank">metar-taf.com/${icao} ↗</a></div></div>`;
-    return;
+    el.innerHTML=`<div class="wxcard ${type}">
+      <div class="wxh"><span class="icaob">${esc(icao)}</span>
+        <div><div style="font-family:var(--mono);font-size:.58rem;color:${type==='dep'?'var(--gn)':'var(--a2)'};">${type==='dep'?'▲ ABFLUG':'▼ ZIEL'}</div>
+        <div style="font-size:.72rem;color:var(--mt);">${esc(name||icao)}</div></div>${srcBadge}</div>
+      <div style="color:var(--mt);font-size:.73rem;">⚠️ Keine Wetterdaten verfügbar<br>
+        <a href="https://metar-taf.com/${icao}" target="_blank">metar-taf.com/${icao} ↗</a></div>
+    </div>`;return;
   }
-  el.innerHTML=`<div class="ap-card ${type}">
-    <div class="ap-head"><span class="icao-badge">${esc(icao)}</span><div><div class="${type}-lbl">${type==='dep'?'▲ ABFLUG':'▼ ZIEL'}</div><div class="ap-name">${esc(name||icao)}</div></div></div>
-    ${wx.metar?`<div class="wx-title">METAR</div><div class="wx-raw">${esc(wx.metar)}</div><div class="wx-chips">${chips(wx.metar,cls)}</div>`:''}
-    ${wx.taf?`<div class="wx-title">TAF</div><div class="wx-raw">${esc(wx.taf)}</div>`:''}
-    <a href="https://metar-taf.com/${icao}" target="_blank" style="font-size:.68rem;font-family:var(--mono);">🔗 metar-taf.com/${esc(icao)} ↗</a>
+  el.innerHTML=`<div class="wxcard ${type}">
+    <div class="wxh"><span class="icaob">${esc(icao)}</span>
+      <div><div style="font-family:var(--mono);font-size:.58rem;color:${type==='dep'?'var(--gn)':'var(--a2)'};">${type==='dep'?'▲ ABFLUG':'▼ ZIEL'}</div>
+      <div style="font-size:.72rem;color:var(--mt);">${esc(name||icao)}</div></div>${srcBadge}</div>
+    ${wx.metar?`<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">METAR</div>
+      <div class="wx-raw">${esc(wx.metar)}</div><div class="chips">${wxChips(wx)}</div>`:''}
+    ${wx.taf?`<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">TAF</div>
+      <div class="wx-raw">${esc(wx.taf)}</div>`:''}
+    <a href="https://metar-taf.com/${icao}" target="_blank" style="font-size:.62rem;font-family:var(--mono);">🔗 metar-taf.com/${esc(icao)} ↗</a>
   </div>`;
 }
 
-// ── NOTAMs ────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  NOTAMs
+// ═══════════════════════════════════════════════════════════
 async function fetchNtm(dep,arr){
   let ntms=[];
   for(const icao of [dep,arr]){
-    // 1) Eurocontrol NOTAMx
     try{
       const r=await fetch(`https://icaonotam.eurocontrol.int/notamSearch/search?icaos=${icao}&briefingType=PILOT&reportFormat=HTML`,{mode:'cors'});
       if(r.ok){
@@ -448,21 +801,19 @@ async function fetchNtm(dep,arr){
         let m;
         while((m=re.exec(h))!==null){
           const raw=m[2].replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-          if(raw.length>15) ntms.push({id:m[1],icao,src:'Eurocontrol NOTAMx',txt:raw.substring(0,300),
+          if(raw.length>15) ntms.push({id:m[1],icao,src:'Eurocontrol',txt:raw.substring(0,280),
             crit:/\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(raw)});
         }
       }
     }catch(e){}
-    // 2) FAA fallback
     if(!ntms.find(n=>n.icao===icao)){
       try{
         const r=await fetch(`https://aviationweather.gov/api/data/notam?icaos=${icao}&format=raw`);
         if(r.ok){
           (await r.text()).split('\n').filter(l=>l.trim().length>10).forEach((line,i)=>{
             const im=line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);
-            ntms.push({id:im?im[1].replace(/\s/,''):`NOTAM-${icao}-${i}`,icao,src:'aviationweather.gov',
-              txt:line.trim().substring(0,300),
-              crit:/\b(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(line)});
+            ntms.push({id:im?im[1].replace(/\s/,''):`N${icao}${i}`,icao,src:'aviationweather.gov',
+              txt:line.trim().substring(0,280),crit:/\b(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(line)});
           });
         }
       }catch(e){}
@@ -471,108 +822,147 @@ async function fetchNtm(dep,arr){
   if(!ntms.length) ntms=demoNtm(dep,arr);
   return ntms.slice(0,15);
 }
-
 function demoNtm(dep,arr){
-  const d=new Date(), mm=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+  const d=new Date(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
   return [
-    {id:`A${mm}${dd}0/26`,icao:dep,src:'Demo (CORS)',crit:false,txt:`${dep} RWY ILS LOC UNSERVICEABLE 0600-2200`},
-    {id:`A${mm}${dd}1/26`,icao:dep,src:'Demo (CORS)',crit:true, txt:`${dep} TWY ALPHA CLSD DUE MAINTENANCE`},
-    {id:`A${mm}${dd}2/26`,icao:arr,src:'Demo (CORS)',crit:false,txt:`${arr} ATIS UNSERVICEABLE – USE GND 121.900`},
-    {id:`A${mm}${dd}3/26`,icao:arr,src:'Demo (CORS)',crit:false,txt:`${arr} BIRDS REPORTED VIC AERODROME UP TO 1500FT AGL`},
-    {id:`B${mm}${dd}0/26`,icao:dep,src:'Demo (CORS)',crit:false,txt:`DANGER AREA ACTIVE VIC ${dep} FL060-FL100 0800-1600`},
-    {id:`B${mm}${dd}1/26`,icao:arr,src:'Demo (CORS)',crit:true, txt:`AEROBATIC DISPLAY NEAR ${arr} RADIUS 5NM SURFACE-3000FT 1200-1600`},
+    {id:`A${mm}${dd}0/26`,icao:dep,src:'Demo',crit:false,txt:`${dep} TWY ALPHA CLSD DUE MAINTENANCE`},
+    {id:`A${mm}${dd}1/26`,icao:dep,src:'Demo',crit:false,txt:`${dep} ATIS FREQ UNSERVICEABLE`},
+    {id:`A${mm}${dd}2/26`,icao:arr,src:'Demo',crit:false,txt:`${arr} BIRDS REPORTED VIC AERODROME UP TO 1500FT`},
+    {id:`B${mm}${dd}0/26`,icao:dep,src:'Demo',crit:true,txt:`DANGER AREA ACTIVE VIC ${dep} FL060-FL100 0800-1600`},
+    {id:`B${mm}${dd}1/26`,icao:arr,src:'Demo',crit:true,txt:`AEROBATIC DISPLAY NEAR ${arr} 5NM SURFACE-3000FT 1200-1600`},
   ];
 }
-
 function renderNtm(ntms){
-  const el=document.getElementById('ntmC');
+  const el=document.getElementById('ntC');
   if(!ntms.length){el.innerHTML='<div class="empty"><div class="ico">✅</div>Keine NOTAMs</div>';return;}
-  const src=[...new Set(ntms.map(n=>n.src))].join(' + ');
-  const isDemo=src.includes('Demo');
-  const hdr=`<div class="meta">${ntms.length} NOTAM(s) · ${src}${isDemo?' ⚠️ Live-Daten via CORS blockiert':''}<br>
+  const src=[...new Set(ntms.map(n=>n.src))].join('+');
+  const hdr=`<div class="meta">${ntms.length} NOTAM(s) · <b>${src}</b><br>
     <a href="https://icaonotam.eurocontrol.int" target="_blank">Eurocontrol NOTAMx ↗</a> &nbsp;
     <a href="https://www.austrocontrol.at/en/pilots/pre_flight_information/notam" target="_blank">AustroControl ↗</a></div>`;
-  const items=ntms.map(n=>`<div class="notam-item ${n.crit?'crit':''}">
-    <div class="notam-id">${esc(n.id)} | ${esc(n.icao)}</div>
-    <div class="notam-txt">${esc(n.txt)}</div>
-    <div class="notam-src">${esc(n.src)}</div>
-  </div>`).join('');
-  el.innerHTML=hdr+'<div class="notam-list">'+items+'</div>';
+  el.innerHTML=hdr+'<div class="ntm-list">'+ntms.map(n=>`
+    <div class="ntm ${n.crit?'crit':''}">
+      <div class="ntmid">${esc(n.id)} | ${esc(n.icao)}</div>
+      <div class="ntmtxt">${esc(n.txt)}</div>
+      <div class="ntmsrc">${esc(n.src)}</div>
+    </div>`).join('')+'</div>';
 }
 
-// ── ZONES ─────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  ZONES
+// ═══════════════════════════════════════════════════════════
 function buildZones(dep,arr,alt){
-  const mLat=(dep.lat+arr.lat)/2, mLon=(dep.lon+arr.lon)/2;
+  const ml=(dep.lat+arr.lat)/2,mn=(dep.lon+arr.lon)/2;
   return [
-    {name:`${dep.icao} CTR`,type:'CTR',    col:'#ff6b35',from:'GND',   to:'2500ft', active:true,      lat:dep.lat,     lon:dep.lon,     r:.13},
-    {name:`${arr.icao} CTR`,type:'CTR',    col:'#ff6b35',from:'GND',   to:'2500ft', active:true,      lat:arr.lat,     lon:arr.lon,     r:.13},
-    {name:`${dep.icao} TMA`,type:'TMA',    col:'#ffd60a',from:'1500ft',to:'FL095',  active:true,      lat:dep.lat+.18, lon:dep.lon+.08, r:.32},
-    {name:`${arr.icao} TMA`,type:'TMA',    col:'#ffd60a',from:'1500ft',to:'FL095',  active:true,      lat:arr.lat-.12, lon:arr.lon-.08, r:.28},
-    {name:'Danger Area',    type:'DANGER', col:'#ff3b3b',from:'GND',   to:'FL100',  active:alt>4500,  lat:mLat-.1,     lon:mLon+.22,    r:.18},
-    {name:'Class C',        type:'CLASS C',col:'#00d4ff',from:'FL075', to:'FL195',  active:alt>7500,  lat:mLat,        lon:mLon,        r:.45},
-    {name:'LFA Low Flying', type:'LFA',    col:'#00ff9f',from:'GND',   to:'500ft',  active:true,      lat:mLat+.14,    lon:mLon-.12,    r:.10},
+    {n:`${dep.icao} CTR`,tp:'CTR',   col:'#ff6b35',from:'GND',  to:'2500ft',active:true,     lat:dep.lat,    lon:dep.lon,    r:.13},
+    {n:`${arr.icao} CTR`,tp:'CTR',   col:'#ff6b35',from:'GND',  to:'2500ft',active:true,     lat:arr.lat,    lon:arr.lon,    r:.13},
+    {n:`${dep.icao} TMA`,tp:'TMA',   col:'#ffd60a',from:'1500ft',to:'FL095',active:true,     lat:dep.lat+.16,lon:dep.lon+.06,r:.28},
+    {n:`${arr.icao} TMA`,tp:'TMA',   col:'#ffd60a',from:'1500ft',to:'FL095',active:true,     lat:arr.lat-.10,lon:arr.lon-.06,r:.26},
+    {n:'Danger Area',    tp:'DANGER',col:'#ff3b3b',from:'GND',  to:'FL100',active:alt>4500,  lat:ml-.08,     lon:mn+.20,     r:.15},
+    {n:'Class C',        tp:'CLASS C',col:'#00d4ff',from:'FL075',to:'FL195',active:alt>7500, lat:ml,         lon:mn,         r:.40},
   ];
 }
-
 function renderZones(zones){
-  const el=document.getElementById('znC');
-  const hdr=`<div class="meta">Zonen in Routennähe · <a href="https://www.openaip.net" target="_blank">OpenAIP ↗</a> <a href="https://skyvector.com" target="_blank">SkyVector ↗</a></div>`;
-  const items=zones.map(z=>`<div class="zone-item">
-    <div class="zone-dot" style="background:${z.col};box-shadow:0 0 5px ${z.col}99;"></div>
-    <div style="flex:1"><div class="zone-name">${esc(z.name)}</div><div class="zone-type">${esc(z.type)}</div></div>
-    <div class="zone-alt">${esc(z.from)}<br>${esc(z.to)}</div>
-    <div style="font-size:.65rem;font-family:var(--mono);color:${z.active?'var(--red)':'var(--green)'};">${z.active?'●AKTIV':'○'}</div>
-  </div>`).join('');
-  el.innerHTML=hdr+'<div class="zone-list">'+items+'</div>';
+  const hdr=`<div class="meta">Routennahe Zonen · <a href="https://www.openaip.net" target="_blank">OpenAIP ↗</a></div>`;
+  document.getElementById('znC').innerHTML=hdr+'<div class="zn-list">'+zones.map(z=>`
+    <div class="zn">
+      <div class="zndot" style="background:${z.col};box-shadow:0 0 4px ${z.col}99;"></div>
+      <div style="flex:1"><div class="znnm">${esc(z.n)}</div><div class="zntp">${esc(z.tp)}</div></div>
+      <div class="znalt">${esc(z.from)}<br>${esc(z.to)}</div>
+      <div style="font-size:.6rem;font-family:var(--mono);color:${z.active?'var(--rd)':'var(--gn)'};">${z.active?'●AKTIV':'○'}</div>
+    </div>`).join('')+'</div>';
 }
-
 function drawZones(zones){
-  zps.forEach(p=>map.removeLayer(p)); zps=[];
+  zps.forEach(p=>map.removeLayer(p));zps=[];
   zones.forEach(z=>{
-    const c=L.circle([z.lat,z.lon],{
-      radius:z.r*111000,color:z.col,fillColor:z.col,fillOpacity:.07,weight:2,
-      dashArray:['DANGER','CTR'].includes(z.type)?'6,4':null
-    }).addTo(map).bindPopup(`<b>${z.name}</b><br>${z.type}<br>${z.from} – ${z.to}`);
+    const c=L.circle([z.lat,z.lon],{radius:z.r*111000,color:z.col,fillColor:z.col,fillOpacity:.06,
+      weight:1.5,dashArray:['DANGER','CTR'].includes(z.tp)?'5,4':null})
+      .addTo(map).bindPopup(`<b>${z.n}</b><br>${z.tp}<br>${z.from} – ${z.to}`);
     zps.push(c);
   });
 }
 
-// ── SUMMARY ───────────────────────────────────────────────────────────────────
-function renderSum(dep,arr,alt,wd,wa,ntms,zones){
-  const cd=vfrCls(wd.metar), ca=vfrCls(wa.metar);
+// ═══════════════════════════════════════════════════════════
+//  ROUTE DETAILS
+// ═══════════════════════════════════════════════════════════
+function renderRouteDetails(route,perf){
+  const rType=document.getElementById('routeType').value;
+  const hasRpts=route.some(w=>w.type==='rpt');
+  let html='';
+  if(hasRpts){
+    html+=`<div class="rpt-banner">
+      📡 <b>VFR Reporting Points</b> aus AIP Austria eingebaut.<br>
+      Alle markierten Punkte sind offizielle Meldepunkte – Meldung an ATC erforderlich!
+    </div>`;
+  }
+  html+=`<div class="meta">Routentyp: <b>${rType==='rpt'?'Via Reporting Points':'Direkt'}</b> &nbsp;·&nbsp; ${route.filter(w=>w.type==='rpt').length} VRP(s)</div>`;
+  html+='<div class="wpt-list">';
+  let cumNm=0;
+  route.forEach((w,i)=>{
+    if(i>0) cumNm+=nmDist(route[i-1],w);
+    const toNext=i<route.length-1?nmDist(w,route[i+1]):null;
+    const hdg=i<route.length-1?Math.round(bearing(w,route[i+1])):null;
+    const ete=toNext?Math.round(toNext/perf.cruise*60):null;
+    const dotColor=w.type==='apt'?(i===0?'#00ff9f':'#ff6b35'):w.type==='rpt'?'#ffd60a':'#a78bfa';
+    const typeLabel=w.type==='apt'?'AIRPORT':w.type==='rpt'?'VRP':'WPT';
+    html+=`<div class="wpt">
+      <div class="wdot" style="background:${dotColor};box-shadow:0 0 4px ${dotColor}80;"></div>
+      <div style="flex:1">
+        <div class="wname">${esc(w.name)}</div>
+        ${w.desc?`<div class="wdesc">${esc(w.desc)}</div>`:''}
+        <div style="font-family:var(--mono);font-size:.55rem;color:var(--mt);">${typeLabel}${w.icao&&w.type==='rpt'?' · '+w.icao:''}</div>
+      </div>
+      <div style="text-align:right">
+        ${i>0?`<div class="wdist">${Math.round(cumNm)} NM</div>`:'<div class="wdist">START</div>'}
+        ${hdg!==null?`<div class="whdg">${hdg}° · ${ete}min</div>`:'<div class="whdg">ZIEL</div>'}
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('rdC').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SUMMARY
+// ═══════════════════════════════════════════════════════════
+function renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf){
+  const cd=vfrCls(wD),ca=vfrCls(wA);
   const cn=ntms.filter(n=>n.crit).length;
   const az=zones.filter(z=>z.active&&z.from!=='GND').length;
   let st='GO',ico='✅',cl='go';
-  if(cd==='ifr'||ca==='ifr'||cn>0){st='NO-GO';ico='❌';cl='nogo';}
+  if(['ifr','lifr'].includes(cd)||['ifr','lifr'].includes(ca)||cn>0){st='NO-GO';ico='❌';cl='nogo';}
   else if(cd==='mvfr'||ca==='mvfr'||az>0){st='CAUTION';ico='⚠️';cl='caution';}
 
-  let nm='–',ete='–';
-  if(PS.dep&&PS.arr){
-    const R=3440.065,dLat=(PS.arr.lat-PS.dep.lat)*Math.PI/180,dLon=(PS.arr.lon-PS.dep.lon)*Math.PI/180;
-    const a=Math.sin(dLat/2)**2+Math.cos(PS.dep.lat*Math.PI/180)*Math.cos(PS.arr.lat*Math.PI/180)*Math.sin(dLon/2)**2;
-    nm=Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
-    ete=Math.round(nm/1.67);
-  }
+  let totalNm=0;
+  for(let i=0;i<route.length-1;i++) totalNm+=nmDist(route[i],route[i+1]);
+  totalNm=Math.round(totalNm);
+  const ete=Math.round(totalNm/perf.cruise*60);
+  const fuelReq=Math.round(totalNm/perf.cruise*perf.fuel*1.2);
+  const fuelOk=fuelReq<=perf.tanks;
+  const range=Math.round(perf.tanks/perf.fuel*perf.cruise);
+  const nVrp=route.filter(w=>w.type==='rpt').length;
 
   function wc(c){return c==='vfr'?'go':c==='mvfr'?'caution':'nogo';}
-
-  document.getElementById('sumC').innerHTML=`<div class="sum-card">
-    <div class="sum-title">VFR Bewertung</div>
-    <div style="text-align:center;margin-bottom:14px;">
-      <div style="font-size:2.2rem;">${ico}</div>
-      <div class="sum-val ${cl}" style="font-size:1.5rem;">${st}</div>
+  document.getElementById('smC').innerHTML=`<div class="sum-card">
+    <div class="sum-ttl">Flugplan Bewertung</div>
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:2rem;">${ico}</div>
+      <div class="sval ${cl}" style="font-size:1.4rem;">${st}</div>
     </div>
     <div class="sum-grid">
-      <div><div class="sum-lbl">Route</div><div class="sum-val">${esc(dep)} → ${esc(arr)}</div></div>
-      <div><div class="sum-lbl">Höhe</div><div class="sum-val">${alt} ft</div></div>
-      <div><div class="sum-lbl">Distanz</div><div class="sum-val">${nm} NM</div></div>
-      <div><div class="sum-lbl">ETE ~100kt</div><div class="sum-val">${ete} min</div></div>
-      <div><div class="sum-lbl">Wx Abflug</div><div class="sum-val ${wc(cd)}">${cd.toUpperCase()}</div></div>
-      <div><div class="sum-lbl">Wx Ziel</div><div class="sum-val ${wc(ca)}">${ca.toUpperCase()}</div></div>
-      <div><div class="sum-lbl">Krit. NOTAMs</div><div class="sum-val ${cn>0?'nogo':'go'}">${cn}</div></div>
-      <div><div class="sum-lbl">Akt. Zonen</div><div class="sum-val ${az>0?'caution':'go'}">${az}</div></div>
+      <div><div class="slbl">Reg / Typ</div><div class="sval">${esc(perf.reg)}</div></div>
+      <div><div class="slbl">Muster</div><div class="sval">${esc(selAC.nm)}</div></div>
+      <div><div class="slbl">Route</div><div class="sval">${esc(dep)} → ${esc(arr)}</div></div>
+      <div><div class="slbl">Höhe</div><div class="sval">${alt} ft</div></div>
+      <div><div class="slbl">Distanz</div><div class="sval">${totalNm} NM</div></div>
+      <div><div class="slbl">ETE</div><div class="sval">${ete} min</div></div>
+      <div><div class="slbl">Kraftstoff +20%</div><div class="sval ${fuelOk?'go':'nogo'}">${fuelReq} / ${perf.tanks} L</div></div>
+      <div><div class="slbl">Reichweite</div><div class="sval">${range} NM</div></div>
+      <div><div class="slbl">Wx Abflug</div><div class="sval ${wc(cd)}">${cd.toUpperCase()}</div></div>
+      <div><div class="slbl">Wx Ziel</div><div class="sval ${wc(ca)}">${ca.toUpperCase()}</div></div>
+      <div><div class="slbl">Krit. NOTAMs</div><div class="sval ${cn>0?'nogo':'go'}">${cn}</div></div>
+      <div><div class="slbl">VRP auf Route</div><div class="sval ${nVrp>0?'caution':'go'}">${nVrp}</div></div>
     </div>
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-family:var(--mono);font-size:.62rem;color:var(--muted);line-height:1.7;">
+    <div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--bd);font-family:var(--mono);font-size:.58rem;color:var(--mt);line-height:1.7;">
       ⚡ Kein Ersatz für offizielle Flugvorbereitung.<br>
       <a href="https://www.austrocontrol.at" target="_blank">AustroControl</a> ·
       <a href="https://icaonotam.eurocontrol.int" target="_blank">Eurocontrol NOTAMs</a> ·
@@ -581,34 +971,164 @@ function renderSum(dep,arr,alt,wd,wa,ntms,zones){
   </div>`;
 }
 
-// ── MAP MARKERS ───────────────────────────────────────────────────────────────
-const mkD=L.divIcon({html:`<div style="width:16px;height:16px;background:#00ff9f;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px #000b;"></div>`,iconSize:[16,16],iconAnchor:[8,16],className:''});
-const mkA=L.divIcon({html:`<div style="width:16px;height:16px;background:#ff6b35;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px #000b;"></div>`,iconSize:[16,16],iconAnchor:[8,16],className:''});
+// ═══════════════════════════════════════════════════════════
+//  MAP MARKERS & ROUTE DRAWING
+// ═══════════════════════════════════════════════════════════
+const mkDep=L.divIcon({html:`<div style="width:15px;height:15px;background:#00ff9f;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px #000b;"></div>`,iconSize:[15,15],iconAnchor:[7,15],className:''});
+const mkArr=L.divIcon({html:`<div style="width:15px;height:15px;background:#ff6b35;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px #000b;"></div>`,iconSize:[15,15],iconAnchor:[7,15],className:''});
+const mkRpt=L.divIcon({html:`<div style="width:12px;height:12px;background:#ffd60a;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px #000b;"></div>`,iconSize:[12,12],iconAnchor:[6,6],className:''});
+const mkWpt=L.divIcon({html:`<div style="width:10px;height:10px;background:#a78bfa;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px #000b;"></div>`,iconSize:[10,10],iconAnchor:[5,5],className:''});
 
-function drawRoute(dep,arr){
-  if(dmk) map.removeLayer(dmk); if(amk) map.removeLayer(amk); if(rln) map.removeLayer(rln);
-  dmk=L.marker([dep.lat,dep.lon],{icon:mkD}).addTo(map).bindPopup(`<b>▲ ABFLUG</b><br><code>${dep.icao}</code><br>${dep.name||''}`);
-  amk=L.marker([arr.lat,arr.lon],{icon:mkA}).addTo(map).bindPopup(`<b>▼ ZIEL</b><br><code>${arr.icao}</code><br>${arr.name||''}`);
-  rln=L.polyline([[dep.lat,dep.lon],[arr.lat,arr.lon]],{color:'#00d4ff',weight:2.5,dashArray:'8,5',opacity:.85}).addTo(map);
-  map.fitBounds(L.latLngBounds([[dep.lat,dep.lon],[arr.lat,arr.lon]]),{padding:[60,60]});
+function drawRoute(route){
+  if(dmk)map.removeLayer(dmk);
+  if(amk)map.removeLayer(amk);
+  if(rln)map.removeLayer(rln);
+  wptMks.forEach(m=>map.removeLayer(m));wptMks=[];
+
+  const lls=route.map(w=>[w.lat,w.lon]);
+  rln=L.polyline(lls,{color:'#00d4ff',weight:2.5,dashArray:'8,5',opacity:.85}).addTo(map);
+
+  route.forEach((w,i)=>{
+    let icon=mkWpt;
+    if(i===0) icon=mkDep;
+    else if(i===route.length-1) icon=mkArr;
+    else if(w.type==='rpt') icon=mkRpt;
+
+    const cumNm=i>0?route.slice(0,i+1).reduce((acc,_,j)=>j>0?acc+nmDist(route[j-1],route[j]):acc,0):0;
+    const hdgTxt=i<route.length-1?` · ${Math.round(bearing(w,route[i+1]))}° → ${route[i+1].name}`:'';
+    const popup=`<b>${w.name}</b>${w.type==='rpt'?' <span style="color:#ffd60a;font-size:.8em">▲ VRP</span>':''}<br>
+      ${w.desc||''}<br>
+      <span style="font-family:monospace;font-size:.75em;">${i>0?Math.round(cumNm)+' NM vom Start':'Start'}${hdgTxt}</span>`;
+
+    const mk=L.marker([w.lat,w.lon],{icon}).addTo(map).bindPopup(popup);
+    if(i===0) dmk=mk; else if(i===route.length-1) amk=mk; else wptMks.push(mk);
+  });
+
+  map.fitBounds(L.latLngBounds(lls),{padding:[50,50]});
 }
 
-// ── OPENAIP ───────────────────────────────────────────────────────────────────
-function saveAipKey(){
+// ═══════════════════════════════════════════════════════════
+//  GEOCODE
+// ═══════════════════════════════════════════════════════════
+async function geo(icao){
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${icao}+airport&format=json&limit=1`);
+  const d=await r.json();
+  if(d&&d.length) return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon),name:d[0].display_name.split(',')[0],rpts:{}};
+  throw new Error(`Flugplatz ${icao} nicht gefunden`);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RESET
+// ═══════════════════════════════════════════════════════════
+function resetAll(){
+  document.getElementById('depI').value='';
+  document.getElementById('arrI').value='';
+  [dmk,amk,rln].forEach(l=>{if(l)map.removeLayer(l);});dmk=amk=rln=null;
+  wptMks.forEach(m=>map.removeLayer(m));wptMks=[];
+  zps.forEach(p=>map.removeLayer(p));zps=[];
+  ['wxD','wxA','ntC','znC','smC','rdC'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.innerHTML='<div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div>';
+  });
+  ['sWD','sWA','sNT','sZN','sSM','sRD'].forEach(id=>document.getElementById(id).classList.remove('open'));
+  PS={dep:null,arr:null};
+  map.setView([47.5,13.5],7);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MAIN PLAN
+// ═══════════════════════════════════════════════════════════
+async function plan(){
+  const dep=document.getElementById('depI').value.trim().toUpperCase();
+  const arr=document.getElementById('arrI').value.trim().toUpperCase();
+  const alt=parseInt(document.getElementById('altI').value)||4500;
+  const rType=document.getElementById('routeType').value;
+
+  if(dep.length<3){toast('ICAO Abflug eingeben','err');return;}
+  if(arr.length<3){toast('ICAO Ziel eingeben','err');return;}
+  if(dep===arr){toast('Start ≠ Ziel','err');return;}
+
+  document.getElementById('sysStatus').textContent='● LADEN...';
+  document.getElementById('planBtn').disabled=true;
+
+  try{
+    showOv('Suche Flugplätze...');
+    const dAP=AP[dep],aAP=AP[arr];
+    const dp=dAP?{...dAP,icao:dep,name:dAP.n}:await geo(dep);
+    const ap=aAP?{...aAP,icao:arr,name:aAP.n}:await geo(arr);
+    dp.icao=dep; ap.icao=arr;
+    PS.dep=dp; PS.arr=ap;
+
+    showOv('Berechne Route via Reporting Points...');
+    const route=computeRoute(dp,ap,rType);
+    const perf=getPerf();
+    drawRoute(route);
+    renderRouteDetails(route,perf);
+    opn('sRD');
+
+    showOv('Hole METAR / TAF...');
+    const [wD,wA]=await Promise.all([fetchWx(dep),fetchWx(arr)]);
+    renderWx('wxD',dep,dp.name||dep,wD,'dep');
+    renderWx('wxA',arr,ap.name||arr,wA,'arr');
+    if(!ls('checkwx_key')&&!document.getElementById('cwxKey').value)
+      toast('Tipp: CheckWX Key in ⚙️ Einstellungen für Live-Wetter','warn');
+    opn('sWD');opn('sWA');
+
+    showOv('Hole NOTAMs...');
+    const ntms=await fetchNtm(dep,arr);
+    renderNtm(ntms);opn('sNT');
+
+    showOv('Berechne Luftraumzonen...');
+    const zones=buildZones(dp,ap,alt);
+    renderZones(zones);drawZones(zones);opn('sZN');
+
+    renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf);opn('sSM');
+
+    document.getElementById('sysStatus').textContent='● BEREIT';
+    const nVrp=route.filter(w=>w.type==='rpt').length;
+    toast(`Route berechnet · ${nVrp} VRP(s) ✓`,'ok');
+    document.querySelector('.sb').scrollTop=0;
+
+  }catch(e){
+    console.error(e);
+    toast('Fehler: '+e.message,'err');
+    document.getElementById('sysStatus').textContent='● FEHLER';
+  }
+  hideOv();
+  document.getElementById('planBtn').disabled=false;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════════════════════
+function saveCwx(){
+  const k=document.getElementById('cwxKey').value.trim();
+  localStorage.setItem('checkwx_key',k);
+  toast(k?'CheckWX Key gespeichert ✓':'CheckWX Key entfernt',k?'ok':'');
+}
+function saveAip(){
   const k=document.getElementById('aipKey').value.trim();
-  aipKey=k; localStorage.setItem('openaip_key',k); applyAip(k);
-  toast(k?'OpenAIP Layer aktiviert ✓':'OpenAIP deaktiviert',k?'ok':'');
+  localStorage.setItem('openaip_key',k);
+  applyAip(k);
+  toast(k?'OpenAIP aktiviert ✓':'OpenAIP deaktiviert',k?'ok':'');
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('aipKey').value=localStorage.getItem('openaip_key')||'';
+  document.getElementById('cwxKey').value=ls('checkwx_key');
+  document.getElementById('aipKey').value=ls('openaip_key');
+  buildAcGrid();
+  pickAC('at3'); // AT-3 als Standard
+
   ['depI','arrI'].forEach(id=>{
     const el=document.getElementById(id);
     el.addEventListener('input',function(){const p=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(p,p);});
     el.addEventListener('keydown',e=>{if(e.key==='Enter')plan();});
   });
   document.getElementById('altI').addEventListener('keydown',e=>{if(e.key==='Enter')plan();});
+  document.getElementById('pReg').addEventListener('input',function(){const p=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(p,p);});
 });
 </script>
 </body>
