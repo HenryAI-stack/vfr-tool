@@ -172,6 +172,28 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
 .bwx{background:rgba(0,212,255,.15);color:var(--ac);border:1px solid rgba(0,212,255,.3);}
 .bdemo{background:rgba(255,214,10,.1);color:var(--yw);border:1px solid rgba(255,214,10,.3);}
 
+
+/* ── GOOGLE LOGIN OVERLAY ── */
+#loginOverlay{position:fixed;inset:0;background:linear-gradient(135deg,#0a0e17 0%,#0d1f33 60%,#0a0e17 100%);
+  display:flex;align-items:center;justify-content:center;z-index:9000;flex-direction:column;gap:20px;}
+.login-box{background:#111827;border:1px solid #1e3a5f;border-radius:14px;padding:36px 40px;
+  text-align:center;max-width:340px;width:90%;}
+.login-logo{font-size:3rem;margin-bottom:10px;}
+.login-title{font-family:'Share Tech Mono',monospace;font-size:1.1rem;color:#00d4ff;
+  letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;}
+.login-sub{font-size:.78rem;color:#6b8cae;margin-bottom:24px;line-height:1.6;}
+.login-divider{height:1px;background:#1e3a5f;margin:20px 0;}
+.login-disclaimer{font-size:.62rem;color:#6b8cae;line-height:1.7;margin-top:14px;}
+.login-user-bar{display:none;align-items:center;gap:10px;background:#1a2236;
+  border:1px solid #1e3a5f;border-radius:8px;padding:7px 12px;font-family:'Share Tech Mono',monospace;
+  font-size:.7rem;color:#e2eaf7;position:fixed;top:60px;right:12px;z-index:8999;}
+.login-user-bar img{width:26px;height:26px;border-radius:50%;border:2px solid #00d4ff;}
+.login-user-bar .uname{color:#00d4ff;}
+.logout-btn{background:transparent;border:1px solid #1e3a5f;color:#6b8cae;
+  font-family:'Share Tech Mono',monospace;font-size:.62rem;padding:3px 8px;border-radius:4px;
+  cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.logout-btn:hover{border-color:#ff3b3b;color:#ff3b3b;}
+
 /* PRINT */
 .print-only{display:none;}
 @media print{
@@ -200,8 +222,122 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
   .p-logrow td{height:22px;}
 }
 </style>
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer>
+// ═══════════════════════════════════════════════════════════
+//  GOOGLE SIGN-IN
+// ═══════════════════════════════════════════════════════════
+var GOOGLE_CLIENT_ID='876959021639-f3jmr77rnd600ggba6icej1pef6muo87.apps.googleusercontent.com';
+var currentUser=null;
+
+function initGoogleAuth(){
+  // Try to restore session from localStorage
+  var saved=localStorage.getItem('vfr_user');
+  if(saved){
+    try{
+      currentUser=JSON.parse(saved);
+      showLoggedIn(currentUser);
+      return;
+    }catch(e){ localStorage.removeItem('vfr_user'); }
+  }
+  // Render Google button
+  if(window.google&&google.accounts){
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: onGoogleCallback,
+      auto_select: false,
+      cancel_on_tap_outside: false,
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('googleSignInBtn'),
+      {theme:'outline',size:'large',shape:'rectangular',width:260,text:'signin_with',locale:'de'}
+    );
+    google.accounts.id.prompt();
+  } else {
+    // GSI not loaded yet, retry
+    setTimeout(initGoogleAuth,500);
+  }
+}
+
+function parseJwt(token){
+  try{
+    var base64=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    var json=decodeURIComponent(atob(base64).split('').map(function(c){
+      return '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(json);
+  }catch(e){return null;}
+}
+
+function onGoogleCallback(response){
+  var payload=parseJwt(response.credential);
+  if(!payload){toast('Login fehlgeschlagen','err');return;}
+  currentUser={name:payload.name,email:payload.email,picture:payload.picture};
+  localStorage.setItem('vfr_user',JSON.stringify(currentUser));
+  showLoggedIn(currentUser);
+}
+
+function showLoggedIn(user){
+  document.getElementById('loginOverlay').style.display='none';
+  var bar=document.getElementById('userBar');
+  bar.style.display='flex';
+  document.getElementById('userName').textContent=user.name||user.email;
+  var av=document.getElementById('userAvatar');
+  if(user.picture){av.src=user.picture;}else{av.style.display='none';}
+  toast('Willkommen, '+( user.name?user.name.split(' ')[0] : user.email)+' ✓','ok');
+}
+
+function signOut(){
+  currentUser=null;
+  localStorage.removeItem('vfr_user');
+  document.getElementById('userBar').style.display='none';
+  document.getElementById('loginOverlay').style.display='flex';
+  if(window.google&&google.accounts){
+    google.accounts.id.disableAutoSelect();
+  }
+  resetAll();
+  // Re-render button
+  setTimeout(function(){
+    if(window.google&&google.accounts){
+      google.accounts.id.renderButton(
+        document.getElementById('googleSignInBtn'),
+        {theme:'outline',size:'large',shape:'rectangular',width:260,text:'signin_with',locale:'de'}
+      );
+    }
+  },200);
+}
+
+// Start Google auth init when GSI library loads
+window.onload=function(){
+  initGoogleAuth();
+};
+
+</script>
 </head>
 <body>
+
+<!-- GOOGLE LOGIN OVERLAY -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">✈️</div>
+    <div class="login-title">VFR // FlightPlan</div>
+    <div class="login-sub">PPL Flugplanung · AIP Poland<br>Bitte mit Google-Konto anmelden</div>
+    <div id="googleSignInBtn"></div>
+    <div class="login-divider"></div>
+    <div class="login-disclaimer">
+      Diese Anwendung nutzt Google Sign-In zur Authentifizierung.<br>
+      Keine Daten werden gespeichert oder weitergegeben.
+    </div>
+  </div>
+</div>
+
+<!-- USER BAR (shown after login) -->
+<div class="login-user-bar" id="userBar">
+  <img id="userAvatar" src="" alt="">
+  <span class="uname" id="userName"></span>
+  <button class="logout-btn" onclick="signOut()">Abmelden</button>
+</div>
+
 <header>
   <div class="logo">✈️</div>
   <div><h1>VFR // FlightPlan</h1><small>AIP Poland · VFR Reporting Points · FIR Warszawa</small></div>
@@ -721,31 +857,63 @@ function renderWx(elId,icao,name,wx,type){
   var typeCol=type==='dep'?'var(--gn)':'var(--a2)';
   var typeLbl=type==='dep'?'▲ ABFLUG':'▼ ZIEL';
   var decoded=buildDecodedTable(wx.decoded);
+
+  // metar-taf.com embedded widget (unique ID per call to avoid conflicts)
+  var widgetId='mtaf-'+icao+'-'+type+'-'+Date.now();
+  var widgetHtml=
+    '<div style="margin-top:10px;overflow:hidden;border-radius:6px;">'+
+    '<a href="https://metar-taf.com/de/metar/'+icao+'" id="'+widgetId+'" '+
+      'style="font-size:14px;font-weight:500;color:#000;width:100%;max-width:300px;height:435px;display:block">'+
+      'METAR '+icao+'</a>'+
+    '</div>';
+
   if(!wx.metar&&!wx.taf){
-    el.innerHTML='<div class="wxcard '+type+'">'+
+    el.innerHTML=
+      '<div class="wxcard '+type+'">'+
       '<div class="wxh"><span class="icaob">'+esc(icao)+'</span>'+
       '<div><div style="font-family:var(--mono);font-size:.58rem;color:'+typeCol+';">'+typeLbl+'</div>'+
       '<div style="font-size:.72rem;color:var(--mt);">'+esc(name||icao)+'</div></div>'+srcBadge+'</div>'+
-      '<div style="color:var(--mt);font-size:.73rem;">⚠️ Keine Wetterdaten<br>'+
-      '<a href="https://metar-taf.com/'+icao+'" target="_blank">metar-taf.com/'+icao+' ↗</a></div></div>';
+      widgetHtml+
+      '</div>';
+    loadMetarWidget(icao,widgetId);
     return;
   }
-  var html='<div class="wxcard '+type+'">'+
+
+  el.innerHTML=
+    '<div class="wxcard '+type+'">'+
     '<div class="wxh"><span class="icaob">'+esc(icao)+'</span>'+
     '<div><div style="font-family:var(--mono);font-size:.58rem;color:'+typeCol+';">'+typeLbl+'</div>'+
-    '<div style="font-size:.72rem;color:var(--mt);">'+esc(name||icao)+'</div></div>'+srcBadge+'</div>';
-  if(wx.metar){
-    html+='<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">METAR RAW</div>'+
+    '<div style="font-size:.72rem;color:var(--mt);">'+esc(name||icao)+'</div></div>'+srcBadge+'</div>'+
+    (wx.metar?
+      '<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">METAR RAW</div>'+
       '<div class="wx-raw">'+esc(wx.metar)+'</div>'+
-      '<div class="chips">'+wxChips(wx)+'</div>'+decoded;
-  }
-  if(wx.taf){
-    html+='<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;margin-top:6px;">TAF</div>'+
-      '<div class="wx-raw">'+esc(wx.taf)+'</div>';
-  }
-  html+='<a href="https://metar-taf.com/'+icao+'" target="_blank" style="font-size:.62rem;font-family:var(--mono);">🔗 metar-taf.com/'+esc(icao)+' ↗</a></div>';
-  el.innerHTML=html;
+      '<div class="chips">'+wxChips(wx)+'</div>'+
+      decoded
+    :'')+
+    (wx.taf?
+      '<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;margin-top:6px;">TAF</div>'+
+      '<div class="wx-raw">'+esc(wx.taf)+'</div>'
+    :'')+
+    widgetHtml+
+    '</div>';
+
+  loadMetarWidget(icao,widgetId);
 }
+
+// Dynamically load the metar-taf embed script for a specific ICAO and target ID
+function loadMetarWidget(icao,targetId){
+  // Remove any previous script for this ICAO to avoid duplicates
+  var oldScript=document.getElementById('mtaf-script-'+icao+'-'+targetId);
+  if(oldScript) oldScript.remove();
+  var script=document.createElement('script');
+  script.id='mtaf-script-'+icao+'-'+targetId;
+  script.async=true;
+  script.defer=true;
+  script.crossOrigin='anonymous';
+  script.src='https://metar-taf.com/de/embed-js/'+icao+'?u=80931&qnh=hPa&rh=rh&target='+targetId;
+  document.body.appendChild(script);
+}
+
 
 // NOTAMs
 async function fetchNtm(dep,arr){
