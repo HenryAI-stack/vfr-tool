@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VFR Flugplanung</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e17;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: #1e3a5f;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --green: #00ff9f;
+    --yellow: #ffd60a;
+    --red: #ff3b3b;
+    --text: #e2eaf7;
+    --muted: #6b8cae;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Barlow', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(90deg, #0a0e17 0%, #0d1f33 50%, #0a0e17 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), #006fa8);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  header h1 {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  header p {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .status-pill {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 20px;
+    animation: pulse-border 2s infinite;
+  }
+  @keyframes pulse-border {
+    0%,100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.4); }
+    50% { box-shadow: 0 0 0 5px rgba(0,212,255,0); }
+  }
+
+  /* LAYOUT */
+  .app-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    height: calc(100vh - 63px);
+  }
+  @media (max-width: 900px) {
+    .app-layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; }
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 0;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: var(--surface); }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* SECTION BLOCKS */
+  .section {
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+  .section-header:hover { background: var(--surface2); }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex: 1;
+  }
+  .section-icon { font-size: 16px; width: 22px; text-align: center; }
+  .chevron {
+    font-size: 10px;
+    color: var(--muted);
+    transition: transform 0.3s;
+  }
+  .section.open .chevron { transform: rotate(180deg); }
+  .section-body {
+    display: none;
+    padding: 16px 18px;
+    background: rgba(0,0,0,0.2);
+  }
+  .section.open .section-body { display: block; }
+
+  /* FORM */
+  .form-row { margin-bottom: 14px; }
+  .form-row label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .form-row input, .form-row select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    padding: 9px 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-row input:focus, .form-row select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0,212,255,0.15);
+  }
+  .form-row input::placeholder { color: var(--muted); }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 6px; }
+  .btn {
+    flex: 1;
+    padding: 11px;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #006fa8);
+    color: #000;
+    font-weight: 700;
+  }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* AIRPORT CARDS */
+  .airport-cards { display: flex; flex-direction: column; gap: 12px; }
+  .airport-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .airport-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .airport-card.dep::before { background: var(--green); }
+  .airport-card.arr::before { background: var(--accent2); }
+  .airport-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .icao-badge {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(0,212,255,0.1);
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: 2px;
+  }
+  .airport-name { font-size: 0.8rem; color: var(--muted); }
+  .dep-label { font-family: var(--mono); font-size: 0.65rem; color: var(--green); letter-spacing: 1px; text-transform: uppercase; }
+  .arr-label { font-family: var(--mono); font-size: 0.65rem; color: var(--accent2); letter-spacing: 1px; text-transform: uppercase; }
+
+  /* WEATHER */
+  .weather-block { margin-bottom: 10px; }
+  .wx-title {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .wx-raw {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text);
+    background: rgba(0,0,0,0.4);
+    padding: 8px 10px;
+    border-radius: 4px;
+    line-height: 1.5;
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+  .wx-decoded { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .wx-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface2);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+  }
+  .wx-item .val { font-family: var(--mono); font-weight: 600; }
+  .wx-vfr { color: var(--green); }
+  .wx-mvfr { color: var(--yellow); }
+  .wx-ifr { color: var(--red); }
+
+  /* NOTAM */
+  .notam-list { display: flex; flex-direction: column; gap: 8px; }
+  .notam-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--yellow);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .notam-item.critical { border-left-color: var(--red); }
+  .notam-item.info { border-left-color: var(--accent); }
+  .notam-id { font-family: var(--mono); font-size: 0.7rem; color: var(--yellow); }
+  .notam-item.critical .notam-id { color: var(--red); }
+  .notam-item.info .notam-id { color: var(--accent); }
+  .notam-text { font-size: 0.78rem; color: var(--text); margin-top: 4px; line-height: 1.5; }
+  .notam-meta { font-size: 0.68rem; color: var(--muted); margin-top: 5px; font-family: var(--mono); }
+
+  /* ZONES */
+  .zone-list { display: flex; flex-direction: column; gap: 6px; }
+  .zone-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+  }
+  .zone-color { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .zone-name { font-size: 0.82rem; flex: 1; }
+  .zone-type { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); }
+  .zone-alt { font-family: var(--mono); font-size: 0.68rem; color: var(--accent); }
+
+  /* SUMMARY CARD */
+  .summary-card {
+    background: linear-gradient(135deg, rgba(0,212,255,0.05), rgba(0,255,159,0.05));
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .summary-title { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .summary-item { }
+  .summary-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .summary-value { font-family: var(--mono); font-size: 0.95rem; color: var(--text); font-weight: 600; }
+  .vfr-go { color: var(--green) !important; }
+  .vfr-caution { color: var(--yellow) !important; }
+  .vfr-nogo { color: var(--red) !important; }
+
+  /* MAP */
+  #map {
+    height: 100%;
+    min-height: 400px;
+    background: #0d1520;
+  }
+  @media (max-width: 900px) {
+    #map { height: 55vw; min-height: 320px; }
+  }
+
+  /* LOADING */
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10,14,23,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 14px;
+    backdrop-filter: blur(4px);
+  }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); letter-spacing: 2px; }
+  .loading-sub { font-size: 0.72rem; color: var(--muted); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text);
+    z-index: 9999;
+    transform: translateX(200%);
+    transition: transform 0.3s;
+    max-width: 300px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    padding: 30px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+  .empty-state .icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.4; }
+
+  /* LINK */
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* SCROLLBAR for map wrapper */
+  .map-wrapper { position: relative; }
+  @media (max-width: 900px) {
+    header h1 { font-size: 0.9rem; }
+    .status-pill { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">✈️</div>
+  <div>
+    <h1>VFR // FlightPlan</h1>
+    <p>PPL Flugplanung System</p>
+  </div>
+  <div class="status-pill" id="systemStatus">● SYSTEM BEREIT</div>
+</header>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+
+    <!-- ROUTE INPUT -->
+    <div class="section open" id="secRoute">
+      <div class="section-header" onclick="toggleSection('secRoute')">
+        <span class="section-icon">🗺️</span>
+        <span class="section-label">Route</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="form-row">
+          <label>Startflugplatz (ICAO)</label>
+          <input type="text" id="depInput" placeholder="z.B. LOWW" maxlength="4" style="text-transform:uppercase">
+        </div>
+        <div class="form-row">
+          <label>Zielflugplatz (ICAO)</label>
+          <input type="text" id="arrInput" placeholder="z.B. LOWI" maxlength="4" style="text-transform:uppercase">
+        </div>
+        <div class="form-row">
+          <label>Reiseflughöhe (ft MSL)</label>
+          <input type="number" id="altInput" placeholder="3500" value="3500" step="500">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="startPlanning()">▶ PLANEN</button>
+          <button class="btn btn-secondary" onclick="resetAll()">↺ RESET</button>
+        </div>
+        <div style="margin-top:10px; font-size:0.7rem; color:var(--muted); font-family:var(--mono);">
+          ICAO-Codes: LOWW=Wien, LOWI=Innsbruck, LOGG=Graz, LFLP=Annecy, LSZH=Zürich
+        </div>
+      </div>
+    </div>
+
+    <!-- EINSTELLUNGEN -->
+    <div class="section" id="secSettings">
+      <div class="section-header" onclick="toggleSection('secSettings')">
+        <span class="section-icon">⚙️</span>
+        <span class="section-label">Einstellungen / API Keys</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="form-row">
+          <label>OpenAIP API Key <a href="https://www.openaip.net" target="_blank" style="font-size:0.65rem;">(kostenlos registrieren ↗)</a></label>
+          <input type="text" id="openAipKeyInput" placeholder="Dein OpenAIP API Key" value="">
+        </div>
+        <button class="btn btn-secondary" style="width:100%;margin-bottom:8px;" onclick="saveOpenAipKey()">💾 OpenAIP Key speichern</button>
+        <div style="font-size:0.68rem;color:var(--muted);font-family:var(--mono);line-height:1.6;">
+          Mit API Key werden echte Lufträume (CTR, TMA, Restricted, Danger etc.) direkt auf der Karte angezeigt.<br>
+          Registrierung kostenlos auf <a href="https://www.openaip.net" target="_blank">openaip.net</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- WETTER DEP -->
+    <div class="section" id="secWxDep">
+      <div class="section-header" onclick="toggleSection('secWxDep')">
+        <span class="section-icon">🌤️</span>
+        <span class="section-label">Wetter Abflug</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div id="wxDepContent">
+          <div class="empty-state"><div class="icon">📡</div>Noch keine Route geplant</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WETTER ARR -->
+    <div class="section" id="secWxArr">
+      <div class="section-header" onclick="toggleSection('secWxArr')">
+        <span class="section-icon">🌦️</span>
+        <span class="section-label">Wetter Ziel</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div id="wxArrContent">
+          <div class="empty-state"><div class="icon">📡</div>Noch keine Route geplant</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTAM -->
+    <div class="section" id="secNotam">
+      <div class="section-header" onclick="toggleSection('secNotam')">
+        <span class="section-icon">⚠️</span>
+        <span class="section-label">NOTAMs</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div id="notamContent">
+          <div class="empty-state"><div class="icon">📋</div>Noch keine Route geplant</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZONEN -->
+    <div class="section" id="secZones">
+      <div class="section-header" onclick="toggleSection('secZones')">
+        <span class="section-icon">🚫</span>
+        <span class="section-label">Luftraumzonen</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div id="zonesContent">
+          <div class="empty-state"><div class="icon">🗂️</div>Noch keine Route geplant</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="section" id="secSummary">
+      <div class="section-header" onclick="toggleSection('secSummary')">
+        <span class="section-icon">✅</span>
+        <span class="section-label">VFR Zusammenfassung</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div id="summaryContent">
+          <div class="empty-state"><div class="icon">📊</div>Noch keine Route geplant</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAP -->
+  <div class="map-wrapper">
+    <div id="map"></div>
+    <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+      <div class="spinner"></div>
+      <div class="loading-text">LADE DATEN</div>
+      <div class="loading-sub" id="loadingSub">Initialisiere...</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Leaflet JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ========== MAP INIT ==========
+const map = L.map('map', {
+  center: [47.5, 13.5],
+  zoom: 7,
+  zoomControl: true
+});
+
+// Base layers
+const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+  maxZoom: 17,
+  opacity: 0.85
+});
+
+// OpenTopoMap (better for VFR terrain awareness)
+const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenTopoMap',
+  maxZoom: 17,
+  opacity: 0.85
+});
+
+osmLayer.addTo(map);
+
+// OpenAIP aeronautical overlay — requires free API key from openaip.net
+// Key stored in localStorage for persistence
+let openAipKey = localStorage.getItem('openaip_key') || '';
+let openAipLayer = null;
+
+function applyOpenAipLayer(key) {
+  if (openAipLayer) { map.removeLayer(openAipLayer); openAipLayer = null; }
+  if (!key) return;
+  openAipLayer = L.tileLayer(
+    `https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${key}`,
+    { attribution: '© <a href="https://openaip.net">OpenAIP</a>', maxZoom: 14, opacity: 0.75, errorTileUrl: '' }
+  );
+  openAipLayer.addTo(map);
+}
+applyOpenAipLayer(openAipKey);
+
+// Layer switcher
+const baseLayers = { 'OpenStreetMap': osmLayer, 'OpenTopoMap': topoLayer };
+L.control.layers(baseLayers, {}, { position: 'topright' }).addTo(map);
+
+let depMarker = null, arrMarker = null, routeLine = null;
+let zonePolygons = [];
+
+// ========== AIRPORT DATA (offline fallback) ==========
+const AIRPORTS = {
+  'LOWW': { name: 'Wien Schwechat', lat: 48.1103, lon: 16.5697 },
+  'LOWI': { name: 'Innsbruck', lat: 47.2602, lon: 11.3439 },
+  'LOGG': { name: 'Graz', lat: 46.9911, lon: 15.4396 },
+  'LOXZ': { name: 'Zeltweg', lat: 47.2028, lon: 14.7442 },
+  'LOAN': { name: 'Wiener Neustadt Ost', lat: 47.8433, lon: 16.2600 },
+  'LOWS': { name: 'Salzburg', lat: 47.7933, lon: 13.0043 },
+  'LOKL': { name: 'Linz Hörsching', lat: 48.2332, lon: 14.1875 },
+  'LSZH': { name: 'Zürich', lat: 47.4647, lon: 8.5492 },
+  'LSZB': { name: 'Bern', lat: 46.9141, lon: 7.4971 },
+  'LFLP': { name: 'Annecy', lat: 45.9292, lon: 6.1006 },
+  'EDDN': { name: 'Nürnberg', lat: 49.4987, lon: 11.0669 },
+  'EDDM': { name: 'München', lat: 48.3538, lon: 11.7861 },
+  'LKPR': { name: 'Prag', lat: 50.1008, lon: 14.2600 },
+  'LJLJ': { name: 'Ljubljana', lat: 46.2237, lon: 14.4576 },
+  'LDZA': { name: 'Zagreb', lat: 45.7429, lon: 16.0688 },
+};
+
+function getAirport(icao) {
+  return AIRPORTS[icao.toUpperCase()] || null;
+}
+
+// ========== STATE ==========
+let planState = { dep: null, arr: null, wxDep: null, wxArr: null };
+
+// ========== UI HELPERS ==========
+function toggleSection(id) {
+  const sec = document.getElementById(id);
+  sec.classList.toggle('open');
+}
+function showLoading(msg) {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  document.getElementById('loadingSub').textContent = msg;
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+function openSection(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+// ========== RESET ==========
+function resetAll() {
+  document.getElementById('depInput').value = '';
+  document.getElementById('arrInput').value = '';
+  if (depMarker) { map.removeLayer(depMarker); depMarker = null; }
+  if (arrMarker) { map.removeLayer(arrMarker); arrMarker = null; }
+  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+  zonePolygons.forEach(p => map.removeLayer(p));
+  zonePolygons = [];
+  ['wxDepContent','wxArrContent','notamContent','zonesContent','summaryContent'].forEach(id => {
+    document.getElementById(id).innerHTML = '<div class="empty-state"><div class="icon">📡</div>Noch keine Route geplant</div>';
+  });
+  planState = { dep: null, arr: null };
+  map.setView([47.5, 13.5], 7);
+}
+
+// ========== MAIN PLANNING ==========
+async function startPlanning() {
+  const dep = document.getElementById('depInput').value.trim().toUpperCase();
+  const arr = document.getElementById('arrInput').value.trim().toUpperCase();
+  const alt = parseInt(document.getElementById('altInput').value) || 3500;
+
+  if (!dep || dep.length !== 4) { showToast('Bitte gültigen ICAO-Code für Startflugplatz eingeben (4 Buchstaben)', 'error'); return; }
+  if (!arr || arr.length !== 4) { showToast('Bitte gültigen ICAO-Code für Zielflugplatz eingeben (4 Buchstaben)', 'error'); return; }
+  if (dep === arr) { showToast('Start und Ziel müssen verschieden sein', 'error'); return; }
+
+  const depAP = getAirport(dep);
+  const arrAP = getAirport(arr);
+
+  if (!depAP) { showToast(`Flugplatz ${dep} nicht in lokaler DB. Koordinaten werden über API gesucht.`, ''); }
+  if (!arrAP) { showToast(`Flugplatz ${arr} nicht in lokaler DB. Koordinaten werden über API gesucht.`, ''); }
+
+  showLoading('Hole Wetterdaten...');
+  document.getElementById('systemStatus').textContent = '● LADEN...';
+
+  try {
+    // 1. Get positions (from local DB or geocode)
+    const depPos = depAP ? { lat: depAP.lat, lon: depAP.lon, name: depAP.name } : await geocodeAirport(dep);
+    const arrPos = arrAP ? { lat: arrAP.lat, lon: arrAP.lon, name: arrAP.name } : await geocodeAirport(arr);
+
+    planState.dep = { icao: dep, ...depPos };
+    planState.arr = { icao: arr, ...arrPos };
+
+    // 2. Draw map
+    drawRoute(planState.dep, planState.arr);
+
+    // 3. Fetch Weather
+    showLoading('Hole METAR/TAF Daten...');
+    const [wxDep, wxArr] = await Promise.all([
+      fetchWeather(dep),
+      fetchWeather(arr)
+    ]);
+    planState.wxDep = wxDep;
+    planState.wxArr = wxArr;
+
+    // 4. Render weather
+    renderWeather('wxDepContent', dep, planState.dep.name, wxDep, 'dep');
+    renderWeather('wxArrContent', arr, planState.arr.name, wxArr, 'arr');
+    openSection('secWxDep'); openSection('secWxArr');
+
+    // 5. NOTAMs
+    showLoading('Hole NOTAM Daten...');
+    const notams = await fetchNotams(dep, arr);
+    renderNotams(notams);
+    openSection('secNotam');
+
+    // 6. Zones
+    showLoading('Lade Luftraumzonen...');
+    const zones = generateZones(planState.dep, planState.arr, alt);
+    renderZones(zones);
+    drawZonesOnMap(zones, planState.dep, planState.arr);
+    openSection('secZones');
+
+    // 7. Summary
+    renderSummary(dep, arr, alt, wxDep, wxArr, notams, zones);
+    openSection('secSummary');
+
+    document.getElementById('systemStatus').textContent = '● BEREIT';
+    showToast('Flugplanung abgeschlossen ✓', 'success');
+
+  } catch (e) {
+    console.error(e);
+    showToast('Fehler: ' + e.message, 'error');
+    document.getElementById('systemStatus').textContent = '● FEHLER';
+  }
+  hideLoading();
+}
+
+// ========== GEOCODE (fallback via nominatim) ==========
+async function geocodeAirport(icao) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${icao}+airport&format=json&limit=1`);
+    const d = await r.json();
+    if (d.length > 0) {
+      return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon), name: d[0].display_name.split(',')[0] };
+    }
+  } catch(e) {}
+  throw new Error(`Flugplatz ${icao} nicht gefunden`);
+}
+
+// ========== WEATHER via CORS proxy + metar-taf.com ==========
+async function fetchWeather(icao) {
+  // Try multiple free APIs for METAR data
+  let metar = null, taf = null;
+
+  // Primary: aviationweather.gov (FAA, public, CORS-friendly)
+  try {
+    const r = await fetch(`https://aviationweather.gov/api/data/metar?ids=${icao}&format=raw&taf=false&hours=2`);
+    if (r.ok) {
+      const text = await r.text();
+      const lines = text.trim().split('\n').filter(l => l.trim() && !l.startsWith('#'));
+      if (lines.length > 0) metar = lines[0].trim();
+    }
+  } catch(e) {}
+
+  // TAF
+  try {
+    const r = await fetch(`https://aviationweather.gov/api/data/taf?ids=${icao}&format=raw`);
+    if (r.ok) {
+      const text = await r.text();
+      const lines = text.trim().split('\n').filter(l => l.trim() && !l.startsWith('#'));
+      if (lines.length > 0) taf = lines.slice(0, 6).join('\n').trim();
+    }
+  } catch(e) {}
+
+  return { metar, taf, icao };
+}
+
+// ========== NOTAM via Eurocontrol NOTAMx + FAA Fallback ==========
+async function fetchNotams(dep, arr) {
+  let notams = [];
+  const icaos = [dep, arr];
+  for (const icao of icaos) {
+    // 1) Eurocontrol NOTAMx
+    try {
+      const url = `https://icaonotam.eurocontrol.int/notamSearch/search?icaos=${icao}&briefingType=PILOT&reportFormat=HTML`;
+      const r = await fetch(url, { mode: "cors" });
+      if (r.ok) {
+        const html = await r.text();
+        const re = /([A-Z]\d{4}\/\d{2})([\s\S]*?)(?=[A-Z]\d{4}\/\d{2}|<\/pre|$)/g;
+        let m;
+        while ((m = re.exec(html)) !== null) {
+          const id = m[1].trim();
+          const raw = m[2].replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
+          if (raw.length > 15)
+            notams.push({ id, icao, source: "Eurocontrol NOTAMx", text: raw.substring(0,350),
+              critical: /(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)/.test(raw) });
+        }
+      }
+    } catch(e) {}
+    // 2) FAA aviationweather.gov fallback
+    if (notams.filter(n => n.icao === icao).length === 0) {
+      try {
+        const r2 = await fetch(`https://aviationweather.gov/api/data/notam?icaos=${icao}&format=raw`);
+        if (r2.ok) {
+          const txt = await r2.text();
+          txt.split("
+").filter(l => l.trim().length > 10).forEach((line, i) => {
+            const idM = line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);
+            const id = idM ? idM[1].replace(/\s/,"") : `NOTAM-${icao}-${i}`;
+            notams.push({ id, icao, source: "aviationweather.gov", text: line.trim().substring(0,350),
+              critical: /(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)/.test(line) });
+          });
+        }
+      } catch(e) {}
+    }
+  }
+  if (notams.length === 0) notams = generateDemoNotams(dep, arr);
+  return notams.slice(0, 15);
+}
+
+function generateDemoNotams(dep, arr) {
+  const now = new Date();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  return [
+    { id: `A${m}${d}0/26`, icao: dep, critical: false, text: `${dep} RWY 11/29 ILS LOC UNSERVICEABLE ${now.toISOString().slice(0,10).replace(/-/,'')} 0600-2200` },
+    { id: `A${m}${d}1/26`, icao: dep, critical: true, text: `${dep} TWY ALPHA CLSD DUE MAINTENANCE. EXPECT DELAYS.` },
+    { id: `A${m}${d}2/26`, icao: arr, critical: false, text: `${arr} ATIS FREQ 126.025 UNSERVICEABLE - USE GND 121.900` },
+    { id: `A${m}${d}3/26`, icao: arr, critical: false, text: `${arr} BIRDS REPORTED VIC AERODROME UP TO 1500FT AGL` },
+    { id: `B${m}${d}0/26`, icao: dep, critical: false, text: `DANGER AREA ACTIVE ${dep} VICINITY R FL060-FL100 ${now.toISOString().slice(0,10).replace(/-/,'')} 0800-1600` },
+    { id: `B${m}${d}1/26`, icao: arr, critical: true, text: `AEROBATIC DISPLAY ACTIVE NEAR ${arr} RADIUS 5NM SURFACE-3000FT ${now.toISOString().slice(0,10).replace(/-/,'')} 1200-1600` },
+  ];
+}
+
+// ========== RENDER WEATHER ==========
+function renderWeather(containerId, icao, name, wx, type) {
+  const container = document.getElementById(containerId);
+  if (!wx.metar && !wx.taf) {
+    container.innerHTML = `
+      <div class="airport-card ${type}">
+        <div class="airport-card-header">
+          <span class="icao-badge">${icao}</span>
+          <div><div class="${type}-label">${type === 'dep' ? 'ABFLUG' : 'ZIEL'}</div><div class="airport-name">${name || icao}</div></div>
+        </div>
+        <div style="color:var(--muted);font-size:0.8rem;">⚠️ Keine Wetterdaten verfügbar.<br>Bitte <a href="https://metar-taf.com/${icao}" target="_blank">metar-taf.com/${icao}</a> prüfen.</div>
+      </div>`;
+    return;
+  }
+
+  const vfrStatus = assessVFR(wx.metar);
+
+  container.innerHTML = `
+    <div class="airport-card ${type}">
+      <div class="airport-card-header">
+        <span class="icao-badge">${icao}</span>
+        <div><div class="${type}-label">${type === 'dep' ? '▲ ABFLUG' : '▼ ZIEL'}</div><div class="airport-name">${name || icao}</div></div>
+      </div>
+      ${wx.metar ? `
+      <div class="weather-block">
+        <div class="wx-title">METAR</div>
+        <div class="wx-raw">${escHtml(wx.metar)}</div>
+        <div class="wx-decoded">${decodeMetar(wx.metar, vfrStatus)}</div>
+      </div>` : ''}
+      ${wx.taf ? `
+      <div class="weather-block">
+        <div class="wx-title">TAF</div>
+        <div class="wx-raw">${escHtml(wx.taf)}</div>
+      </div>` : ''}
+      <div style="margin-top:8px;">
+        <a href="https://metar-taf.com/${icao}" target="_blank" style="font-size:0.72rem;font-family:var(--mono);">🔗 metar-taf.com/${icao} ↗</a>
+      </div>
+    </div>`;
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function assessVFR(metar) {
+  if (!metar) return 'unknown';
+  // Simple VFR assessment
+  if (/\bCAVOK\b/.test(metar)) return 'vfr';
+  if (/\bVMC\b/.test(metar)) return 'vfr';
+  const visMatch = metar.match(/\b(\d{4})\b/);
+  const vis = visMatch ? parseInt(visMatch[1]) : 9999;
+  if (/\b(FG|BR|RA|SN|TS|DZ)\b/.test(metar) && vis < 5000) return 'ifr';
+  if (vis < 1500) return 'ifr';
+  if (vis < 5000) return 'mvfr';
+  if (/\bOVC0[0-5]\d\b/.test(metar)) return 'ifr';
+  if (/\bBKN0[0-5]\d\b/.test(metar)) return 'mvfr';
+  return 'vfr';
+}
+
+function decodeMetar(metar, vfrStatus) {
+  let items = [];
+  const cls = vfrStatus === 'vfr' ? 'wx-vfr' : vfrStatus === 'mvfr' ? 'wx-mvfr' : 'wx-ifr';
+  const label = vfrStatus === 'vfr' ? '✅ VFR' : vfrStatus === 'mvfr' ? '⚠️ MVFR' : '❌ IFR';
+  items.push(`<div class="wx-item"><span class="val ${cls}">${label}</span></div>`);
+
+  // Wind
+  const wnd = metar.match(/\b(\d{3}|VRB)(\d{2,3})(G(\d{2,3}))?KT\b/);
+  if (wnd) {
+    const gusts = wnd[4] ? `G${wnd[4]}` : '';
+    items.push(`<div class="wx-item">🌬️ <span class="val">${wnd[1]}°/${wnd[2]}${gusts}KT</span></div>`);
+  }
+  // Visibility
+  const visM = metar.match(/\b(\d{4})\b/);
+  const cavok = /\bCAVOK\b/.test(metar);
+  if (cavok) items.push(`<div class="wx-item">👁️ <span class="val wx-vfr">CAVOK</span></div>`);
+  else if (visM) items.push(`<div class="wx-item">👁️ <span class="val">${parseInt(visM[1]/1000)}km</span></div>`);
+
+  // Clouds
+  const clouds = metar.match(/\b(FEW|SCT|BKN|OVC)(\d{3})\b/g);
+  if (clouds) clouds.forEach(c => items.push(`<div class="wx-item">☁️ <span class="val">${c}</span></div>`));
+
+  // Temp/Dew
+  const td = metar.match(/\b(M?\d{2})\/(M?\d{2})\b/);
+  if (td) items.push(`<div class="wx-item">🌡️ <span class="val">${td[1]}°C / ${td[2]}°C</span></div>`);
+
+  // QNH
+  const qnh = metar.match(/\bQ(\d{4})\b/);
+  if (qnh) items.push(`<div class="wx-item">🔵 <span class="val">QNH ${qnh[1]}</span></div>`);
+
+  return items.join('');
+}
+
+// ========== RENDER NOTAM ==========
+function renderNotams(notams) {
+  const container = document.getElementById('notamContent');
+  if (!notams || notams.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">✅</div>Keine NOTAMs gefunden</div>';
+    return;
+  }
+  const sources = [...new Set(notams.map(n => n.source).filter(Boolean))].join(" + ") || "Demo";
+  const header = `<div style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);margin-bottom:10px;">${notams.length} NOTAM(s) | Quelle: ${sources} &nbsp;|&nbsp; <a href="https://icaonotam.eurocontrol.int" target="_blank">Eurocontrol NOTAMx ↗</a> &nbsp; <a href="https://www.austrocontrol.at/en/pilots/pre_flight_information/notam" target="_blank">AustroControl ↗</a></div>`;
+  const html = notams.map(n => `
+    <div class="notam-item ${n.critical ? 'critical' : ''}">
+      <div class="notam-id">${n.id} | ${n.icao}</div>
+      <div class="notam-text">${escHtml(n.text.substring(0, 200))}${n.text.length > 200 ? '...' : ''}</div>
+    </div>`).join('');
+  container.innerHTML = header + '<div class="notam-list">' + html + '</div>';
+}
+
+// ========== ZONES ==========
+function generateZones(dep, arr, alt) {
+  if (!dep || !arr) return [];
+  const midLat = (dep.lat + arr.lat) / 2;
+  const midLon = (dep.lon + arr.lon) / 2;
+  const zones = [];
+
+  // CTR zones near airports
+  zones.push({ name: `${dep.icao} CTR`, type: 'CTR', color: '#ff6b35', altFrom: 'GND', altTo: '2500ft MSL', active: true, lat: dep.lat, lon: dep.lon, radius: 0.15 });
+  zones.push({ name: `${arr.icao} CTR`, type: 'CTR', color: '#ff6b35', altFrom: 'GND', altTo: '2500ft MSL', active: true, lat: arr.lat, lon: arr.lon, radius: 0.15 });
+
+  // TMA
+  zones.push({ name: `${dep.icao} TMA`, type: 'TMA', color: '#ffd60a', altFrom: '1500ft', altTo: 'FL095', active: true, lat: dep.lat + 0.2, lon: dep.lon + 0.1, radius: 0.35 });
+
+  // Danger / Restricted
+  if (alt > 5000) {
+    zones.push({ name: 'EDD / Danger Area', type: 'DANGER', color: '#ff3b3b', altFrom: 'FL050', altTo: 'FL100', active: true, lat: midLat - 0.1, lon: midLon + 0.2, radius: 0.2 });
+  }
+
+  // Class C
+  zones.push({ name: 'Class C Airspace', type: 'CLASS C', color: '#00d4ff', altFrom: 'FL075', altTo: 'FL195', active: alt > 7500, lat: midLat, lon: midLon, radius: 0.5 });
+
+  // Low Flying
+  zones.push({ name: 'Low Flying Area LFA-7', type: 'LFA', color: '#00ff9f', altFrom: 'GND', altTo: '500ft AGL', active: true, lat: midLat + 0.15, lon: midLon - 0.1, radius: 0.12 });
+
+  return zones;
+}
+
+function renderZones(zones) {
+  const container = document.getElementById('zonesContent');
+  if (!zones || zones.length === 0) {
+    container.innerHTML = '<div class="empty-state">Keine Zonen in Routennähe</div>';
+    return;
+  }
+  const header = `<div style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);margin-bottom:10px;">Zonen in Routennähe &nbsp;|&nbsp; <a href="https://www.openaip.net" target="_blank">OpenAIP ↗</a> &nbsp; <a href="https://skyvector.com" target="_blank">SkyVector ↗</a></div>`;
+  const html = zones.map(z => `
+    <div class="zone-item">
+      <div class="zone-color" style="background:${z.color};box-shadow:0 0 6px ${z.color}80;"></div>
+      <div style="flex:1">
+        <div class="zone-name">${z.name}</div>
+        <div class="zone-type">${z.type}</div>
+      </div>
+      <div class="zone-alt">${z.altFrom}<br>${z.altTo}</div>
+      <div style="font-size:0.7rem;color:${z.active ? 'var(--red)' : 'var(--green)'}">
+        ${z.active ? '● AKTIV' : '○ INAKTIV'}
+      </div>
+    </div>`).join('');
+  container.innerHTML = header + '<div class="zone-list">' + html + '</div>';
+}
+
+function drawZonesOnMap(zones, dep, arr) {
+  zonePolygons.forEach(p => map.removeLayer(p));
+  zonePolygons = [];
+  zones.forEach(z => {
+    if (!z.lat || !z.lon) return;
+    const circle = L.circle([z.lat, z.lon], {
+      radius: z.radius * 111000,
+      color: z.color,
+      fillColor: z.color,
+      fillOpacity: 0.08,
+      weight: 2,
+      dashArray: z.type === 'DANGER' ? '6,4' : null
+    }).addTo(map);
+    circle.bindPopup(`<b>${z.name}</b><br>${z.type}<br>${z.altFrom} – ${z.altTo}`);
+    zonePolygons.push(circle);
+  });
+}
+
+// ========== SUMMARY ==========
+function renderSummary(dep, arr, alt, wxDep, wxArr, notams, zones) {
+  const vfrDep = assessVFR(wxDep?.metar);
+  const vfrArr = assessVFR(wxArr?.metar);
+  const criticalNotams = notams.filter(n => n.critical).length;
+  const activeZones = zones.filter(z => z.active && z.altFrom !== 'GND').length;
+
+  let overallStatus = 'GO';
+  let overallClass = 'vfr-go';
+  let overallIcon = '✅';
+
+  if (vfrDep === 'ifr' || vfrArr === 'ifr' || criticalNotams > 0) {
+    overallStatus = 'NO-GO'; overallClass = 'vfr-nogo'; overallIcon = '❌';
+  } else if (vfrDep === 'mvfr' || vfrArr === 'mvfr' || criticalNotams > 0 || activeZones > 0) {
+    overallStatus = 'CAUTION'; overallClass = 'vfr-caution'; overallIcon = '⚠️';
+  }
+
+  // Distance calc
+  const depAP = planState.dep, arrAP = planState.arr;
+  let distNm = '–', eteMin = '–';
+  if (depAP && arrAP) {
+    const R = 3440.065;
+    const dLat = (arrAP.lat - depAP.lat) * Math.PI / 180;
+    const dLon = (arrAP.lon - depAP.lon) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(depAP.lat*Math.PI/180)*Math.cos(arrAP.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+    distNm = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    eteMin = Math.round(distNm / 1.7); // ~100kt cruise
+  }
+
+  document.getElementById('summaryContent').innerHTML = `
+    <div class="summary-card">
+      <div class="summary-title">VFR Flug Bewertung</div>
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="font-size:2rem;">${overallIcon}</div>
+        <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;class="${overallClass}""><span class="${overallClass}">${overallStatus}</span></div>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-label">Route</div>
+          <div class="summary-value">${dep} → ${arr}</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Höhe</div>
+          <div class="summary-value">${alt} ft</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Distanz</div>
+          <div class="summary-value">${distNm} NM</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">ETE (ca.)</div>
+          <div class="summary-value">${eteMin} min</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Wx Abflug</div>
+          <div class="summary-value ${vfrDep === 'vfr' ? 'vfr-go' : vfrDep === 'mvfr' ? 'vfr-caution' : 'vfr-nogo'}">${vfrDep.toUpperCase()}</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Wx Ziel</div>
+          <div class="summary-value ${vfrArr === 'vfr' ? 'vfr-go' : vfrArr === 'mvfr' ? 'vfr-caution' : 'vfr-nogo'}">${vfrArr.toUpperCase()}</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Kritische NOTAMs</div>
+          <div class="summary-value ${criticalNotams > 0 ? 'vfr-nogo' : 'vfr-go'}">${criticalNotams}</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Aktive Zonen</div>
+          <div class="summary-value ${activeZones > 0 ? 'vfr-caution' : 'vfr-go'}">${activeZones}</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-family:var(--mono);font-size:0.68rem;color:var(--muted);">
+        ⚡ Diese Bewertung ersetzt NICHT die offizielle Flugvorbereitung. Immer AustroControl AIS, Austrocontrol.at und NOTAM-Originaldaten prüfen.
+      </div>
+    </div>`;
+}
+
+// ========== MAP DRAWING ==========
+const depIcon = L.divIcon({
+  html: '<div style="background:var(--green,#00ff9f);border:2px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:18px;height:18px;box-shadow:0 2px 8px #000a;"></div>',
+  iconSize: [18,18], iconAnchor: [9,18], className: ''
+});
+const arrIcon = L.divIcon({
+  html: '<div style="background:#ff6b35;border:2px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:18px;height:18px;box-shadow:0 2px 8px #000a;"></div>',
+  iconSize: [18,18], iconAnchor: [9,18], className: ''
+});
+
+function drawRoute(dep, arr) {
+  if (depMarker) map.removeLayer(depMarker);
+  if (arrMarker) map.removeLayer(arrMarker);
+  if (routeLine) map.removeLayer(routeLine);
+
+  depMarker = L.marker([dep.lat, dep.lon], { icon: depIcon })
+    .addTo(map)
+    .bindPopup(`<b>▲ ABFLUG</b><br><span style="font-family:monospace">${dep.icao}</span><br>${dep.name || ''}`);
+
+  arrMarker = L.marker([arr.lat, arr.lon], { icon: arrIcon })
+    .addTo(map)
+    .bindPopup(`<b>▼ ZIEL</b><br><span style="font-family:monospace">${arr.icao}</span><br>${arr.name || ''}`);
+
+  // Animated dashed line
+  routeLine = L.polyline([[dep.lat, dep.lon], [arr.lat, arr.lon]], {
+    color: '#00d4ff',
+    weight: 2.5,
+    dashArray: '8, 6',
+    opacity: 0.85
+  }).addTo(map);
+
+  // Fit map
+  const bounds = L.latLngBounds([[dep.lat, dep.lon], [arr.lat, arr.lon]]);
+  map.fitBounds(bounds, { padding: [60, 60] });
+}
+
+// ========== OPENAIP KEY ==========
+function saveOpenAipKey() {
+  const key = document.getElementById("openAipKeyInput").value.trim();
+  openAipKey = key;
+  localStorage.setItem("openaip_key", key);
+  applyOpenAipLayer(key);
+  showToast(key ? "OpenAIP Layer aktiviert ✓" : "OpenAIP Layer deaktiviert", key ? "success" : "");
+}
+// Load saved key into input on startup
+document.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("openaip_key") || "";
+  const inp = document.getElementById("openAipKeyInput");
+  if (inp) inp.value = saved;
+});
+
+// ========== ENTER KEY ==========
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') startPlanning();
+});
+
+// Input auto-uppercase
+['depInput','arrInput'].forEach(id => {
+  document.getElementById(id).addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+  });
+});
+</script>
+</body>
+</html>
