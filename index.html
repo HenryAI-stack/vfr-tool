@@ -244,19 +244,20 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
     <div class="login-title">VFR // FlightPlan</div>
     <div class="login-sub">PPL Flugplanung · AIP Poland<br>Bitte mit Google-Konto anmelden</div>
 
-    <!-- Google rendered button goes here -->
-    <div id="googleSignInBtn"></div>
-
-    <!-- Fallback button (shown if GSI doesn't render) -->
-    <button class="g-fallback-btn" id="googleFallbackBtn" onclick="googleLoginFallback()">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-      Mit Google anmelden
-    </button>
+    <!-- Single login button container: GSI renders here, fallback shown if GSI not ready -->
+    <div id="loginBtnContainer" style="display:flex;flex-direction:column;align-items:center;gap:10px;min-height:50px;">
+      <button class="g-fallback-btn" id="googleFallbackBtn" onclick="googleLoginFallback()" style="display:flex;">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;flex-shrink:0;">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Mit Google anmelden
+      </button>
+      <!-- GSI renders official button here, replaces fallback -->
+      <div id="googleSignInBtn" style="display:none;"></div>
+    </div>
 
     <div class="login-divider"></div>
     <div class="login-note">
@@ -424,6 +425,44 @@ function onGoogleCallback(response) {
   showLoggedIn(currentUser);
 }
 
+function userKey(suffix) {
+  // Per-user storage key based on email
+  var email = (currentUser && currentUser.email) ? currentUser.email.replace(/[^a-zA-Z0-9]/g,'_') : 'default';
+  return 'vfr_' + email + '_' + suffix;
+}
+
+function saveUserSettings() {
+  // Save API keys linked to current Google user
+  if (!currentUser) return;
+  var s = {
+    checkwx: document.getElementById('cwxKey').value.trim(),
+    openaip: document.getElementById('aipKey').value.trim(),
+    cruise:  document.getElementById('pCruise').value,
+    fuel:    document.getElementById('pFuel').value,
+    tanks:   document.getElementById('pTanks').value,
+    reg:     document.getElementById('pReg').value,
+    acId:    selAC.id,
+  };
+  localStorage.setItem(userKey('settings'), JSON.stringify(s));
+}
+
+function loadUserSettings() {
+  if (!currentUser) return;
+  var raw = localStorage.getItem(userKey('settings'));
+  if (!raw) return;
+  try {
+    var s = JSON.parse(raw);
+    if (s.checkwx) { document.getElementById('cwxKey').value = s.checkwx; localStorage.setItem('checkwx_key', s.checkwx); }
+    if (s.openaip) { document.getElementById('aipKey').value = s.openaip; localStorage.setItem('openaip_key', s.openaip); applyAip(s.openaip); }
+    if (s.cruise)  document.getElementById('pCruise').value = s.cruise;
+    if (s.fuel)    document.getElementById('pFuel').value = s.fuel;
+    if (s.tanks)   document.getElementById('pTanks').value = s.tanks;
+    if (s.reg)     document.getElementById('pReg').value = s.reg;
+    if (s.acId)    { pickAC(s.acId); }
+    toast('Einstellungen geladen ✓', 'ok');
+  } catch(e) {}
+}
+
 function showLoggedIn(user) {
   document.getElementById('loginOverlay').style.display = 'none';
   var bar = document.getElementById('userBar');
@@ -431,6 +470,8 @@ function showLoggedIn(user) {
   document.getElementById('userName').textContent = user.name || user.email;
   var av = document.getElementById('userAvatar');
   if (user.picture) { av.src = user.picture; } else { av.style.display = 'none'; }
+  // Load this user's saved settings
+  setTimeout(loadUserSettings, 100);
   toast('Willkommen, ' + (user.name ? user.name.split(' ')[0] : user.email) + ' ✓', 'ok');
 }
 
@@ -445,34 +486,41 @@ function signOut() {
 }
 
 function initGoogleBtn() {
-  // Always show fallback first so user is never stuck
-  document.getElementById('googleFallbackBtn').style.display = 'flex';
+  var fallback = document.getElementById('googleFallbackBtn');
+  var gsiContainer = document.getElementById('googleSignInBtn');
 
   if (window.google && window.google.accounts && window.google.accounts.id) {
     try {
+      // Hide fallback BEFORE rendering GSI button – prevents double display
+      fallback.style.display = 'none';
+      gsiContainer.style.display = 'block';
+
       google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: onGoogleCallback,
         auto_select: false,
         cancel_on_tap_outside: false,
       });
-      google.accounts.id.renderButton(
-        document.getElementById('googleSignInBtn'),
-        {theme:'outline', size:'large', shape:'rectangular', width:260, text:'signin_with', locale:'de'}
-      );
-      // Hide fallback once official button is rendered
+      google.accounts.id.renderButton(gsiContainer,
+        {theme:'outline', size:'large', shape:'rectangular', width:260, text:'signin_with', locale:'de'});
+
+      // Verify render succeeded – if not, show fallback again
       setTimeout(function() {
-        var btn = document.getElementById('googleSignInBtn');
-        if (btn && btn.querySelector('iframe,div[role]')) {
-          document.getElementById('googleFallbackBtn').style.display = 'none';
+        if (!gsiContainer.querySelector('iframe,div[role],div[jsname]')) {
+          gsiContainer.style.display = 'none';
+          fallback.style.display = 'flex';
         }
-      }, 1200);
+      }, 1500);
     } catch(e) {
       console.warn('GSI renderButton failed:', e);
+      gsiContainer.style.display = 'none';
+      fallback.style.display = 'flex';
     }
   } else {
-    // GSI not loaded yet – retry silently
-    setTimeout(initGoogleBtn, 1000);
+    // GSI not loaded yet – show fallback and retry
+    fallback.style.display = 'flex';
+    gsiContainer.style.display = 'none';
+    setTimeout(initGoogleBtn, 900);
   }
 }
 
@@ -606,6 +654,7 @@ function pickAC(id) {
   document.getElementById('pFuel').value=selAC.fuel;
   document.getElementById('pTanks').value=selAC.tanks;
   if(selAC.id==='at3') document.getElementById('pReg').value='SP-TPF';
+  if(currentUser) setTimeout(saveUserSettings,200);
 }
 function getPerf() {
   return {cruise:parseInt(document.getElementById('pCruise').value)||108,
@@ -728,15 +777,22 @@ function buildDecodedTable(decoded) {
   return '<table class="wx-decoded-table">'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join('')+'</table>';
 }
 
-// metar-taf.com embed widget – loaded dynamically with correct ICAO
-function loadMetarWidget(icao, targetId) {
-  var old=document.getElementById('mtaf-s-'+targetId);
-  if(old) old.remove();
-  var s=document.createElement('script');
-  s.id='mtaf-s-'+targetId;
-  s.async=true; s.defer=true; s.crossOrigin='anonymous';
-  s.src='https://metar-taf.com/de/embed-js/'+icao+'?u=80931&qnh=hPa&rh=rh&target='+targetId;
-  document.body.appendChild(s);
+// metar-taf.com iframe embed – simple and always works
+function metarIframe(icao) {
+  return '<div class="mtaf-wrap">'+
+    '<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;'+
+    'text-transform:uppercase;margin-bottom:4px;">METAR-TAF.COM WIDGET</div>'+
+    '<iframe '+
+      'src="https://metar-taf.com/de/metar/'+icao+'" '+
+      'width="100%" '+
+      'height="435" '+
+      'frameborder="0" '+
+      'scrolling="no" '+
+      'loading="lazy" '+
+      'style="border-radius:6px;display:block;background:#fff;max-width:300px;" '+
+      'title="METAR '+icao+'">'+
+    '</iframe>'+
+    '</div>';
 }
 
 function renderWx(elId, icao, name, wx, type) {
@@ -746,11 +802,7 @@ function renderWx(elId, icao, name, wx, type) {
   var typeLbl=type==='dep'?'▲ ABFLUG':'▼ ZIEL';
   var decoded=buildDecodedTable(wx.decoded);
   // Unique ID for metar-taf widget target
-  var wid='mtaf-'+icao+'-'+type;
-  var widget='<div class="mtaf-wrap">'+
-    '<a href="https://metar-taf.com/de/metar/'+icao+'" id="'+wid+'" '+
-    'style="font-size:14px;font-weight:500;color:#000;width:100%;max-width:300px;height:435px;display:block">'+
-    'METAR '+esc(icao)+'</a></div>';
+  var widget=metarIframe(icao);
 
   var html='<div class="wxcard '+type+'">'+
     '<div class="wxh"><span class="icaob">'+esc(icao)+'</span>'+
@@ -767,7 +819,6 @@ function renderWx(elId, icao, name, wx, type) {
   }
   html+=widget+'</div>';
   el.innerHTML=html;
-  loadMetarWidget(icao, wid);
 }
 
 // ══════════════════════════════════════════════════
@@ -1049,8 +1100,8 @@ function exportPDF() {
 // ══════════════════════════════════════════════════
 //  SETTINGS
 // ══════════════════════════════════════════════════
-function saveCwx(){var k=document.getElementById('cwxKey').value.trim();localStorage.setItem('checkwx_key',k);toast(k?'CheckWX Key gespeichert ✓':'CheckWX Key entfernt',k?'ok':'');}
-function saveAip(){var k=document.getElementById('aipKey').value.trim();localStorage.setItem('openaip_key',k);applyAip(k);toast(k?'OpenAIP aktiviert ✓':'OpenAIP deaktiviert',k?'ok':'');}
+function saveCwx(){var k=document.getElementById('cwxKey').value.trim();localStorage.setItem('checkwx_key',k);saveUserSettings();toast(k?'CheckWX Key gespeichert ✓':'CheckWX Key entfernt',k?'ok':'');}
+function saveAip(){var k=document.getElementById('aipKey').value.trim();localStorage.setItem('openaip_key',k);applyAip(k);saveUserSettings();toast(k?'OpenAIP aktiviert ✓':'OpenAIP deaktiviert',k?'ok':'');}
 
 // ══════════════════════════════════════════════════
 //  INIT
