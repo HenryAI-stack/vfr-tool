@@ -246,6 +246,41 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
 .bwx{background:rgba(0,212,255,.15);color:var(--ac);border:1px solid rgba(0,212,255,.3);}
 .bdemo{background:rgba(255,214,10,.1);color:var(--yw);border:1px solid rgba(255,214,10,.3);}
 
+
+/* ── SAVED ROUTES ── */
+.route-list{display:flex;flex-direction:column;gap:6px;}
+.route-item{background:var(--bg);border:1px solid var(--bd);border-radius:7px;
+  padding:10px 12px;transition:border-color .2s;}
+.route-item:hover{border-color:var(--ac);}
+.route-item-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.route-icao{font-family:var(--mono);font-size:.85rem;font-weight:700;color:var(--ac);}
+.route-arrow{color:var(--mt);font-size:.75rem;}
+.route-date{font-family:var(--mono);font-size:.58rem;color:var(--mt);margin-left:auto;}
+.route-meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:7px;}
+.route-tag{font-family:var(--mono);font-size:.6rem;background:var(--sf2);
+  color:var(--mt);padding:2px 7px;border-radius:3px;}
+.route-tag.hi{color:var(--ac);background:rgba(0,212,255,.1);}
+.route-btns{display:flex;gap:6px;}
+.rbtn{flex:1;padding:5px 0;border:none;border-radius:4px;font-family:var(--mono);
+  font-size:.62rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
+  transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.rbtn-load{background:rgba(0,212,255,.15);color:var(--ac);border:1px solid rgba(0,212,255,.3);}
+.rbtn-load:hover{background:rgba(0,212,255,.3);}
+.rbtn-edit{background:rgba(255,214,10,.1);color:var(--yw);border:1px solid rgba(255,214,10,.3);}
+.rbtn-edit:hover{background:rgba(255,214,10,.2);}
+.rbtn-del{background:rgba(255,59,59,.1);color:var(--rd);border:1px solid rgba(255,59,59,.3);}
+.rbtn-del:hover{background:rgba(255,59,59,.2);}
+/* edit modal */
+#routeModal{display:none;position:fixed;inset:0;z-index:8500;
+  background:rgba(10,14,23,.85);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;}
+#routeModal.open{display:flex;}
+.modal-box{background:var(--sf);border:1px solid var(--bd);border-radius:12px;
+  padding:24px;width:320px;max-width:92vw;}
+.modal-title{font-family:var(--mono);font-size:.8rem;color:var(--ac);
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.modal-btns{display:flex;gap:8px;margin-top:16px;}
+
 /* ── PRINT ── */
 .print-only{display:none;}
 @media print{
@@ -413,6 +448,14 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
     <div class="sbody"><div id="smC"><div class="empty"><div class="ico">📊</div>Noch keine Route geplant</div></div></div>
   </div>
 
+  <!-- GESPEICHERTE ROUTEN -->
+  <div class="sec" id="sSV">
+    <div class="sh" onclick="tog('sSV')"><span class="si">💾</span><span class="sl">Gespeicherte Routen</span><span class="chv">▼</span></div>
+    <div class="sbody">
+      <div id="savedRoutesContent"><div class="empty"><div class="ico">💾</div>Keine gespeicherten Routen<br><span style="font-size:.68rem;">Route planen, dann „Route speichern" klicken</span></div></div>
+    </div>
+  </div>
+
   <!-- EINSTELLUNGEN -->
   <div class="sec" id="sST">
     <div class="sh" onclick="tog('sST')"><span class="si">⚙️</span><span class="sl">API Keys</span><span class="chv">▼</span></div>
@@ -439,6 +482,22 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
   </div>
 </div>
 </div><!-- /app -->
+
+
+<!-- ROUTE EDIT MODAL -->
+<div id="routeModal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Route bearbeiten</div>
+    <div class="fr"><label>Route Name</label>
+      <input id="modalName" type="text" placeholder="z.B. Wochenendflug" spellcheck="false"></div>
+    <div class="fr"><label>Notizen</label>
+      <input id="modalNotes" type="text" placeholder="Optionale Notizen" spellcheck="false"></div>
+    <div class="modal-btns">
+      <button class="btn bp" onclick="saveModalEdit()" style="font-size:.72rem;">💾 Speichern</button>
+      <button class="btn bs" onclick="closeRouteModal()" style="font-size:.72rem;">Abbrechen</button>
+    </div>
+  </div>
+</div>
 
 <div class="print-only" id="printPanel"></div>
 <div class="toast" id="toast"></div>
@@ -523,6 +582,8 @@ function showApp(user) {
   if (user.picture) document.getElementById('uAvatar').src = user.picture;
   // Load user-specific settings
   loadUserSettings(user.email);
+  // Render saved routes for this user
+  setTimeout(renderSavedRoutes, 200);
   toast('Willkommen ' + (user.name ? user.name.split(' ')[0] : user.email) + ' ✓', 'ok');
 }
 
@@ -803,17 +864,7 @@ function wxChips(wx){var cls=vfrCls(wx);var cn=cls==='vfr'?'c-vfr':cls==='mvfr'?
 
 function wxDecTable(decoded){if(!decoded)return '';var rows=[],dc=decoded;if(dc.wind)rows.push(['Wind',(dc.wind.degrees||'VRB')+'° / '+(dc.wind.speed_kts||'–')+' kt'+(dc.wind.gust_kts?' G'+dc.wind.gust_kts+'kt':'')]);if(dc.visibility){var vm=dc.visibility.meters_float;rows.push(['Sicht',vm>=9999?'10+ km':(vm/1000).toFixed(1)+' km']);}if(dc.clouds&&dc.clouds.length)rows.push(['Wolken',dc.clouds.map(function(cl){return cl.code+' '+(cl.base_feet_agl||'–')+'ft';}).join(' · ')]);if(dc.temperature)rows.push(['Temp/Tau',dc.temperature.celsius+'°C / '+(dc.dewpoint?dc.dewpoint.celsius:'–')+'°C']);if(dc.barometer)rows.push(['QNH',dc.barometer.hpa+' hPa']);if(!rows.length)return '';return '<table class="wx-dec">'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join('')+'</table>';}
 
-// metar-taf.com embed: inject <a> anchor + embed-js script
-var mtafScripts={};
-function injectMtaf(icao,tid){
-  // Remove old script for same target
-  if(mtafScripts[tid]){mtafScripts[tid].remove();delete mtafScripts[tid];}
-  var s=document.createElement('script');
-  s.async=true;s.defer=true;s.crossOrigin='anonymous';
-  s.src='https://metar-taf.com/de/embed-js/'+icao+'?u=80931&qnh=hPa&rh=rh&target='+tid;
-  document.body.appendChild(s);
-  mtafScripts[tid]=s;
-}
+// metar-taf: using direct links only
 
 function renderWx(elId,origIcao,name,wx,type){
   var el=document.getElementById(elId);
@@ -823,18 +874,17 @@ function renderWx(elId,origIcao,name,wx,type){
   var typeCol=type==='dep'?'var(--gn)':'var(--a2)';
   var typeLbl=type==='dep'?'▲ ABFLUG':'▼ ZIEL';
   var decoded=wxDecTable(wx.decoded);
-  var tid='mtaf-'+type;
 
-  var fallbackNote=isFallback?'<div class="mtaf-fallback">⚠️ Kein METAR für '+esc(origIcao)+' – zeige '+esc(dispIcao)+'</div>':'';
-  var mtafWidget=
-    '<div class="mtaf-wrap">'+
-    '<div class="mtaf-note">metar-taf.com widget</div>'+
-    fallbackNote+
-    '<a href="https://metar-taf.com/de/metar/'+dispIcao+'" '+
-       'id="'+tid+'" '+
-       'style="font-size:14px;font-weight:500;color:#000;width:300px;height:435px;display:block">'+
-    'METAR '+esc(dispIcao)+
-    '</a></div>';
+  // Clean metar-taf link (no widget, no embedded script)
+  var fbNote=isFallback?'<span style="font-family:var(--mono);font-size:.58rem;color:var(--yw);"> (Daten von '+esc(dispIcao)+')</span>':'';
+  var mtafLink=
+    '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+    '<a href="https://metar-taf.com/de/metar/'+dispIcao+'" target="_blank" '+
+       'style="font-family:var(--mono);font-size:.68rem;display:inline-flex;align-items:center;gap:5px;'+
+       'background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);padding:4px 10px;border-radius:4px;">'+
+    '🌐 metar-taf.com/'+esc(dispIcao)+'</a>'+
+    fbNote+
+    '</div>';
 
   var html=
     '<div class="wxcard '+type+'">'+
@@ -847,10 +897,9 @@ function renderWx(elId,origIcao,name,wx,type){
       '<div class="chips">'+wxChips(wx)+'</div>'+decoded;
   }
   if(wx.taf){html+='<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;margin-top:6px;">TAF</div><div class="wx-raw">'+esc(wx.taf)+'</div>';}
-  html+=mtafWidget+'</div>';
+  if(!wx.metar&&!wx.taf){html+='<div style="color:var(--mt);font-size:.74rem;margin:6px 0;">⚠️ Keine Wetterdaten verfügbar</div>';}
+  html+=mtafLink+'</div>';
   el.innerHTML=html;
-  // Inject metar-taf script after DOM update
-  setTimeout(function(){injectMtaf(dispIcao,tid);},150);
 }
 
 // ══════════════════════════════════════════════════════
@@ -910,7 +959,8 @@ function renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf){
     '<div><div class="slbl">Krit. NOTAMs</div><div class="sval '+(cn>0?'nogo':'go')+'">'+cn+'</div></div>'+
     '<div><div class="slbl">VRPs</div><div class="sval '+(nV>0?'caution':'go')+'">'+nV+'</div></div>'+
     '</div><div style="margin-top:12px;display:flex;gap:8px;">'+
-    '<button class="btn bp" style="font-size:.72rem;" onclick="exportPDF()">🖨️ PDF EXPORT</button></div>'+
+    '<button class="btn bp" style="font-size:.72rem;" onclick="exportPDF()">🖨️ PDF EXPORT</button>'+
+    '<button class="btn bs" style="font-size:.72rem;" onclick="saveCurrentRoute()">💾 ROUTE SPEICHERN</button></div>'+
     '<div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--bd);font-family:var(--mono);font-size:.58rem;color:var(--mt);line-height:1.7;">'+
     '⚡ Kein Ersatz für offizielle Flugvorbereitung · <a href="https://metar-taf.com" target="_blank">metar-taf.com</a></div></div>';
 }
@@ -1021,6 +1071,161 @@ function exportPDF(){
     '<div class="p-warn">⚡ <b>WICHTIG:</b> Planungshilfe – NOTAMs via PANSA AIS/AustroControl prüfen. VFR-Mindestbedingungen gemäß SERA/EASA.</div></div>';
   setTimeout(function(){window.print();},200);
 }
+
+
+// ══════════════════════════════════════════════════════
+//  SAVED ROUTES  (stored per Google user in localStorage)
+// ══════════════════════════════════════════════════════
+function routesKey(){
+  return uKey('routes');
+}
+function loadRoutes(){
+  if(!gUser) return [];
+  try{ return JSON.parse(localStorage.getItem(routesKey())||'[]'); }catch(e){ return []; }
+}
+function saveRoutes(routes){
+  if(!gUser) return;
+  localStorage.setItem(routesKey(), JSON.stringify(routes));
+}
+
+function saveCurrentRoute(){
+  if(!gUser){ toast('Bitte zuerst anmelden','err'); return; }
+  if(!PS.dep||!PS.arr||!PS.route||!PS.lastData){ toast('Bitte zuerst Route berechnen','err'); return; }
+  var routes = loadRoutes();
+  var now = new Date();
+  var route = {
+    id:      Date.now().toString(),
+    name:    PS.dep.icao + ' → ' + PS.arr.icao,
+    notes:   '',
+    dep:     PS.dep.icao,
+    arr:     PS.arr.icao,
+    depName: PS.dep.name||PS.dep.icao,
+    arrName: PS.arr.name||PS.arr.icao,
+    alt:     PS.lastData.alt,
+    cruise:  PS.lastData.perf.cruise,
+    fuel:    PS.lastData.perf.fuel,
+    tanks:   PS.lastData.perf.tanks,
+    reg:     PS.lastData.perf.reg,
+    acid:    selAC.id,
+    rType:   document.getElementById('routeType').value,
+    waypoints: PS.route.map(function(w){ return {name:w.name,lat:w.lat,lon:w.lon,type:w.type,desc:w.desc||'',icao:w.icao||'',color:w.color||''}; }),
+    savedAt: now.toISOString(),
+    dateStr: now.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}),
+  };
+  // Check for duplicate (same dep/arr saved in last 5 min)
+  var fiveMin=5*60*1000;
+  var dup=routes.findIndex(function(r){ return r.dep===route.dep&&r.arr===route.arr&&(now-new Date(r.savedAt))<fiveMin; });
+  if(dup>=0){ routes[dup]=route; toast('Route aktualisiert ✓','ok'); }
+  else{ routes.unshift(route); toast('Route gespeichert ✓','ok'); }
+  // Keep max 20 routes
+  if(routes.length>20) routes=routes.slice(0,20);
+  saveRoutes(routes);
+  renderSavedRoutes();
+  opn('sSV');
+}
+
+function deleteRoute(id){
+  if(!confirm('Route löschen?')) return;
+  var routes=loadRoutes().filter(function(r){ return r.id!==id; });
+  saveRoutes(routes);
+  renderSavedRoutes();
+  toast('Route gelöscht','ok');
+}
+
+var editingRouteId=null;
+function openRouteModal(id){
+  var routes=loadRoutes();
+  var r=routes.find(function(r){ return r.id===id; });
+  if(!r) return;
+  editingRouteId=id;
+  document.getElementById('modalName').value=r.name;
+  document.getElementById('modalNotes').value=r.notes||'';
+  document.getElementById('routeModal').classList.add('open');
+}
+function closeRouteModal(){
+  document.getElementById('routeModal').classList.remove('open');
+  editingRouteId=null;
+}
+function saveModalEdit(){
+  if(!editingRouteId) return;
+  var routes=loadRoutes();
+  var idx=routes.findIndex(function(r){ return r.id===editingRouteId; });
+  if(idx<0){ closeRouteModal(); return; }
+  routes[idx].name  = document.getElementById('modalName').value.trim()||routes[idx].name;
+  routes[idx].notes = document.getElementById('modalNotes').value.trim();
+  saveRoutes(routes);
+  renderSavedRoutes();
+  closeRouteModal();
+  toast('Route aktualisiert ✓','ok');
+}
+
+function loadRoute(id){
+  var routes=loadRoutes();
+  var r=routes.find(function(rt){ return rt.id===id; });
+  if(!r){ toast('Route nicht gefunden','err'); return; }
+  // Restore inputs
+  document.getElementById('depI').value=r.dep;
+  document.getElementById('arrI').value=r.arr;
+  document.getElementById('altI').value=r.alt||4500;
+  document.getElementById('routeType').value=r.rType||'rpt';
+  document.getElementById('pCruise').value=r.cruise||108;
+  document.getElementById('pFuel').value=r.fuel||18;
+  document.getElementById('pTanks').value=r.tanks||65;
+  document.getElementById('pReg').value=r.reg||'SP-TPF';
+  if(r.acid) pickAC(r.acid);
+  toast('Route geladen – ▶ PLANEN drücken zum Ausführen','ok');
+  // Scroll to route section
+  opn('sRT');
+  document.querySelector('.sidebar').scrollTop=0;
+}
+
+function renderSavedRoutes(){
+  var el=document.getElementById('savedRoutesContent');
+  if(!el) return;
+  if(!gUser){
+    el.innerHTML='<div class="empty"><div class="ico">🔐</div>Anmeldung erforderlich</div>';
+    return;
+  }
+  var routes=loadRoutes();
+  if(!routes.length){
+    el.innerHTML='<div class="empty"><div class="ico">💾</div>Keine gespeicherten Routen<br>'+
+      '<span style="font-size:.68rem;">Route planen, dann „Route speichern" klicken</span></div>';
+    return;
+  }
+  var html='<div style="font-family:var(--mono);font-size:.6rem;color:var(--mt);margin-bottom:8px;">'+routes.length+' gespeicherte Route(n)</div>'+
+    '<div class="route-list">';
+  routes.forEach(function(r){
+    var nm=r.notes?r.name+' – '+r.notes:r.name;
+    html+=
+      '<div class="route-item">'+
+      '<div class="route-item-head">'+
+        '<span class="route-icao">'+esc(r.dep)+'</span>'+
+        '<span class="route-arrow">→</span>'+
+        '<span class="route-icao">'+esc(r.arr)+'</span>'+
+        '<span class="route-date">'+esc(r.dateStr||'')+'</span>'+
+      '</div>'+
+      '<div class="route-meta">'+
+        '<span class="route-tag hi">'+esc(r.alt||'')+'ft</span>'+
+        '<span class="route-tag">'+esc(r.cruise||'')+'kt</span>'+
+        '<span class="route-tag">'+esc(r.reg||'')+'</span>'+
+        (r.waypoints?'<span class="route-tag">'+r.waypoints.length+' WPTs</span>':'')+
+        (r.notes?'<span class="route-tag" style="color:var(--yw);">'+esc(r.notes)+'</span>':'')+
+      '</div>'+
+      '<div class="route-btns">'+
+        '<button class="rbtn rbtn-load" onclick="loadRoute(''+r.id+'')">▶ Laden</button>'+
+        '<button class="rbtn rbtn-edit" onclick="openRouteModal(''+r.id+'')">✏️ Bearbeiten</button>'+
+        '<button class="rbtn rbtn-del"  onclick="deleteRoute(''+r.id+'')">🗑️ Löschen</button>'+
+      '</div>'+
+      '</div>';
+  });
+  el.innerHTML=html+'</div>';
+}
+
+// Close modal on background click
+document.addEventListener('click', function(e){
+  var modal=document.getElementById('routeModal');
+  if(modal&&modal.classList.contains('open')&&e.target===modal) closeRouteModal();
+});
 
 // ══════════════════════════════════════════════════════
 //  SETTINGS
