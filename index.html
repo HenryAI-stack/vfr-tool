@@ -950,6 +950,8 @@ function renderWx(elId,origIcao,name,wx,type){
 
 async function fetchNtmForIcao(icao, user, pass) {
   var results = [];
+  // Guard: only query known-valid ICAO formats
+  if(!icao||icao.length<3||icao.length>4) return results;
 
   // ── FAA FNS-NDS SOAP via CORS proxy ─────────────────────────────────────
   // Endpoint: https://notams.aim.faa.gov/fnsnds/FnsNds
@@ -1067,11 +1069,16 @@ async function fetchNtm(dep, arr) {
   var pass = document.getElementById('ntmPass').value.trim() || lsGet('fns_pass');
   var results = [];
 
+  // Nur gültige ICAO-Codes (3-4 Buchstaben/Zahlen) abfragen
+  function validIcao(code) {
+    return code && /^[A-Z]{2,4}[0-9A-Z]{0,2}$/.test(code) && code.length >= 3 && code.length <= 4;
+  }
+  var icaos = [dep, arr].filter(validIcao);
+
   // Beide Flughäfen parallel abfragen
-  var both = await Promise.all([
-    fetchNtmForIcao(dep, user, pass),
-    fetchNtmForIcao(arr, user, pass),
-  ]);
+  var both = await Promise.all(icaos.map(function(icao) {
+    return fetchNtmForIcao(icao, user, pass);
+  }));
   both.forEach(function(list) { results = results.concat(list); });
 
   // Demo-Fallback wenn nichts geliefert
@@ -1312,7 +1319,16 @@ async function renderSavedRoutes(){
 }
 
 // GEOCODE
-async function geo(icao){var r=await fetch('https://nominatim.openstreetmap.org/search?q='+icao+'+airport&format=json&limit=1');var d=await r.json();if(d&&d.length)return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon),name:d[0].display_name.split(',')[0],rpts:{}};throw new Error('Flugplatz '+icao+' nicht gefunden');}
+async function geo(icao){
+  // Validate ICAO format before geocoding
+  if(!icao||!/^[A-Z]{2,4}[0-9A-Z]{0,2}$/.test(icao)||icao.length<3||icao.length>4){
+    throw new Error('Ungültiger ICAO-Code: '+icao);
+  }
+  var r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(icao+' airport')+'&format=json&limit=3&featuretype=aeroway');
+  var d=await r.json();
+  if(d&&d.length)return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon),name:d[0].display_name.split(',')[0],rpts:{}};
+  throw new Error('Flugplatz '+icao+' nicht gefunden');
+}
 
 // RESET
 function resetAll(){
