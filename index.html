@@ -71,8 +71,7 @@ header small{font-size:.6rem;color:var(--mt);letter-spacing:1px;text-transform:u
 
 /* ── LAYOUT ── */
 .app{flex:1;display:flex;overflow:hidden;}
-.sidebar{width:375px;flex-shrink:0;background:var(--sf);
-  border-right:1px solid var(--bd);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+/* sidebar now in SIDEBAR TOGGLE CSS block */
 .sidebar::-webkit-scrollbar{width:3px;}
 .sidebar::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px;}
 .mwrap{flex:1;position:relative;min-width:0;}
@@ -296,6 +295,43 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
   letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
 .modal-btns{display:flex;gap:8px;margin-top:16px;}
 
+
+/* ── SIDEBAR TOGGLE ── */
+.sidebar{width:375px;flex-shrink:0;background:var(--sf);
+  border-right:1px solid var(--bd);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  transition:width .3s ease, min-width .3s ease;}
+.sidebar.collapsed{width:0;min-width:0;overflow:hidden;border-right:none;}
+.sidebar-toggle{
+  position:absolute;top:50%;left:0;transform:translateY(-50%);
+  z-index:200;background:var(--sf2);border:1px solid var(--bd);
+  border-left:none;border-radius:0 6px 6px 0;
+  width:18px;height:48px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:left .3s ease, background .2s;
+  color:var(--mt);font-size:10px;
+}
+.sidebar-toggle:hover{background:var(--sf);color:var(--ac);}
+.mwrap{flex:1;position:relative;min-width:0;}
+
+/* ── LOCK BUTTON ── */
+.lock-btn{
+  display:flex;align-items:center;gap:6px;
+  background:transparent;border:1px solid var(--bd);
+  color:var(--mt);font-family:var(--mono);font-size:.65rem;
+  padding:5px 10px;border-radius:5px;cursor:pointer;
+  transition:all .2s;width:100%;justify-content:center;margin-bottom:8px;
+  -webkit-tap-highlight-color:transparent;
+}
+.lock-btn:hover{border-color:var(--yw);color:var(--yw);}
+.lock-btn.locked{border-color:var(--rd);color:var(--rd);background:rgba(255,59,59,.08);}
+.lock-btn.locked:hover{border-color:var(--gn);color:var(--gn);}
+.lock-badge{
+  display:inline-block;font-family:var(--mono);font-size:.55rem;
+  padding:1px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;
+  background:rgba(255,59,59,.15);color:var(--rd);border:1px solid rgba(255,59,59,.3);
+  margin-left:4px;
+}
+
 /* ── PRINT ── */
 .print-only{display:none;}
 @media print{
@@ -430,7 +466,10 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
   <!-- ROUTE DETAILS -->
   <div class="sec" id="sRD">
     <div class="sh" onclick="tog('sRD')"><span class="si">📍</span><span class="sl">Berechnete Route</span><span class="chv">▼</span></div>
-    <div class="sbody"><div id="rdC"><div class="empty"><div class="ico">📍</div>Noch keine Route berechnet</div></div></div>
+    <div class="sbody">
+      <button class="lock-btn" id="lockBtn" onclick="toggleLock()">🔓 Wegpunkte bearbeitbar</button>
+      <div id="rdC"><div class="empty"><div class="ico">📍</div>Noch keine Route berechnet</div></div>
+    </div>
   </div>
 
   <!-- WETTER DEP -->
@@ -490,6 +529,7 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
 
 </div><!-- /sidebar -->
 <div class="mwrap">
+  <button class="sidebar-toggle" id="sbToggle" onclick="toggleSidebar()" title="Sidebar ein/ausblenden">◀</button>
   <div id="map"></div>
   <div class="ov" id="ov" style="display:none;">
     <div class="spin"></div><div class="ovt">LADE DATEN</div>
@@ -622,7 +662,9 @@ function showApp(user) {
   if (user.picture) document.getElementById('uAvatar').src = user.picture;
   // Load user-specific settings
   loadUserSettings(user.email);
-  // Render saved routes for this user
+  // Init Google Drive token for cross-device route sync
+  setTimeout(initDriveToken, 500);
+  // Render saved routes (will show local first, then Drive data)
   setTimeout(renderSavedRoutes, 200);
   toast('Willkommen ' + (user.name ? user.name.split(' ')[0] : user.email) + ' ✓', 'ok');
 }
@@ -997,12 +1039,12 @@ function renderRouteDetails(route,perf){
         (i>0?'<div class="wdist">'+Math.round(cumNm)+' NM</div>':'<div class="wdist">START</div>')+
         (hdg!==null?'<div class="whdg">'+hdg+'° '+ete+'min</div>':'<div class="whdg">ZIEL</div>')+
       '</div>'+
-      (canDel?'<button class="wpt-del" data-wptidx="'+i+'" title="Wegpunkt löschen">✕</button>':'')+
+      (canDel&&!routeLocked?'<button class="wpt-del" data-wptidx="'+i+'" title="Wegpunkt löschen">✕</button>':'')+
       '</div>';
 
     // "Add waypoint" button between every pair of points
     if(i<route.length-1){
-      html+='<button class="wpt-add" data-addafter="'+i+'">➕ Wegpunkt nach '+esc(w.name)+' einfügen</button>';
+      if(!routeLocked) html+='<button class="wpt-add" data-addafter="'+i+'">➕ Wegpunkt nach '+esc(w.name)+' einfügen</button>';
     }
   });
 
@@ -1077,7 +1119,7 @@ function drawRoute(route){
   redrawLine();
   route.forEach(function(w,i){
     var icon=i===0?mkD:(i===route.length-1?mkA:(w.type==='rpt'?mkR:mkW));
-    var draggable=i>0&&i<route.length-1;
+    var draggable=(i>0&&i<route.length-1&&!routeLocked);
     var mk=L.marker([w.lat,w.lon],{icon:icon,draggable:draggable}).addTo(map)
       .bindPopup('<b>'+w.name+'</b>'+(w.type==='rpt'?' <span style="color:#ffd60a">▲ VRP</span>':'')+'<br>'+(w.desc||''));
     if(draggable){(function(wi){mk.on('drag',function(e){var ll=e.target.getLatLng();PS.route[wi].lat=ll.lat;PS.route[wi].lon=ll.lng;redrawLine();});mk.on('dragend',function(){if(PS.route[wi].name.indexOf(' *')<0)PS.route[wi].name+=' *';PS.route[wi].type='wpt';var p=getPerf();renderRouteDetails(PS.route,p);if(PS.lastData)renderSummary(PS.dep.icao,PS.arr.icao,PS.lastData.alt,PS.lastData.wD,PS.lastData.wA,PS.lastData.ntms,PS.lastData.zones,PS.route,p);toast('Wegpunkt verschoben ✓','ok');});})(i);}
@@ -1094,7 +1136,10 @@ async function geo(icao){var r=await fetch('https://nominatim.openstreetmap.org/
 // ══════════════════════════════════════════════════════
 //  RESET
 // ══════════════════════════════════════════════════════
-function resetAll(){document.getElementById('depI').value='';document.getElementById('arrI').value='';if(dmk)map.removeLayer(dmk);if(amk)map.removeLayer(amk);if(rln)map.removeLayer(rln);dmk=amk=rln=null;wptMks.forEach(function(m){map.removeLayer(m);});wptMks=[];zps.forEach(function(p){map.removeLayer(p);});zps=[];['wxD','wxA','ntC','znC','smC','rdC'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div>';});['sWD','sWA','sNT','sZN','sSM','sRD'].forEach(function(id){document.getElementById(id).classList.remove('open');});PS={dep:null,arr:null,route:null,lastData:null};map.setView([52.0,19.0],6);}
+function resetAll(){document.getElementById('depI').value='';document.getElementById('arrI').value='';if(dmk)map.removeLayer(dmk);if(amk)map.removeLayer(amk);if(rln)map.removeLayer(rln);dmk=amk=rln=null;wptMks.forEach(function(m){map.removeLayer(m);});wptMks=[];zps.forEach(function(p){map.removeLayer(p);});zps=[];['wxD','wxA','ntC','znC','smC','rdC'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div>';});['sWD','sWA','sNT','sZN','sSM','sRD'].forEach(function(id){document.getElementById(id).classList.remove('open');});PS={dep:null,arr:null,route:null,lastData:null};map.setView([52.0,19.0],6);
+  routeLocked=false;
+  var lb=document.getElementById('lockBtn');
+  if(lb){lb.textContent='🔓 Wegpunkte bearbeitbar';lb.classList.remove('locked');}}
 
 // ══════════════════════════════════════════════════════
 //  MAIN PLAN
@@ -1169,6 +1214,43 @@ function exportPDF(){
 }
 
 
+
+
+// ══════════════════════════════════════════════════════
+//  SIDEBAR TOGGLE
+// ══════════════════════════════════════════════════════
+var sidebarOpen = true;
+function toggleSidebar(){
+  var sb=document.querySelector('.sidebar');
+  var btn=document.getElementById('sbToggle');
+  sidebarOpen=!sidebarOpen;
+  sb.classList.toggle('collapsed', !sidebarOpen);
+  btn.textContent=sidebarOpen?'◀':'▶';
+  btn.title=sidebarOpen?'Sidebar einklappen':'Sidebar ausklappen';
+  // Trigger map resize after transition
+  setTimeout(function(){ map.invalidateSize(); }, 320);
+}
+
+// ══════════════════════════════════════════════════════
+//  WAYPOINT LOCK
+// ══════════════════════════════════════════════════════
+var routeLocked = false;
+function toggleLock(){
+  routeLocked=!routeLocked;
+  var btn=document.getElementById('lockBtn');
+  if(!btn) return;
+  if(routeLocked){
+    btn.textContent='🔒 Wegpunkte gesperrt';
+    btn.classList.add('locked');
+  } else {
+    btn.textContent='🔓 Wegpunkte bearbeitbar';
+    btn.classList.remove('locked');
+  }
+  // Redraw route markers with new draggable state
+  if(PS.route&&PS.route.length) drawRoute(PS.route);
+  // Re-render list (shows/hides del+add buttons)
+  if(PS.route&&PS.lastData) renderRouteDetails(PS.route,PS.lastData.perf);
+}
 
 // ══════════════════════════════════════════════════════
 //  WAYPOINT EDIT  (delete / add)
@@ -1246,68 +1328,173 @@ document.addEventListener('click',function(e){
   if(modal&&modal.classList.contains('open')&&e.target===modal) closeAddWptModal();
 });
 
+
 // ══════════════════════════════════════════════════════
-//  SAVED ROUTES  (stored per Google user in localStorage)
+//  SAVED ROUTES  –  Google Drive appDataFolder (cross-device sync)
 // ══════════════════════════════════════════════════════
-function routesKey(){
-  return uKey('routes');
-}
-function loadRoutes(){
-  if(!gUser) return [];
-  try{ return JSON.parse(localStorage.getItem(routesKey())||'[]'); }catch(e){ return []; }
-}
-function saveRoutes(routes){
-  if(!gUser) return;
-  localStorage.setItem(routesKey(), JSON.stringify(routes));
+// Routes are stored in Google Drive "appDataFolder" – invisible to user
+// but accessible from any device with the same Google account.
+// Fallback: localStorage (when no access token available).
+
+var gdAccessToken = null;       // set after Google login
+var GDRIVE_FILENAME = 'vfr-routes.json';
+var gdFileId = null;            // cached Drive file ID
+var routesCache = null;         // in-memory cache
+
+// Called from showApp() after login – request Drive scope via GSI token
+function initDriveToken() {
+  if (!window.google || !google.accounts || !google.accounts.oauth2) {
+    setTimeout(initDriveToken, 1000);
+    return;
+  }
+  var tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: G_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/drive.appdata',
+    callback: function(resp) {
+      if (resp.error) { console.warn('Drive token error:', resp.error); return; }
+      gdAccessToken = resp.access_token;
+      renderSavedRoutes(); // refresh list now that we have token
+    },
+  });
+  tokenClient.requestAccessToken({prompt: ''});
 }
 
-function saveCurrentRoute(){
+// ── Drive API helpers ──────────────────────────────────────────────────────
+async function driveListFiles() {
+  var r = await fetch(
+    'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%22'+GDRIVE_FILENAME+'%22&fields=files(id,name)',
+    {headers: {'Authorization': 'Bearer '+gdAccessToken}}
+  );
+  var d = await r.json();
+  return d.files || [];
+}
+
+async function driveReadRoutes() {
+  // 1. Find file ID
+  var files = await driveListFiles();
+  if (!files.length) return [];
+  gdFileId = files[0].id;
+  // 2. Download content
+  var r = await fetch(
+    'https://www.googleapis.com/drive/v3/files/'+gdFileId+'?alt=media',
+    {headers: {'Authorization': 'Bearer '+gdAccessToken}}
+  );
+  if (!r.ok) return [];
+  try { return await r.json(); } catch(e) { return []; }
+}
+
+async function driveWriteRoutes(routes) {
+  var body = JSON.stringify(routes);
+  var boundary = 'vfr_boundary_42';
+  var meta = JSON.stringify({name: GDRIVE_FILENAME, parents: ['appDataFolder']});
+
+  if (gdFileId) {
+    // Update existing file (PATCH)
+    await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files/'+gdFileId+'?uploadType=media',
+      {method:'PATCH', headers:{'Authorization':'Bearer '+gdAccessToken,'Content-Type':'application/json'}, body: body}
+    );
+  } else {
+    // Create new file (multipart POST)
+    var multipart =
+      '--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+meta+
+      '\r\n--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+body+
+      '\r\n--'+boundary+'--';
+    var r = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      {method:'POST', headers:{'Authorization':'Bearer '+gdAccessToken,
+       'Content-Type':'multipart/related; boundary='+boundary}, body: multipart}
+    );
+    var d = await r.json();
+    gdFileId = d.id;
+  }
+  routesCache = routes;
+}
+
+// ── Public load/save (Drive with localStorage fallback) ────────────────────
+function lsRoutesKey() {
+  return uKey('routes');
+}
+
+async function loadRoutesAsync() {
+  if (routesCache) return routesCache;
+  // Try Drive first
+  if (gdAccessToken) {
+    try {
+      var routes = await driveReadRoutes();
+      routesCache = routes;
+      // Also mirror to localStorage for offline
+      localStorage.setItem(lsRoutesKey(), JSON.stringify(routes));
+      return routes;
+    } catch(e) { console.warn('Drive read failed, using localStorage:', e); }
+  }
+  // localStorage fallback
+  try { return JSON.parse(localStorage.getItem(lsRoutesKey())||'[]'); } catch(e) { return []; }
+}
+
+async function saveRoutesAsync(routes) {
+  routesCache = routes;
+  // Always write to localStorage immediately
+  localStorage.setItem(lsRoutesKey(), JSON.stringify(routes));
+  // Write to Drive if token available
+  if (gdAccessToken) {
+    try { await driveWriteRoutes(routes); }
+    catch(e) { console.warn('Drive write failed:', e); }
+  }
+}
+
+// Synchronous fallback for cases where we need routes immediately
+function loadRoutesSync() {
+  if (routesCache) return routesCache;
+  try { return JSON.parse(localStorage.getItem(lsRoutesKey())||'[]'); } catch(e) { return []; }
+}
+
+// ── Save current route ──────────────────────────────────────────────────────
+async function saveCurrentRoute(){
   if(!gUser){ toast('Bitte zuerst anmelden','err'); return; }
   if(!PS.dep||!PS.arr||!PS.route||!PS.lastData){ toast('Bitte zuerst Route berechnen','err'); return; }
-  var routes = loadRoutes();
+  var routes = await loadRoutesAsync();
   var now = new Date();
   var route = {
     id:      Date.now().toString(),
-    name:    PS.dep.icao + ' → ' + PS.arr.icao,
+    name:    PS.dep.icao+' → '+PS.arr.icao,
     notes:   '',
-    dep:     PS.dep.icao,
-    arr:     PS.arr.icao,
-    depName: PS.dep.name||PS.dep.icao,
-    arrName: PS.arr.name||PS.arr.icao,
+    dep:     PS.dep.icao, arr:     PS.arr.icao,
+    depName: PS.dep.name||PS.dep.icao, arrName: PS.arr.name||PS.arr.icao,
     alt:     PS.lastData.alt,
-    cruise:  PS.lastData.perf.cruise,
-    fuel:    PS.lastData.perf.fuel,
-    tanks:   PS.lastData.perf.tanks,
-    reg:     PS.lastData.perf.reg,
+    cruise:  PS.lastData.perf.cruise, fuel: PS.lastData.perf.fuel,
+    tanks:   PS.lastData.perf.tanks,  reg:  PS.lastData.perf.reg,
     acid:    selAC.id,
     rType:   document.getElementById('routeType').value,
-    waypoints: PS.route.map(function(w){ return {name:w.name,lat:w.lat,lon:w.lon,type:w.type,desc:w.desc||'',icao:w.icao||'',color:w.color||''}; }),
+    waypoints: PS.route.map(function(w){
+      return {name:w.name,lat:w.lat,lon:w.lon,type:w.type,desc:w.desc||'',icao:w.icao||'',color:w.color||''};
+    }),
     savedAt: now.toISOString(),
-    dateStr: now.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}),
+    dateStr: now.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'})+
+             ' '+now.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}),
   };
-  // Check for duplicate (same dep/arr saved in last 5 min)
+  // Replace duplicate (same dep/arr within 5 min)
   var fiveMin=5*60*1000;
   var dup=routes.findIndex(function(r){ return r.dep===route.dep&&r.arr===route.arr&&(now-new Date(r.savedAt))<fiveMin; });
   if(dup>=0){ routes[dup]=route; toast('Route aktualisiert ✓','ok'); }
   else{ routes.unshift(route); toast('Route gespeichert ✓','ok'); }
-  // Keep max 20 routes
   if(routes.length>20) routes=routes.slice(0,20);
-  saveRoutes(routes);
+  await saveRoutesAsync(routes);
   renderSavedRoutes();
   opn('sSV');
 }
 
-function deleteRoute(id){
+async function deleteRoute(id){
   if(!confirm('Route löschen?')) return;
-  var routes=loadRoutes().filter(function(r){ return r.id!==id; });
-  saveRoutes(routes);
+  var routes=(await loadRoutesAsync()).filter(function(r){ return r.id!==id; });
+  await saveRoutesAsync(routes);
   renderSavedRoutes();
   toast('Route gelöscht','ok');
 }
 
 var editingRouteId=null;
 function openRouteModal(id){
-  var routes=loadRoutes();
+  var routes=loadRoutesSync();
   var r=routes.find(function(r){ return r.id===id; });
   if(!r) return;
   editingRouteId=id;
@@ -1319,126 +1506,39 @@ function closeRouteModal(){
   document.getElementById('routeModal').classList.remove('open');
   editingRouteId=null;
 }
-function saveModalEdit(){
+async function saveModalEdit(){
   if(!editingRouteId) return;
-  var routes=loadRoutes();
+  var routes=await loadRoutesAsync();
   var idx=routes.findIndex(function(r){ return r.id===editingRouteId; });
   if(idx<0){ closeRouteModal(); return; }
   routes[idx].name  = document.getElementById('modalName').value.trim()||routes[idx].name;
   routes[idx].notes = document.getElementById('modalNotes').value.trim();
-  saveRoutes(routes);
+  await saveRoutesAsync(routes);
   renderSavedRoutes();
   closeRouteModal();
   toast('Route aktualisiert ✓','ok');
 }
 
-async function loadRoute(id){
-  var routes=loadRoutes();
-  var r=routes.find(function(rt){ return rt.id===id; });
-  if(!r){ toast('Route nicht gefunden','err'); return; }
-
-  var dep=r.dep, arr=r.arr, alt=r.alt||4500;
-
-  // Restore all form inputs
-  document.getElementById('depI').value=dep;
-  document.getElementById('arrI').value=arr;
-  document.getElementById('altI').value=alt;
-  document.getElementById('routeType').value=r.rType||'rpt';
-  document.getElementById('pCruise').value=r.cruise||108;
-  document.getElementById('pFuel').value=r.fuel||18;
-  document.getElementById('pTanks').value=r.tanks||65;
-  document.getElementById('pReg').value=r.reg||'SP-TPF';
-  if(r.acid) pickAC(r.acid);
-
-  document.getElementById('sysStatus').textContent='● LADEN...';
-  document.getElementById('planBtn').disabled=true;
-
-  try{
-    // 1 – Airport data
-    showOv('Lade gespeicherte Route...');
-    var dAP=AP[dep], aAP=AP[arr];
-    var dp=dAP?{lat:dAP.lat,lon:dAP.lon,name:dAP.n,rpts:dAP.rpts,freq:dAP.freq}:await geo(dep);
-    var ap=aAP?{lat:aAP.lat,lon:aAP.lon,name:aAP.n,rpts:aAP.rpts,freq:aAP.freq}:await geo(arr);
-    dp.icao=dep; ap.icao=arr;
-    PS.dep=dp; PS.arr=ap;
-
-    // 2 – Restore saved waypoints (with fallback to fresh compute)
-    var perf=getPerf();
-    var route;
-    if(r.waypoints&&r.waypoints.length>=2){
-      // Reconstruct waypoints from saved data
-      route=r.waypoints.map(function(w){
-        return {
-          name:  w.name||'WPT',
-          lat:   w.lat,
-          lon:   w.lon,
-          type:  w.type||'wpt',
-          color: w.color||(w.type==='apt'?(w.name===dep?'#00ff9f':'#ff6b35'):w.type==='rpt'?'#ffd60a':'#a78bfa'),
-          desc:  w.desc||'',
-          icao:  w.icao||'',
-        };
-      });
-    } else {
-      // No saved waypoints – compute fresh
-      route=computeRoute(dp,ap,r.rType||'rpt');
-    }
-    drawRoute(route);
-    renderRouteDetails(route,perf);
-    opn('sRD');
-
-    // 3 – Fresh METAR/TAF
-    showOv('Hole aktuelle METAR/TAF Daten...');
-    var wxRes=await Promise.all([fetchWx(dep),fetchWx(arr)]);
-    var wD=wxRes[0], wA=wxRes[1];
-    renderWx('wxD',dep,dp.name||dep,wD,'dep');
-    renderWx('wxA',arr,ap.name||arr,wA,'arr');
-    opn('sWD'); opn('sWA');
-
-    // 4 – Fresh NOTAMs
-    showOv('Hole aktuelle NOTAMs...');
-    var ntms=await fetchNtm(dep,arr);
-    renderNtm(ntms); opn('sNT');
-
-    // 5 – Zones
-    showOv('Berechne Luftraumzonen...');
-    var zones=buildZones(dp,ap,alt);
-    renderZones(zones); drawZones(zones); opn('sZN');
-
-    // 6 – Summary
-    PS.lastData={alt:alt,wD:wD,wA:wA,ntms:ntms,zones:zones,perf:perf};
-    renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf);
-    opn('sSM');
-
-    document.getElementById('sysStatus').textContent='● BEREIT';
-    toast('Route „'+r.name+'" geladen · METAR & NOTAMs aktuell ✓','ok');
-    document.querySelector('.sidebar').scrollTop=0;
-
-  } catch(e){
-    console.error(e);
-    toast('Fehler beim Laden: '+e.message,'err');
-    document.getElementById('sysStatus').textContent='● FEHLER';
-  }
-  hideOv();
-  document.getElementById('planBtn').disabled=false;
-}
-
-function renderSavedRoutes(){
+async function renderSavedRoutes(){
   var el=document.getElementById('savedRoutesContent');
   if(!el) return;
   if(!gUser){
     el.innerHTML='<div class="empty"><div class="ico">🔐</div>Anmeldung erforderlich</div>';
     return;
   }
-  var routes=loadRoutes();
+  el.innerHTML='<div class="empty"><div class="ico">⏳</div>Lade Routen...</div>';
+  var routes=await loadRoutesAsync();
   if(!routes.length){
     el.innerHTML='<div class="empty"><div class="ico">💾</div>Keine gespeicherten Routen<br>'+
-      '<span style="font-size:.68rem;">Route planen, dann „Route speichern" klicken</span></div>';
+      '<span style="font-size:.68rem;">Route planen → „ROUTE SPEICHERN" klicken</span></div>';
     return;
   }
-  var html='<div style="font-family:var(--mono);font-size:.6rem;color:var(--mt);margin-bottom:8px;">'+routes.length+' gespeicherte Route(n)</div>'+
+  var sync=gdAccessToken?
+    '<span style="font-family:var(--mono);font-size:.58rem;color:var(--gn);">☁️ Google Drive Sync aktiv</span>':
+    '<span style="font-family:var(--mono);font-size:.58rem;color:var(--yw);">⚠️ Nur lokale Daten (Drive lädt...)</span>';
+  var html='<div style="margin-bottom:8px;">'+sync+'</div>'+
     '<div class="route-list">';
   routes.forEach(function(r){
-    var nm=r.notes?r.name+' – '+r.notes:r.name;
     html+=
       '<div class="route-item">'+
       '<div class="route-item-head">'+
@@ -1448,21 +1548,22 @@ function renderSavedRoutes(){
         '<span class="route-date">'+esc(r.dateStr||'')+'</span>'+
       '</div>'+
       '<div class="route-meta">'+
-        '<span class="route-tag hi">'+esc(r.alt||'')+'ft</span>'+
-        '<span class="route-tag">'+esc(r.cruise||'')+'kt</span>'+
+        '<span class="route-tag hi">'+esc(String(r.alt||''))+'ft</span>'+
+        '<span class="route-tag">'+esc(String(r.cruise||''))+'kt</span>'+
         '<span class="route-tag">'+esc(r.reg||'')+'</span>'+
         (r.waypoints?'<span class="route-tag">'+r.waypoints.length+' WPTs</span>':'')+
         (r.notes?'<span class="route-tag" style="color:var(--yw);">'+esc(r.notes)+'</span>':'')+
       '</div>'+
+      (r.name&&r.name!==r.dep+' → '+r.arr?
+        '<div style="font-family:var(--mono);font-size:.62rem;color:var(--ac);margin-bottom:5px;">'+esc(r.name)+'</div>':'')+ 
       '<div class="route-btns">'+
         '<button class="rbtn rbtn-load" data-act="load" data-id="'+r.id+'">▶ Laden</button>'+
-        '<button class="rbtn rbtn-edit" data-act="edit" data-id="'+r.id+'">✏️ Bearbeiten</button>'+
+        '<button class="rbtn rbtn-edit" data-act="edit" data-id="'+r.id+'">✏️ Bearb.</button>'+
         '<button class="rbtn rbtn-del"  data-act="del"  data-id="'+r.id+'">🗑️ Löschen</button>'+
       '</div>'+
       '</div>';
   });
   el.innerHTML=html+'</div>';
-  // Event delegation for route action buttons
   el.querySelectorAll('.rbtn[data-act]').forEach(function(btn){
     btn.addEventListener('click',function(){
       var act=this.dataset.act, id=this.dataset.id;
@@ -1474,10 +1575,11 @@ function renderSavedRoutes(){
 }
 
 // Close modal on background click
-document.addEventListener('click', function(e){
+document.addEventListener('click',function(e){
   var modal=document.getElementById('routeModal');
   if(modal&&modal.classList.contains('open')&&e.target===modal) closeRouteModal();
 });
+
 
 // ══════════════════════════════════════════════════════
 //  SETTINGS
