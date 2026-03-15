@@ -1212,13 +1212,22 @@ function renderSavedRoutes(){
         (r.notes?'<span class="route-tag" style="color:var(--yw);">'+esc(r.notes)+'</span>':'')+
       '</div>'+
       '<div class="route-btns">'+
-        '<button class="rbtn rbtn-load" onclick="loadRoute(''+r.id+'')">▶ Laden</button>'+
-        '<button class="rbtn rbtn-edit" onclick="openRouteModal(''+r.id+'')">✏️ Bearbeiten</button>'+
-        '<button class="rbtn rbtn-del"  onclick="deleteRoute(''+r.id+'')">🗑️ Löschen</button>'+
+        '<button class="rbtn rbtn-load" data-act="load" data-id="'+r.id+'">▶ Laden</button>'+
+        '<button class="rbtn rbtn-edit" data-act="edit" data-id="'+r.id+'">✏️ Bearbeiten</button>'+
+        '<button class="rbtn rbtn-del"  data-act="del"  data-id="'+r.id+'">🗑️ Löschen</button>'+
       '</div>'+
       '</div>';
   });
   el.innerHTML=html+'</div>';
+  // Event delegation for route action buttons
+  el.querySelectorAll('.rbtn[data-act]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var act=this.dataset.act, id=this.dataset.id;
+      if(act==='load') loadRoute(id);
+      else if(act==='edit') openRouteModal(id);
+      else if(act==='del')  deleteRoute(id);
+    });
+  });
 }
 
 // Close modal on background click
