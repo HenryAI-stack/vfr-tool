@@ -247,6 +247,21 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
 .bdemo{background:rgba(255,214,10,.1);color:var(--yw);border:1px solid rgba(255,214,10,.3);}
 
 
+/* ── WAYPOINT EDIT BUTTONS ── */
+.wpt-del{background:transparent;border:none;color:var(--rd);cursor:pointer;
+  font-size:.75rem;padding:0 4px;opacity:.6;transition:opacity .2s;line-height:1;flex-shrink:0;}
+.wpt-del:hover{opacity:1;}
+.wpt-add{display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-top:6px;padding:7px;border:1px dashed var(--bd);border-radius:5px;
+  cursor:pointer;font-family:var(--mono);font-size:.65rem;color:var(--mt);
+  background:transparent;width:100%;transition:all .2s;text-align:center;}
+.wpt-add:hover{border-color:var(--ac);color:var(--ac);background:rgba(0,212,255,.05);}
+/* add waypoint modal */
+#addWptModal{display:none;position:fixed;inset:0;z-index:8500;
+  background:rgba(10,14,23,.85);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;}
+#addWptModal.open{display:flex;}
+
 /* ── SAVED ROUTES ── */
 .route-list{display:flex;flex-direction:column;gap:6px;}
 .route-item{background:var(--bg);border:1px solid var(--bd);border-radius:7px;
@@ -483,6 +498,31 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
 </div>
 </div><!-- /app -->
 
+
+<!-- ADD WAYPOINT MODAL -->
+<div id="addWptModal">
+  <div class="modal-box">
+    <div class="modal-title">➕ Wegpunkt hinzufügen</div>
+    <div style="font-family:var(--mono);font-size:.62rem;color:var(--mt);margin-bottom:12px;">
+      Wird nach Position <span id="addAfterLabel" style="color:var(--ac)"></span> eingefügt
+    </div>
+    <div class="fr"><label>Name / Bezeichnung</label>
+      <input id="addWptName" type="text" placeholder="z.B. NOVEMBER, Checkpoint A" spellcheck="false"></div>
+    <div class="row2">
+      <div class="fr"><label>Breitengrad (lat)</label>
+        <input id="addWptLat" type="number" placeholder="52.1651" step="0.0001"></div>
+      <div class="fr"><label>Längengrad (lon)</label>
+        <input id="addWptLon" type="number" placeholder="20.9671" step="0.0001"></div>
+    </div>
+    <div style="font-size:.62rem;color:var(--mt);font-family:var(--mono);margin-bottom:10px;">
+      💡 Tipp: Auf der Karte den gewünschten Punkt anklicken → Koordinaten kopieren
+    </div>
+    <div class="modal-btns">
+      <button class="btn bp" onclick="confirmAddWpt()" style="font-size:.72rem;">➕ Hinzufügen</button>
+      <button class="btn bs" onclick="closeAddWptModal()" style="font-size:.72rem;">Abbrechen</button>
+    </div>
+  </div>
+</div>
 
 <!-- ROUTE EDIT MODAL -->
 <div id="routeModal">
@@ -877,12 +917,13 @@ function renderWx(elId,origIcao,name,wx,type){
 
   // Clean metar-taf link (no widget, no embedded script)
   var fbNote=isFallback?'<span style="font-family:var(--mono);font-size:.58rem;color:var(--yw);"> (Daten von '+esc(dispIcao)+')</span>':'';
+  // Link always uses origIcao so EPBC links to EPBC, not EPWA
   var mtafLink=
     '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
-    '<a href="https://metar-taf.com/de/metar/'+dispIcao+'" target="_blank" '+
+    '<a href="https://metar-taf.com/de/metar/'+origIcao+'" target="_blank" '+
        'style="font-family:var(--mono);font-size:.68rem;display:inline-flex;align-items:center;gap:5px;'+
        'background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);padding:4px 10px;border-radius:4px;">'+
-    '🌐 metar-taf.com/'+esc(dispIcao)+'</a>'+
+    '🌐 metar-taf.com/'+esc(origIcao)+'</a>'+
     fbNote+
     '</div>';
 
@@ -926,9 +967,64 @@ function drawZones(zones){zps.forEach(function(p){map.removeLayer(p);});zps=[];z
 // ══════════════════════════════════════════════════════
 //  ROUTE DETAILS
 // ══════════════════════════════════════════════════════
-function renderRouteDetails(route,perf){var rType=document.getElementById('routeType').value;var hasRpts=route.some(function(w){return w.type==='rpt';});var html=(hasRpts?'<div class="drag-hint">🖱️ Wegpunkte auf Karte verschiebbar (Drag &amp; Drop)</div>':'')+
-'<div class="meta">Routentyp: <b>'+(rType==='rpt'?'Via Reporting Points':'Direkt')+'</b> · '+route.filter(function(w){return w.type==='rpt';}).length+' VRP(s)</div><div class="wpt-list">';
-var cumNm=0;route.forEach(function(w,i){if(i>0)cumNm+=nmDist(route[i-1],w);var toNext=i<route.length-1?nmDist(w,route[i+1]):null;var hdg=i<route.length-1?Math.round(brng(w,route[i+1])):null;var ete=toNext?Math.round(toNext/perf.cruise*60):null;var dc=w.type==='apt'?(i===0?'#00ff9f':'#ff6b35'):w.type==='rpt'?'#ffd60a':'#a78bfa';var tl=w.type==='apt'?(i===0?'DEP':'ARR'):w.type==='rpt'?'VRP':'WPT';html+='<div class="wpt"><div class="wdot" style="background:'+dc+';box-shadow:0 0 4px '+dc+'80;"></div><div style="flex:1"><div class="wname">'+esc(w.name)+'</div>'+(w.desc?'<div class="wdesc">'+esc(w.desc)+'</div>':'')+'<div class="wtype">'+tl+(w.icao&&w.type==='rpt'?' · '+w.icao:'')+'</div></div><div style="text-align:right">'+(i>0?'<div class="wdist">'+Math.round(cumNm)+' NM</div>':'<div class="wdist">START</div>')+(hdg!==null?'<div class="whdg">'+hdg+'° '+ete+'min</div>':'<div class="whdg">ZIEL</div>')+'</div></div>';});document.getElementById('rdC').innerHTML=html+'</div>';}
+function renderRouteDetails(route,perf){
+  var rType=document.getElementById('routeType').value;
+  var hasRpts=route.some(function(w){return w.type==='rpt';});
+  var html=(hasRpts?'<div class="drag-hint">🖱️ Wegpunkte verschiebbar (Drag) · ✕ löschen · ➕ hinzufügen</div>':'<div class="drag-hint">✕ Wegpunkte löschen · ➕ hinzufügen</div>')+
+    '<div class="meta">Routentyp: <b>'+(rType==='rpt'?'Via Reporting Points':'Direkt')+'</b> · '+
+    route.filter(function(w){return w.type==='rpt';}).length+' VRP(s)</div>'+
+    '<div class="wpt-list">';
+
+  var cumNm=0;
+  route.forEach(function(w,i){
+    if(i>0) cumNm+=nmDist(route[i-1],w);
+    var toNext=i<route.length-1?nmDist(w,route[i+1]):null;
+    var hdg=i<route.length-1?Math.round(brng(w,route[i+1])):null;
+    var ete=toNext?Math.round(toNext/perf.cruise*60):null;
+    var dc=w.type==='apt'?(i===0?'#00ff9f':'#ff6b35'):w.type==='rpt'?'#ffd60a':'#a78bfa';
+    var tl=w.type==='apt'?(i===0?'DEP':'ARR'):w.type==='rpt'?'VRP':'WPT';
+    // Delete button only for intermediate waypoints (not dep/arr)
+    var canDel=(i>0&&i<route.length-1);
+    html+=
+      '<div class="wpt">'+
+      '<div class="wdot" style="background:'+dc+';box-shadow:0 0 4px '+dc+'80;"></div>'+
+      '<div style="flex:1">'+
+        '<div class="wname">'+esc(w.name)+'</div>'+
+        (w.desc?'<div class="wdesc">'+esc(w.desc)+'</div>':'')+
+        '<div class="wtype">'+tl+(w.icao&&w.type==='rpt'?' · '+w.icao:'')+'</div>'+
+      '</div>'+
+      '<div style="text-align:right">'+
+        (i>0?'<div class="wdist">'+Math.round(cumNm)+' NM</div>':'<div class="wdist">START</div>')+
+        (hdg!==null?'<div class="whdg">'+hdg+'° '+ete+'min</div>':'<div class="whdg">ZIEL</div>')+
+      '</div>'+
+      (canDel?'<button class="wpt-del" data-wptidx="'+i+'" title="Wegpunkt löschen">✕</button>':'')+
+      '</div>';
+
+    // "Add waypoint" button between every pair of points
+    if(i<route.length-1){
+      html+='<button class="wpt-add" data-addafter="'+i+'">➕ Wegpunkt nach '+esc(w.name)+' einfügen</button>';
+    }
+  });
+
+  var el=document.getElementById('rdC');
+  el.innerHTML=html+'</div>';
+
+  // Delete waypoint buttons
+  el.querySelectorAll('.wpt-del[data-wptidx]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var idx=parseInt(this.dataset.wptidx);
+      deleteWaypoint(idx);
+    });
+  });
+
+  // Add waypoint buttons
+  el.querySelectorAll('.wpt-add[data-addafter]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var after=parseInt(this.dataset.addafter);
+      openAddWptModal(after);
+    });
+  });
+}
 
 // ══════════════════════════════════════════════════════
 //  SUMMARY
@@ -1072,6 +1168,83 @@ function exportPDF(){
   setTimeout(function(){window.print();},200);
 }
 
+
+
+// ══════════════════════════════════════════════════════
+//  WAYPOINT EDIT  (delete / add)
+// ══════════════════════════════════════════════════════
+function deleteWaypoint(idx){
+  if(!PS.route||PS.route.length<=2){toast('Mindestens Abflug und Ziel erforderlich','err');return;}
+  if(idx<=0||idx>=PS.route.length-1){toast('Abflug und Ziel können nicht gelöscht werden','err');return;}
+  PS.route.splice(idx,1);
+  // Redraw map markers
+  drawRoute(PS.route);
+  // Re-render sidebar
+  var perf=getPerf();
+  renderRouteDetails(PS.route,perf);
+  if(PS.lastData){
+    PS.lastData.perf=perf;
+    renderSummary(PS.dep.icao,PS.arr.icao,PS.lastData.alt,PS.lastData.wD,PS.lastData.wA,
+      PS.lastData.ntms,PS.lastData.zones,PS.route,perf);
+  }
+  toast('Wegpunkt gelöscht ✓','ok');
+}
+
+var addAfterIdx=-1;
+function openAddWptModal(afterIdx){
+  addAfterIdx=afterIdx;
+  var afterName=PS.route[afterIdx]?PS.route[afterIdx].name:'Start';
+  document.getElementById('addAfterLabel').textContent=afterName;
+  document.getElementById('addWptName').value='';
+  document.getElementById('addWptLat').value='';
+  document.getElementById('addWptLon').value='';
+  document.getElementById('addWptModal').classList.add('open');
+  // Enable map click to pick coordinates
+  map.once('click',function(e){
+    document.getElementById('addWptLat').value=e.latlng.lat.toFixed(5);
+    document.getElementById('addWptLon').value=e.latlng.lng.toFixed(5);
+    if(!document.getElementById('addWptName').value){
+      document.getElementById('addWptName').value='WPT-'+(addAfterIdx+1);
+    }
+    toast('Koordinaten von Karte übernommen ✓','ok');
+  });
+}
+function closeAddWptModal(){
+  document.getElementById('addWptModal').classList.remove('open');
+  addAfterIdx=-1;
+  // Remove any pending map click listener
+  map.off('click');
+  // Restore normal map click (none by default)
+}
+function confirmAddWpt(){
+  var name=document.getElementById('addWptName').value.trim();
+  var lat=parseFloat(document.getElementById('addWptLat').value);
+  var lon=parseFloat(document.getElementById('addWptLon').value);
+  if(!name){toast('Bitte Name eingeben','err');return;}
+  if(isNaN(lat)||isNaN(lon)||lat<-90||lat>90||lon<-180||lon>180){
+    toast('Bitte gültige Koordinaten eingeben','err');return;
+  }
+  var newWpt={name:name.toUpperCase(),lat:lat,lon:lon,type:'wpt',color:'#a78bfa',desc:'Manuell hinzugefügt'};
+  // Insert after addAfterIdx
+  PS.route.splice(addAfterIdx+1,0,newWpt);
+  closeAddWptModal();
+  // Redraw
+  drawRoute(PS.route);
+  var perf=getPerf();
+  renderRouteDetails(PS.route,perf);
+  if(PS.lastData){
+    PS.lastData.perf=perf;
+    renderSummary(PS.dep.icao,PS.arr.icao,PS.lastData.alt,PS.lastData.wD,PS.lastData.wA,
+      PS.lastData.ntms,PS.lastData.zones,PS.route,perf);
+  }
+  toast('Wegpunkt '+name+' hinzugefügt ✓','ok');
+}
+
+// Close add-wpt modal on background click
+document.addEventListener('click',function(e){
+  var modal=document.getElementById('addWptModal');
+  if(modal&&modal.classList.contains('open')&&e.target===modal) closeAddWptModal();
+});
 
 // ══════════════════════════════════════════════════════
 //  SAVED ROUTES  (stored per Google user in localStorage)
