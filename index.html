@@ -445,11 +445,17 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
       <button class="btn bs bfw" onclick="saveCwx()">💾 CheckWX speichern</button>
       <div class="fr" style="margin-top:4px;"><label>OpenAIP Key <a href="https://www.openaip.net" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label><input id="aipKey" type="text" placeholder="echte Lufträume auf Karte" autocomplete="off" spellcheck="false"></div>
       <button class="btn bs bfw" onclick="saveAip()">💾 OpenAIP aktivieren</button>
-      <div class="fr" style="margin-top:4px;">
-        <label>Notamify API Key <a href="https://notamify.com" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label>
-        <input id="ntmKey" type="text" placeholder="aktuelle NOTAMs via Notamify" autocomplete="off" spellcheck="false">
+      <div class="dvdr" style="margin-top:4px;"></div>
+      <div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">⚠️ FAA FNS-NDS NOTAMs</div>
+      <div class="fr">
+        <label>FAA FNS-NDS Benutzername <a href="https://aa.data.faa.gov" target="_blank" style="font-size:.58rem;">(aa.data.faa.gov ↗)</a></label>
+        <input id="ntmUser" type="text" placeholder="FNS-NDS Benutzername" autocomplete="off" spellcheck="false">
       </div>
-      <button class="btn bs bfw" onclick="saveNtm()">💾 Notamify speichern</button>
+      <div class="fr">
+        <label>FAA FNS-NDS Passwort</label>
+        <input id="ntmPass" type="password" placeholder="FNS-NDS Passwort" autocomplete="off">
+      </div>
+      <button class="btn bs bfw" onclick="saveNtm()">💾 FNS-NDS Zugangsdaten speichern</button>
       <div class="dvdr"></div>
       <div style="font-family:var(--mono);font-size:.6rem;color:var(--mt);line-height:1.8;">
         ☁️ <b style="color:var(--ac)">Google Drive Sync</b><br>
@@ -562,14 +568,15 @@ function doSignOut(){
 function uKey(k){var e=gUser?gUser.email.replace(/[^a-z0-9]/gi,'_'):'guest';return 'vfr_'+e+'_'+k;}
 function saveUserSettings(){
   if(!gUser)return;
-  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),ntm:document.getElementById('ntmKey').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
+  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),ntmUser:document.getElementById('ntmUser').value.trim(),ntmPass:document.getElementById('ntmPass').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
 }
 function loadUserSettings(email){
   var raw=localStorage.getItem('vfr_'+email.replace(/[^a-z0-9]/gi,'_')+'_cfg');
   if(!raw)return;
   try{var s=JSON.parse(raw);
     if(s.cwx){document.getElementById('cwxKey').value=s.cwx;localStorage.setItem('checkwx_key',s.cwx);}
-    if(s.ntm){document.getElementById('ntmKey').value=s.ntm;localStorage.setItem('notamify_key',s.ntm);}
+    if(s.ntmUser){document.getElementById('ntmUser').value=s.ntmUser;localStorage.setItem('fns_user',s.ntmUser);}
+    if(s.ntmPass){document.getElementById('ntmPass').value=s.ntmPass;localStorage.setItem('fns_pass',s.ntmPass);}
     if(s.aip){document.getElementById('aipKey').value=s.aip;localStorage.setItem('openaip_key',s.aip);applyAip(s.aip);}
     if(s.cruise)document.getElementById('pCruise').value=s.cruise;
     if(s.fuel)document.getElementById('pFuel').value=s.fuel;
@@ -840,43 +847,96 @@ function renderWx(elId,origIcao,name,wx,type){
 }
 
 // NOTAMs
-async function fetchNtmForIcao(icao, ntmKey) {
+// ── FAA FNS-NDS SOAP helper ───────────────────────────────────────────────
+// FNS-NDS endpoint: https://notams.aim.faa.gov/fnsnds/FnsNds
+// Auth: WS-Security UsernameToken (plaintext)
+// Operation: RetrieveNotams – query by icaoLocation
+function fnsSOAPBody(user, pass, icao) {
+  return '<?xml version="1.0" encoding="UTF-8"?>' +
+  '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"' +
+  '  xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"' +
+  '  xmlns:fn="http://fnsnds.faa.gov/">' +
+  '<soapenv:Header>' +
+  '<wsse:Security>' +
+  '<wsse:UsernameToken>' +
+  '<wsse:Username>'+user+'</wsse:Username>' +
+  '<wsse:Password>'+pass+'</wsse:Password>' +
+  '</wsse:UsernameToken>' +
+  '</wsse:Security>' +
+  '</soapenv:Header>' +
+  '<soapenv:Body>' +
+  '<fn:RetrieveNotams>' +
+  '<fn:icaoLocation>'+icao+'</fn:icaoLocation>' +
+  '</fn:RetrieveNotams>' +
+  '</soapenv:Body>' +
+  '</soapenv:Envelope>';
+}
+
+function parseFnsResponse(xml, icao) {
+  var results = [];
+  // Parse NOTAM entries from SOAP XML response
+  // FNS-NDS returns <notamList> with <notam> elements
+  // Each <notam> has <notamNumber>, <icaoMessage> or <traditionalMessage>
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  // Try multiple possible element names from FNS-NDS schema
+  var notamEls = doc.querySelectorAll('notam, Notam, NOTAM, notamEntity');
+  if (!notamEls.length) {
+    // Try to extract raw text between tags
+    var raw = xml.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+    if (raw.length > 20 && raw.indexOf('NOTAM') >= 0) {
+      results.push({id:'FNS-RAW',icao:icao,src:'FAA FNS-NDS',txt:raw.substring(0,500),crit:false});
+    }
+    return results;
+  }
+  notamEls.forEach(function(el) {
+    // Get NOTAM number
+    var numEl = el.querySelector('notamNumber,notamId,number,id');
+    var ntmId = numEl ? numEl.textContent.trim() : 'FNS';
+    // Get NOTAM text (icaoMessage preferred, traditionalMessage as fallback)
+    var msgEl = el.querySelector('icaoMessage,traditionalMessage,message,text,notamText');
+    var raw = msgEl ? msgEl.textContent.trim() : el.textContent.trim();
+    if (!raw || raw.length < 5) return;
+    // Extract proper ID from raw text if not found in element
+    var idMatch = raw.match(/\b([A-Z]\d{4}\/\d{2})\b/);
+    if (idMatch) ntmId = idMatch[1];
+    var txt = raw.replace(/\s+/g,' ').trim().substring(0, 300);
+    var crit = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED|RWY CLSD|TWY CLSD)\b/i.test(raw);
+    if (txt.length > 10) results.push({id:ntmId, icao:icao, src:'FAA FNS-NDS', txt:txt, crit:crit});
+  });
+  return results;
+}
+
+async function fetchNtmForIcao(icao, user, pass) {
   var results = [];
 
-  // ── 1. Notamify API (primary if key available) ─────────────────────────
-  // Endpoint: GET https://api.notamify.com/api/v1/notams?locations=ICAO
-  // Auth: Bearer token in Authorization header
-  // Response: { notams: [ { id, icao_code, icao_message, effective_start, effective_end } ] }
-  if (ntmKey) {
+  // ── 1. FAA FNS-NDS SOAP (primary, wenn Zugangsdaten vorhanden) ───────────
+  if (user && pass) {
     try {
-      var now = new Date();
-      var end = new Date(now.getTime() + 24*60*60*1000); // next 24h
-      var fmt = function(d){return d.toISOString().slice(0,19)+'Z';};
-      var url = 'https://api.notamify.com/api/v1/notams?locations='+icao+
-                '&starts_at='+encodeURIComponent(fmt(now))+
-                '&ends_at='+encodeURIComponent(fmt(end))+'&page=1';
-      var r = await fetch(url, {
-        headers: {'Authorization': 'Bearer '+ntmKey, 'Accept': 'application/json'}
+      var soapBody = fnsSOAPBody(user, pass, icao);
+      var r = await fetch('https://notams.aim.faa.gov/fnsnds/FnsNds', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'RetrieveNotams',
+        },
+        body: soapBody,
       });
       if (r.ok) {
-        var d = await r.json();
-        var list = d.notams || d.data || [];
-        list.forEach(function(n) {
-          var raw = n.icao_message || n.raw || n.text || '';
-          // Extract NOTAM ID from raw text (e.g. A1234/26)
-          var idMatch = raw.match(/\b([A-Z]\d{4}\/\d{2})\b/);
-          var ntmId = idMatch ? idMatch[1] : (n.id ? n.id.substring(0,12) : 'NTM');
-          var txt = raw.replace(/\s+/g,' ').trim().substring(0, 300);
-          var crit = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED|RWY|TWY CLSD)\b/.test(raw);
-          if (txt.length > 10) results.push({id:ntmId, icao:icao, src:'Notamify', txt:txt, crit:crit});
-        });
-        if (results.length) return results;
+        var xml = await r.text();
+        results = parseFnsResponse(xml, icao);
+        if (results.length) {
+          console.log('FAA FNS-NDS: '+results.length+' NOTAMs for '+icao);
+          return results;
+        }
+      } else {
+        var errTxt = await r.text();
+        console.warn('FNS-NDS HTTP '+r.status+' for '+icao+':', errTxt.substring(0,200));
       }
-    } catch(e) { console.warn('Notamify error:', e); }
+    } catch(e) { console.warn('FAA FNS-NDS fetch error:', e.message); }
   }
 
-  // ── 2. aviationweather.gov (free fallback, no key needed) ───────────────
-  // Endpoint: GET https://aviationweather.gov/api/data/notam?icaos=ICAO&format=raw
+  // ── 2. aviationweather.gov (freier Fallback, kein Key nötig) ─────────────
   try {
     var r2 = await fetch('https://aviationweather.gov/api/data/notam?icaos='+icao+'&format=raw');
     if (r2.ok) {
@@ -895,14 +955,15 @@ async function fetchNtmForIcao(icao, ntmKey) {
 }
 
 async function fetchNtm(dep, arr) {
-  var ntmKey = document.getElementById('ntmKey').value.trim() || lsGet('notamify_key');
+  var user = document.getElementById('ntmUser').value.trim() || lsGet('fns_user');
+  var pass = document.getElementById('ntmPass').value.trim() || lsGet('fns_pass');
   var results = [];
 
-  // Fetch both airports in parallel
-  var both = await Promise.all([fetchNtmForIcao(dep, ntmKey), fetchNtmForIcao(arr, ntmKey)]);
+  // Beide Flughäfen parallel abfragen
+  var both = await Promise.all([fetchNtmForIcao(dep, user, pass), fetchNtmForIcao(arr, user, pass)]);
   both.forEach(function(list){ results = results.concat(list); });
 
-  // Demo fallback if nothing returned
+  // Demo-Fallback wenn nichts geliefert
   if (!results.length) {
     var d=new Date(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
     results=[
@@ -911,8 +972,8 @@ async function fetchNtm(dep, arr) {
       {id:'A'+mm+dd+'2/26',icao:arr,src:'Demo',crit:false,txt:arr+' BIRDS VIC AERODROME 1500FT'},
       {id:'B'+mm+dd+'0/26',icao:dep,src:'Demo',crit:true, txt:'DANGER AREA VIC '+dep+' FL060-FL100 0800-1600'},
     ];
-    if (!ntmKey) results.push({id:'INFO',icao:dep,src:'Info',crit:false,
-      txt:'Notamify Key in ⚙️ Einstellungen für echte NOTAMs eintragen (kostenlos auf notamify.com)'});
+    if (!user) results.push({id:'INFO',icao:dep,src:'Info',crit:false,
+      txt:'FAA FNS-NDS Zugangsdaten in ⚙️ Einstellungen für echte NOTAMs eintragen'});
   }
 
   return results.slice(0, 20);
@@ -1217,7 +1278,14 @@ function exportPDF(){
 
 // SETTINGS
 function saveCwx(){var k=document.getElementById('cwxKey').value.trim();localStorage.setItem('checkwx_key',k);saveUserSettings();toast(k?'CheckWX gespeichert ✓':'CheckWX entfernt',k?'ok':'');}
-function saveNtm(){var k=document.getElementById('ntmKey').value.trim();localStorage.setItem('notamify_key',k);saveUserSettings();toast(k?'Notamify Key gespeichert ✓':'Notamify Key entfernt',k?'ok':'');}
+function saveNtm(){
+  var u=document.getElementById('ntmUser').value.trim();
+  var p=document.getElementById('ntmPass').value.trim();
+  localStorage.setItem('fns_user',u);
+  localStorage.setItem('fns_pass',p);
+  saveUserSettings();
+  toast(u?'FAA FNS-NDS Zugangsdaten gespeichert ✓':'FNS-NDS Zugangsdaten entfernt',u?'ok':'');
+}
 function saveAip(){var k=document.getElementById('aipKey').value.trim();localStorage.setItem('openaip_key',k);applyAip(k);saveUserSettings();toast(k?'OpenAIP aktiviert ✓':'OpenAIP deaktiviert',k?'ok':'');}
 
 // CLOSE MODALS ON BG CLICK
@@ -1229,7 +1297,8 @@ document.addEventListener('click',function(e){
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('cwxKey').value=lsGet('checkwx_key');
   document.getElementById('aipKey').value=lsGet('openaip_key');
-  document.getElementById('ntmKey').value=lsGet('notamify_key');
+  document.getElementById('ntmUser').value=lsGet('fns_user');
+  document.getElementById('ntmPass').value=lsGet('fns_pass');
   buildAcGrid();pickAC('at3');
   // Autocomplete
   [['depI','dropDep'],['arrI','dropArr']].forEach(function(pair){
