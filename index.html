@@ -12,106 +12,103 @@
   --ac:#00d4ff;--a2:#ff6b35;--gn:#00ff9f;--yw:#ffd60a;--rd:#ff3b3b;
   --tx:#e2eaf7;--mt:#6b8cae;
   --mono:'Share Tech Mono',monospace;--sans:'Barlow',sans-serif;
+  --sb-w:375px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
 body{background:var(--bg);color:var(--tx);font-family:var(--sans);display:flex;flex-direction:column;}
 
-/* ── LOGIN OVERLAY ── */
-#loginOverlay{
-  position:fixed;inset:0;z-index:9000;
-  background:linear-gradient(135deg,#0a0e17 0%,#0d1f33 60%,#0a0e17 100%);
-  display:flex;align-items:center;justify-content:center;
-}
-.lbox{
-  background:#111827;border:1px solid #1e3a5f;border-radius:16px;
-  padding:40px 36px;text-align:center;width:320px;max-width:90vw;
-  box-shadow:0 16px 60px rgba(0,0,0,.7);
-}
+/* LOGIN */
+#loginOverlay{position:fixed;inset:0;z-index:9000;background:linear-gradient(135deg,#0a0e17 0%,#0d1f33 60%,#0a0e17 100%);display:flex;align-items:center;justify-content:center;}
+.lbox{background:#111827;border:1px solid #1e3a5f;border-radius:16px;padding:40px 36px;text-align:center;width:320px;max-width:90vw;box-shadow:0 16px 60px rgba(0,0,0,.7);}
 .lbox-logo{font-size:2.8rem;margin-bottom:8px;}
-.lbox-title{font-family:var(--mono);font-size:1rem;color:var(--ac);
-  letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;}
+.lbox-title{font-family:var(--mono);font-size:1rem;color:var(--ac);letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;}
 .lbox-sub{font-size:.76rem;color:var(--mt);margin-bottom:28px;line-height:1.7;}
-/* The ONE Google button – rendered by GSI into this div */
-#g_id_signin{
-  display:flex;justify-content:center;align-items:center;min-height:44px;
-}
-.lbox-note{font-size:.6rem;color:var(--mt);margin-top:20px;line-height:1.7;
-  border-top:1px solid var(--bd);padding-top:14px;}
+#g_id_signin{display:flex;justify-content:center;align-items:center;min-height:44px;}
+.lbox-note{font-size:.6rem;color:var(--mt);margin-top:20px;line-height:1.7;border-top:1px solid var(--bd);padding-top:14px;}
 
-/* ── USER BAR ── */
-#userBar{
-  display:none;position:fixed;top:56px;right:10px;z-index:8000;
-  background:var(--sf2);border:1px solid var(--bd);border-radius:8px;
-  padding:5px 10px;display:none;align-items:center;gap:8px;
-  font-family:var(--mono);font-size:.65rem;
-}
+/* USER BAR */
+#userBar{display:none;position:fixed;top:56px;right:10px;z-index:8000;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:5px 10px;align-items:center;gap:8px;font-family:var(--mono);font-size:.65rem;}
 #userBar img{width:24px;height:24px;border-radius:50%;border:2px solid var(--ac);}
 #userBar .uname{color:var(--ac);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.logout-btn{background:transparent;border:1px solid var(--bd);color:var(--mt);
-  font-family:var(--mono);font-size:.58rem;padding:2px 7px;border-radius:4px;cursor:pointer;}
+.logout-btn{background:transparent;border:1px solid var(--bd);color:var(--mt);font-family:var(--mono);font-size:.58rem;padding:2px 7px;border-radius:4px;cursor:pointer;}
 .logout-btn:hover{border-color:var(--rd);color:var(--rd);}
 
-/* ── HEADER ── */
-header{height:52px;flex-shrink:0;
-  background:linear-gradient(90deg,#0a0e17,#0d1f33 50%,#0a0e17);
-  border-bottom:1px solid var(--bd);padding:0 14px;
-  display:flex;align-items:center;gap:10px;z-index:100;}
-.logo{width:30px;height:30px;background:linear-gradient(135deg,var(--ac),#006fa8);
-  border-radius:6px;display:flex;align-items:center;justify-content:center;
-  font-size:16px;flex-shrink:0;}
-header h1{font-family:var(--mono);font-size:.9rem;color:var(--ac);
-  letter-spacing:2px;text-transform:uppercase;}
+/* HEADER */
+header{height:52px;flex-shrink:0;background:linear-gradient(90deg,#0a0e17,#0d1f33 50%,#0a0e17);border-bottom:1px solid var(--bd);padding:0 14px;display:flex;align-items:center;gap:10px;z-index:100;}
+.logo{width:30px;height:30px;background:linear-gradient(135deg,var(--ac),#006fa8);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+header h1{font-family:var(--mono);font-size:.9rem;color:var(--ac);letter-spacing:2px;text-transform:uppercase;}
 header small{font-size:.6rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;}
-.spill{margin-left:auto;font-family:var(--mono);font-size:.6rem;
-  background:rgba(0,212,255,.1);border:1px solid var(--ac);color:var(--ac);
-  padding:2px 8px;border-radius:20px;white-space:nowrap;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.4);}
-  50%{box-shadow:0 0 0 4px rgba(0,212,255,0);}}
+.spill{margin-left:auto;font-family:var(--mono);font-size:.6rem;background:rgba(0,212,255,.1);border:1px solid var(--ac);color:var(--ac);padding:2px 8px;border-radius:20px;white-space:nowrap;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.4);}50%{box-shadow:0 0 0 4px rgba(0,212,255,0);}}
 
-/* ── LAYOUT ── */
+/* LAYOUT */
 .app{flex:1;display:flex;overflow:hidden;}
-/* sidebar now in SIDEBAR TOGGLE CSS block */
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sb-w);flex-shrink:0;background:var(--sf);
+  border-right:1px solid var(--bd);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  transition:width .3s ease;
+}
+.sidebar.collapsed{width:0;overflow:hidden;border-right:none;}
 .sidebar::-webkit-scrollbar{width:3px;}
 .sidebar::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px;}
+
+/* SIDEBAR TOGGLE BUTTON – fixed at vertical center of viewport */
+#sbToggle{
+  position:fixed;
+  top:50vh;
+  left:var(--sb-w);
+  transform:translateY(-50%);
+  z-index:600;
+  background:var(--sf2);
+  border:1px solid var(--bd);
+  border-left:none;
+  border-radius:0 6px 6px 0;
+  width:20px;height:52px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:left .3s ease,background .2s;
+  color:var(--mt);font-size:11px;
+  box-shadow:3px 0 8px rgba(0,0,0,.4);
+}
+#sbToggle:hover{background:var(--sf);color:var(--ac);}
+#sbToggle.closed{left:0;}
+
+/* MAP */
 .mwrap{flex:1;position:relative;min-width:0;}
 #map{width:100%;height:100%;background:#0d1520;}
+
 @media(max-width:820px){
   html,body{overflow:auto;}
   .app{flex-direction:column;overflow:visible;}
-  .sidebar{width:100%;overflow:visible;height:auto;}
+  .sidebar{width:100%!important;overflow:visible;height:auto;}
   .mwrap{height:52vw;min-height:260px;flex:none;}
+  #sbToggle{display:none;}
 }
 
-/* ── SECTIONS ── */
+/* SECTIONS */
 .sec{border-bottom:1px solid var(--bd);}
-.sh{padding:11px 14px;display:flex;align-items:center;gap:8px;
-  cursor:pointer;user-select:none;transition:background .2s;}
+.sh{padding:11px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;transition:background .2s;}
 .sh:hover{background:var(--sf2);}
-.sl{font-family:var(--mono);font-size:.67rem;letter-spacing:2px;
-  text-transform:uppercase;color:var(--mt);flex:1;}
+.sl{font-family:var(--mono);font-size:.67rem;letter-spacing:2px;text-transform:uppercase;color:var(--mt);flex:1;}
 .si{font-size:14px;width:18px;text-align:center;}
 .chv{font-size:9px;color:var(--mt);transition:transform .25s;}
 .sec.open .chv{transform:rotate(180deg);}
 .sbody{display:none;padding:12px 14px;background:rgba(0,0,0,.2);}
 .sec.open .sbody{display:block;}
 
-/* ── FORM ── */
+/* FORM */
 .fr{margin-bottom:11px;}
-.fr label{display:block;font-family:var(--mono);font-size:.6rem;color:var(--mt);
-  letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
-.fr input,.fr select{width:100%;background:var(--bg);border:1px solid var(--bd);
-  color:var(--tx);font-family:var(--mono);font-size:.86rem;padding:8px 10px;
-  border-radius:6px;outline:none;transition:border-color .2s,box-shadow .2s;
-  -webkit-appearance:none;appearance:none;}
+.fr label{display:block;font-family:var(--mono);font-size:.6rem;color:var(--mt);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
+.fr input,.fr select{width:100%;background:var(--bg);border:1px solid var(--bd);color:var(--tx);font-family:var(--mono);font-size:.86rem;padding:8px 10px;border-radius:6px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none;}
 .fr input:focus,.fr select:focus{border-color:var(--ac);box-shadow:0 0 0 2px rgba(0,212,255,.15);}
 .fr input::placeholder{color:var(--mt);}
 .fr select option{background:var(--sf2);}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
 .br{display:flex;gap:7px;margin-top:3px;}
-.btn{flex:1;padding:10px;border:none;border-radius:6px;font-family:var(--mono);
-  font-size:.73rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
-  transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.btn{flex:1;padding:10px;border:none;border-radius:6px;font-family:var(--mono);font-size:.73rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
 .bp{background:linear-gradient(135deg,var(--ac),#006fa8);color:#000;font-weight:700;}
 .bp:hover,.bp:active{opacity:.85;transform:translateY(-1px);}
 .bs{background:transparent;border:1px solid var(--bd);color:var(--mt);}
@@ -119,24 +116,18 @@ header small{font-size:.6rem;color:var(--mt);letter-spacing:1px;text-transform:u
 .bfw{width:100%;margin-bottom:7px;}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
 
-/* ── AUTOCOMPLETE ── */
+/* AUTOCOMPLETE */
 .ac-wrap{position:relative;}
-.ac-drop{position:absolute;top:100%;left:0;right:0;z-index:3000;
-  background:var(--sf2);border:1px solid var(--ac);border-top:none;
-  border-radius:0 0 6px 6px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5);}
-.ac-item{padding:7px 11px;cursor:pointer;display:flex;align-items:center;gap:9px;
-  transition:background .12s;}
+.ac-drop{position:absolute;top:100%;left:0;right:0;z-index:3000;background:var(--sf2);border:1px solid var(--ac);border-top:none;border-radius:0 0 6px 6px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.ac-item{padding:7px 11px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;}
 .ac-item:hover,.ac-item.hi{background:rgba(0,212,255,.13);}
-.ac-code{font-family:var(--mono);font-size:.8rem;font-weight:700;
-  color:var(--ac);width:38px;flex-shrink:0;}
-.ac-nm{font-size:.74rem;color:var(--tx);flex:1;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;}
+.ac-code{font-family:var(--mono);font-size:.8rem;font-weight:700;color:var(--ac);width:38px;flex-shrink:0;}
+.ac-nm{font-size:.74rem;color:var(--tx);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ac-flag{font-size:.82rem;}
 
-/* ── AIRCRAFT ── */
+/* AIRCRAFT */
 .ac-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
-.ac-card{background:var(--bg);border:2px solid var(--bd);border-radius:7px;
-  padding:8px 10px;cursor:pointer;transition:all .2s;text-align:center;}
+.ac-card{background:var(--bg);border:2px solid var(--bd);border-radius:7px;padding:8px 10px;cursor:pointer;transition:all .2s;text-align:center;}
 .ac-card:hover{border-color:var(--mt);}
 .ac-card.sel{border-color:var(--ac);background:rgba(0,212,255,.06);}
 .ac-ico{font-size:1.3rem;margin-bottom:2px;}
@@ -144,200 +135,125 @@ header small{font-size:.6rem;color:var(--mt);letter-spacing:1px;text-transform:u
 .ac-type{font-size:.58rem;color:var(--mt);}
 .perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 
-/* ── WAYPOINTS ── */
+/* LOCK BUTTON */
+.lock-btn{display:flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--bd);color:var(--mt);font-family:var(--mono);font-size:.65rem;padding:5px 10px;border-radius:5px;cursor:pointer;transition:all .2s;width:100%;justify-content:center;margin-bottom:8px;-webkit-tap-highlight-color:transparent;}
+.lock-btn:hover{border-color:var(--yw);color:var(--yw);}
+.lock-btn.locked{border-color:var(--rd);color:var(--rd);background:rgba(255,59,59,.08);}
+.lock-btn.locked:hover{border-color:var(--gn);color:var(--gn);}
+
+/* WAYPOINTS */
 .wpt-list{display:flex;flex-direction:column;gap:4px;margin-top:7px;}
-.wpt{display:flex;align-items:center;gap:7px;background:var(--bg);
-  border:1px solid var(--bd);border-radius:5px;padding:6px 9px;}
+.wpt{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--bd);border-radius:5px;padding:6px 9px;}
 .wdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .wname{font-family:var(--mono);font-size:.7rem;flex:1;}
 .wdesc{font-size:.6rem;color:var(--mt);font-style:italic;}
 .wtype{font-family:var(--mono);font-size:.55rem;color:var(--mt);}
 .wdist{font-family:var(--mono);font-size:.63rem;color:var(--mt);}
 .whdg{font-family:var(--mono);font-size:.63rem;color:var(--ac);}
-.drag-hint{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.2);
-  border-radius:5px;padding:6px 10px;margin-bottom:8px;font-size:.68rem;
-  color:var(--ac);font-family:var(--mono);}
+.wpt-del{background:transparent;border:none;color:var(--rd);cursor:pointer;font-size:.75rem;padding:0 4px;opacity:.6;transition:opacity .2s;line-height:1;flex-shrink:0;}
+.wpt-del:hover{opacity:1;}
+.wpt-add{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:5px;padding:6px;border:1px dashed var(--bd);border-radius:5px;cursor:pointer;font-family:var(--mono);font-size:.63rem;color:var(--mt);background:transparent;width:100%;transition:all .2s;}
+.wpt-add:hover{border-color:var(--ac);color:var(--ac);background:rgba(0,212,255,.05);}
+.drag-hint{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.2);border-radius:5px;padding:6px 10px;margin-bottom:8px;font-size:.67rem;color:var(--ac);font-family:var(--mono);}
 
-/* ── WEATHER ── */
-.wxcard{background:var(--bg);border:1px solid var(--bd);border-radius:7px;
-  padding:11px;position:relative;overflow:hidden;margin-bottom:9px;}
+/* WEATHER */
+.wxcard{background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:11px;position:relative;overflow:hidden;margin-bottom:9px;}
 .wxcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .wxcard.dep::before{background:var(--gn);}
 .wxcard.arr::before{background:var(--a2);}
 .wxh{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
-.icaob{font-family:var(--mono);font-size:.95rem;font-weight:700;color:var(--ac);
-  background:rgba(0,212,255,.1);padding:2px 8px;border-radius:4px;letter-spacing:2px;}
-.wx-raw{font-family:var(--mono);font-size:.69rem;color:var(--tx);
-  background:rgba(0,0,0,.4);padding:6px 8px;border-radius:4px;line-height:1.5;
-  word-break:break-all;white-space:pre-wrap;margin:4px 0;}
+.icaob{font-family:var(--mono);font-size:.95rem;font-weight:700;color:var(--ac);background:rgba(0,212,255,.1);padding:2px 8px;border-radius:4px;letter-spacing:2px;}
+.wx-raw{font-family:var(--mono);font-size:.69rem;color:var(--tx);background:rgba(0,0,0,.4);padding:6px 8px;border-radius:4px;line-height:1.5;word-break:break-all;white-space:pre-wrap;margin:4px 0;}
 .chips{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0;}
-.chip{display:flex;align-items:center;gap:3px;background:var(--sf2);
-  padding:3px 6px;border-radius:4px;font-size:.7rem;}
+.chip{display:flex;align-items:center;gap:3px;background:var(--sf2);padding:3px 6px;border-radius:4px;font-size:.7rem;}
 .chip .v{font-family:var(--mono);font-weight:600;}
 .c-vfr{color:var(--gn);}.c-mvfr{color:var(--yw);}.c-ifr{color:var(--rd);}
 .wx-dec{width:100%;border-collapse:collapse;margin:6px 0;font-size:.69rem;}
 .wx-dec td{padding:2px 6px 2px 0;vertical-align:top;}
-.wx-dec td:first-child{color:var(--mt);font-family:var(--mono);font-size:.6rem;
-  white-space:nowrap;width:40%;}
+.wx-dec td:first-child{color:var(--mt);font-family:var(--mono);font-size:.6rem;white-space:nowrap;width:40%;}
 .wx-dec td:last-child{font-family:var(--mono);}
-.mtaf-wrap{margin-top:10px;}
-.mtaf-note{font-family:var(--mono);font-size:.56rem;color:var(--mt);
-  letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
-.mtaf-fallback{font-family:var(--mono);font-size:.58rem;color:var(--yw);margin-bottom:4px;}
 
-/* ── NOTAM ── */
+/* NOTAM */
 .ntm-list{display:flex;flex-direction:column;gap:6px;}
-.ntm{background:var(--bg);border:1px solid var(--bd);border-left:3px solid var(--yw);
-  border-radius:5px;padding:8px 10px;}
+.ntm{background:var(--bg);border:1px solid var(--bd);border-left:3px solid var(--yw);border-radius:5px;padding:8px 10px;}
 .ntm.crit{border-left-color:var(--rd);}
 .ntmid{font-family:var(--mono);font-size:.63rem;color:var(--yw);}
 .ntm.crit .ntmid{color:var(--rd);}
 .ntmtxt{font-size:.72rem;color:var(--tx);margin-top:2px;line-height:1.5;}
 .ntmsrc{font-size:.58rem;color:var(--mt);margin-top:3px;font-family:var(--mono);}
 
-/* ── ZONES ── */
+/* ZONES */
 .zn-list{display:flex;flex-direction:column;gap:4px;}
-.zn{display:flex;align-items:center;gap:7px;background:var(--bg);
-  border:1px solid var(--bd);border-radius:5px;padding:6px 9px;}
+.zn{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--bd);border-radius:5px;padding:6px 9px;}
 .zndot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 .znnm{font-size:.76rem;flex:1;}
 .zntp{font-family:var(--mono);font-size:.58rem;color:var(--mt);}
 .znalt{font-family:var(--mono);font-size:.6rem;color:var(--ac);text-align:right;}
 
-/* ── SUMMARY ── */
-.sum-card{background:linear-gradient(135deg,rgba(0,212,255,.05),rgba(0,255,159,.05));
-  border:1px solid var(--ac);border-radius:8px;padding:12px;}
-.sum-ttl{font-family:var(--mono);font-size:.63rem;color:var(--ac);
-  letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+/* SUMMARY */
+.sum-card{background:linear-gradient(135deg,rgba(0,212,255,.05),rgba(0,255,159,.05));border:1px solid var(--ac);border-radius:8px;padding:12px;}
+.sum-ttl{font-family:var(--mono);font-size:.63rem;color:var(--ac);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
 .sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .slbl{font-size:.58rem;color:var(--mt);text-transform:uppercase;letter-spacing:1px;}
 .sval{font-family:var(--mono);font-size:.86rem;font-weight:600;}
 .go{color:var(--gn)!important;}.caution{color:var(--yw)!important;}.nogo{color:var(--rd)!important;}
 
-/* ── LOADING ── */
-.ov{position:absolute;inset:0;background:rgba(10,14,23,.88);display:flex;
-  flex-direction:column;align-items:center;justify-content:center;
-  z-index:500;gap:11px;backdrop-filter:blur(3px);}
-.spin{width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--ac);
-  border-radius:50%;animation:sp .8s linear infinite;}
-@keyframes sp{to{transform:rotate(360deg);}}
-.ovt{font-family:var(--mono);font-size:.73rem;color:var(--ac);letter-spacing:2px;}
-.ovs{font-size:.66rem;color:var(--mt);}
-
-/* ── TOAST ── */
-.toast{position:fixed;bottom:14px;right:14px;background:var(--sf2);
-  border:1px solid var(--bd);border-radius:7px;padding:9px 13px;
-  font-family:var(--mono);font-size:.73rem;color:var(--tx);z-index:9999;
-  transform:translateX(220%);transition:transform .3s;max-width:270px;}
-.toast.show{transform:translateX(0);}
-.toast.err{border-color:var(--rd);color:var(--rd);}
-.toast.ok{border-color:var(--gn);color:var(--gn);}
-.toast.warn{border-color:var(--yw);color:var(--yw);}
-
-/* ── MISC ── */
-.empty{padding:20px 12px;text-align:center;color:var(--mt);font-size:.76rem;}
-.empty .ico{font-size:1.6rem;margin-bottom:6px;opacity:.4;}
-.meta{font-family:var(--mono);font-size:.6rem;color:var(--mt);margin-bottom:7px;line-height:1.8;}
-a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
-.dvdr{height:1px;background:var(--bd);margin:9px 0;}
-.badge{display:inline-block;font-family:var(--mono);font-size:.56rem;padding:2px 6px;
-  border-radius:3px;text-transform:uppercase;letter-spacing:1px;}
-.bwx{background:rgba(0,212,255,.15);color:var(--ac);border:1px solid rgba(0,212,255,.3);}
-.bdemo{background:rgba(255,214,10,.1);color:var(--yw);border:1px solid rgba(255,214,10,.3);}
-
-
-/* ── WAYPOINT EDIT BUTTONS ── */
-.wpt-del{background:transparent;border:none;color:var(--rd);cursor:pointer;
-  font-size:.75rem;padding:0 4px;opacity:.6;transition:opacity .2s;line-height:1;flex-shrink:0;}
-.wpt-del:hover{opacity:1;}
-.wpt-add{display:flex;align-items:center;justify-content:center;gap:6px;
-  margin-top:6px;padding:7px;border:1px dashed var(--bd);border-radius:5px;
-  cursor:pointer;font-family:var(--mono);font-size:.65rem;color:var(--mt);
-  background:transparent;width:100%;transition:all .2s;text-align:center;}
-.wpt-add:hover{border-color:var(--ac);color:var(--ac);background:rgba(0,212,255,.05);}
-/* add waypoint modal */
-#addWptModal{display:none;position:fixed;inset:0;z-index:8500;
-  background:rgba(10,14,23,.85);backdrop-filter:blur(4px);
-  align-items:center;justify-content:center;}
-#addWptModal.open{display:flex;}
-
-/* ── SAVED ROUTES ── */
+/* SAVED ROUTES */
 .route-list{display:flex;flex-direction:column;gap:6px;}
-.route-item{background:var(--bg);border:1px solid var(--bd);border-radius:7px;
-  padding:10px 12px;transition:border-color .2s;}
+.route-item{background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:10px 12px;transition:border-color .2s;}
 .route-item:hover{border-color:var(--ac);}
 .route-item-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
 .route-icao{font-family:var(--mono);font-size:.85rem;font-weight:700;color:var(--ac);}
 .route-arrow{color:var(--mt);font-size:.75rem;}
 .route-date{font-family:var(--mono);font-size:.58rem;color:var(--mt);margin-left:auto;}
-.route-meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:7px;}
-.route-tag{font-family:var(--mono);font-size:.6rem;background:var(--sf2);
-  color:var(--mt);padding:2px 7px;border-radius:3px;}
+.route-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:7px;}
+.route-tag{font-family:var(--mono);font-size:.6rem;background:var(--sf2);color:var(--mt);padding:2px 7px;border-radius:3px;}
 .route-tag.hi{color:var(--ac);background:rgba(0,212,255,.1);}
 .route-btns{display:flex;gap:6px;}
-.rbtn{flex:1;padding:5px 0;border:none;border-radius:4px;font-family:var(--mono);
-  font-size:.62rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
-  transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.rbtn{flex:1;padding:5px 0;border:none;border-radius:4px;font-family:var(--mono);font-size:.62rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;}
 .rbtn-load{background:rgba(0,212,255,.15);color:var(--ac);border:1px solid rgba(0,212,255,.3);}
 .rbtn-load:hover{background:rgba(0,212,255,.3);}
 .rbtn-edit{background:rgba(255,214,10,.1);color:var(--yw);border:1px solid rgba(255,214,10,.3);}
 .rbtn-edit:hover{background:rgba(255,214,10,.2);}
 .rbtn-del{background:rgba(255,59,59,.1);color:var(--rd);border:1px solid rgba(255,59,59,.3);}
 .rbtn-del:hover{background:rgba(255,59,59,.2);}
-/* edit modal */
-#routeModal{display:none;position:fixed;inset:0;z-index:8500;
-  background:rgba(10,14,23,.85);backdrop-filter:blur(4px);
-  align-items:center;justify-content:center;}
-#routeModal.open{display:flex;}
-.modal-box{background:var(--sf);border:1px solid var(--bd);border-radius:12px;
-  padding:24px;width:320px;max-width:92vw;}
-.modal-title{font-family:var(--mono);font-size:.8rem;color:var(--ac);
-  letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+
+/* MODALS */
+.modal-bg{display:none;position:fixed;inset:0;z-index:8500;background:rgba(10,14,23,.85);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal-box{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:24px;width:320px;max-width:92vw;}
+.modal-title{font-family:var(--mono);font-size:.8rem;color:var(--ac);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
 .modal-btns{display:flex;gap:8px;margin-top:16px;}
 
+/* LOADING */
+.ov{position:absolute;inset:0;background:rgba(10,14,23,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:500;gap:11px;backdrop-filter:blur(3px);}
+.spin{width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:sp .8s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.ovt{font-family:var(--mono);font-size:.73rem;color:var(--ac);letter-spacing:2px;}
+.ovs{font-size:.66rem;color:var(--mt);}
 
-/* ── SIDEBAR TOGGLE ── */
-.sidebar{width:375px;flex-shrink:0;background:var(--sf);
-  border-right:1px solid var(--bd);overflow-y:auto;-webkit-overflow-scrolling:touch;
-  transition:width .3s ease, min-width .3s ease;}
-.sidebar.collapsed{width:0;min-width:0;overflow:hidden;border-right:none;}
-.sidebar-toggle{
-  position:absolute;top:50%;left:0;transform:translateY(-50%);
-  z-index:200;background:var(--sf2);border:1px solid var(--bd);
-  border-left:none;border-radius:0 6px 6px 0;
-  width:18px;height:48px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:left .3s ease, background .2s;
-  color:var(--mt);font-size:10px;
-}
-.sidebar-toggle:hover{background:var(--sf);color:var(--ac);}
-.mwrap{flex:1;position:relative;min-width:0;}
+/* TOAST */
+.toast{position:fixed;bottom:14px;right:14px;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:9px 13px;font-family:var(--mono);font-size:.73rem;color:var(--tx);z-index:9999;transform:translateX(220%);transition:transform .3s;max-width:270px;}
+.toast.show{transform:translateX(0);}
+.toast.err{border-color:var(--rd);color:var(--rd);}
+.toast.ok{border-color:var(--gn);color:var(--gn);}
+.toast.warn{border-color:var(--yw);color:var(--yw);}
 
-/* ── LOCK BUTTON ── */
-.lock-btn{
-  display:flex;align-items:center;gap:6px;
-  background:transparent;border:1px solid var(--bd);
-  color:var(--mt);font-family:var(--mono);font-size:.65rem;
-  padding:5px 10px;border-radius:5px;cursor:pointer;
-  transition:all .2s;width:100%;justify-content:center;margin-bottom:8px;
-  -webkit-tap-highlight-color:transparent;
-}
-.lock-btn:hover{border-color:var(--yw);color:var(--yw);}
-.lock-btn.locked{border-color:var(--rd);color:var(--rd);background:rgba(255,59,59,.08);}
-.lock-btn.locked:hover{border-color:var(--gn);color:var(--gn);}
-.lock-badge{
-  display:inline-block;font-family:var(--mono);font-size:.55rem;
-  padding:1px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;
-  background:rgba(255,59,59,.15);color:var(--rd);border:1px solid rgba(255,59,59,.3);
-  margin-left:4px;
-}
+/* MISC */
+.empty{padding:20px 12px;text-align:center;color:var(--mt);font-size:.76rem;}
+.empty .ico{font-size:1.6rem;margin-bottom:6px;opacity:.4;}
+.meta{font-family:var(--mono);font-size:.6rem;color:var(--mt);margin-bottom:7px;line-height:1.8;}
+a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
+.dvdr{height:1px;background:var(--bd);margin:9px 0;}
+.badge{display:inline-block;font-family:var(--mono);font-size:.56rem;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;}
+.bwx{background:rgba(0,212,255,.15);color:var(--ac);border:1px solid rgba(0,212,255,.3);}
+.bdemo{background:rgba(255,214,10,.1);color:var(--yw);border:1px solid rgba(255,214,10,.3);}
 
-/* ── PRINT ── */
+/* PRINT */
 .print-only{display:none;}
 @media print{
-  html,body{overflow:visible!important;background:#fff!important;color:#000!important;
-    font-family:Arial,sans-serif!important;height:auto!important;}
-  header,.sidebar,.mwrap,#map,.ov,.toast,#loginOverlay,#userBar,.mtaf-wrap{display:none!important;}
+  html,body{overflow:visible!important;background:#fff!important;color:#000!important;font-family:Arial,sans-serif!important;height:auto!important;}
+  header,.sidebar,.mwrap,#map,.ov,.toast,#loginOverlay,#userBar,#sbToggle{display:none!important;}
   .print-only{display:block!important;}
   .app{display:block!important;}
   .p-page{page-break-after:always;padding:15mm 18mm;font-family:Arial,sans-serif;}
@@ -347,59 +263,51 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
   .p-title{font-size:16pt;font-weight:bold;color:#003366!important;}
   .p-sub{font-size:8.5pt;color:#555!important;}
   .p-sec{margin-bottom:12px;}
-  .p-sec-ttl{font-size:10pt;font-weight:bold;background:#003366!important;
-    color:#fff!important;padding:3px 8px;margin-bottom:5px;}
+  .p-sec-ttl{font-size:10pt;font-weight:bold;background:#003366!important;color:#fff!important;padding:3px 8px;margin-bottom:5px;}
   .p-tbl{width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:8px;}
-  .p-tbl th{background:#dde8ff!important;color:#003366!important;padding:3px 5px;
-    border:1px solid #003366!important;text-align:left;}
+  .p-tbl th{background:#dde8ff!important;color:#003366!important;padding:3px 5px;border:1px solid #003366!important;text-align:left;}
   .p-tbl td{padding:3px 5px;border:1px solid #ccc!important;vertical-align:top;}
   .p-tbl tr:nth-child(even) td{background:#f5f8ff!important;}
   .p-go{color:#006600!important;font-weight:bold;}
   .p-caution{color:#b35a00!important;font-weight:bold;}
   .p-nogo{color:#cc0000!important;font-weight:bold;}
-  .p-status{border:2px solid #003366!important;padding:6px 14px;
-    display:inline-block;margin-bottom:10px;}
-  .p-mono{font-family:'Courier New',monospace!important;font-size:7.5pt;
-    background:#f5f5f5!important;padding:5px 7px;border:1px solid #ccc!important;
-    white-space:pre-wrap;word-break:break-all;}
-  .p-warn{background:#fffbe6!important;border:1px solid #b35a00!important;
-    padding:5px 9px;font-size:7.5pt;margin-top:8px;}
+  .p-status{border:2px solid #003366!important;padding:6px 14px;display:inline-block;margin-bottom:10px;}
+  .p-mono{font-family:'Courier New',monospace!important;font-size:7.5pt;background:#f5f5f5!important;padding:5px 7px;border:1px solid #ccc!important;white-space:pre-wrap;word-break:break-all;}
+  .p-warn{background:#fffbe6!important;border:1px solid #b35a00!important;padding:5px 9px;font-size:7.5pt;margin-top:8px;}
   .p-logrow td{height:22px;}
 }
 </style>
 </head>
 <body>
 
-<!-- ══ LOGIN OVERLAY ══════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="loginOverlay">
   <div class="lbox">
     <div class="lbox-logo">✈️</div>
     <div class="lbox-title">VFR // FlightPlan</div>
     <div class="lbox-sub">PPL Flugplanung · AIP Poland<br>Bitte mit Google-Konto anmelden</div>
-    <!-- Google One Tap / Sign-In Button rendered here by GSI -->
     <div id="g_id_signin"></div>
-    <div class="lbox-note">
-      Anmeldung erforderlich · Keine Daten werden gespeichert oder weitergegeben
-    </div>
+    <div class="lbox-note">Anmeldung erforderlich · Keine Daten werden weitergegeben</div>
   </div>
 </div>
 
-<!-- ══ USER BAR ══════════════════════════════════════ -->
+<!-- USER BAR -->
 <div id="userBar">
   <img id="uAvatar" src="" alt="" onerror="this.style.display='none'">
   <span class="uname" id="uName"></span>
   <button class="logout-btn" onclick="doSignOut()">Abmelden</button>
 </div>
 
-<!-- ══ HEADER ═════════════════════════════════════════ -->
 <header>
   <div class="logo">✈️</div>
   <div><h1>VFR // FlightPlan</h1><small>AIP Poland · VFR Reporting Points</small></div>
   <div class="spill" id="sysStatus">● BEREIT</div>
 </header>
 
-<!-- ══ MAIN APP ═══════════════════════════════════════ -->
 <div class="app">
+<!-- SIDEBAR TOGGLE (fixed at 50vh) -->
+<button id="sbToggle" onclick="toggleSidebar()" title="Sidebar ein/ausblenden">◀</button>
+
 <div class="sidebar">
 
   <!-- FLUGZEUG -->
@@ -414,9 +322,7 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
         <div class="fr"><label>Tanks (l)</label><input id="pTanks" type="number" value="65" min="20" max="600"></div>
         <div class="fr"><label>Zuladung (kg)</label><input id="pPax" type="number" value="160" min="50" max="400"></div>
       </div>
-      <div class="fr"><label>Kennzeichen</label>
-        <input id="pReg" type="text" value="SP-TPF" autocapitalize="characters" autocorrect="off" spellcheck="false">
-      </div>
+      <div class="fr"><label>Kennzeichen</label><input id="pReg" type="text" value="SP-TPF" autocapitalize="characters" autocorrect="off" spellcheck="false"></div>
     </div>
   </div>
 
@@ -426,29 +332,16 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
     <div class="sbody">
       <div class="row2">
         <div class="fr"><label>Abflug (ICAO)</label>
-          <div class="ac-wrap">
-            <input id="depI" type="text" placeholder="EPWA" maxlength="4"
-              autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
-            <div class="ac-drop" id="dropDep" style="display:none;"></div>
-          </div>
+          <div class="ac-wrap"><input id="depI" type="text" placeholder="EPWA" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><div class="ac-drop" id="dropDep" style="display:none;"></div></div>
         </div>
         <div class="fr"><label>Ziel (ICAO)</label>
-          <div class="ac-wrap">
-            <input id="arrI" type="text" placeholder="EPKK" maxlength="4"
-              autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
-            <div class="ac-drop" id="dropArr" style="display:none;"></div>
-          </div>
+          <div class="ac-wrap"><input id="arrI" type="text" placeholder="EPKK" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><div class="ac-drop" id="dropArr" style="display:none;"></div></div>
         </div>
       </div>
       <div class="row2">
-        <div class="fr"><label>Höhe (ft MSL)</label>
-          <input id="altI" type="number" value="4500" step="500" min="1000" max="14500">
-        </div>
+        <div class="fr"><label>Höhe (ft MSL)</label><input id="altI" type="number" value="4500" step="500" min="1000" max="14500"></div>
         <div class="fr"><label>Routing</label>
-          <select id="routeType">
-            <option value="rpt" selected>Via Reporting Points</option>
-            <option value="direct">Direkt</option>
-          </select>
+          <select id="routeType"><option value="rpt" selected>Via Reporting Points</option><option value="direct">Direkt</option></select>
         </div>
       </div>
       <div class="br">
@@ -463,7 +356,7 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
     </div>
   </div>
 
-  <!-- ROUTE DETAILS -->
+  <!-- BERECHNETE ROUTE -->
   <div class="sec" id="sRD">
     <div class="sh" onclick="tog('sRD')"><span class="si">📍</span><span class="sl">Berechnete Route</span><span class="chv">▼</span></div>
     <div class="sbody">
@@ -505,31 +398,31 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
   <!-- GESPEICHERTE ROUTEN -->
   <div class="sec" id="sSV">
     <div class="sh" onclick="tog('sSV')"><span class="si">💾</span><span class="sl">Gespeicherte Routen</span><span class="chv">▼</span></div>
-    <div class="sbody">
-      <div id="savedRoutesContent"><div class="empty"><div class="ico">💾</div>Keine gespeicherten Routen<br><span style="font-size:.68rem;">Route planen, dann „Route speichern" klicken</span></div></div>
-    </div>
+    <div class="sbody"><div id="savedRoutesContent"><div class="empty"><div class="ico">💾</div>Keine Routen gespeichert</div></div></div>
   </div>
 
   <!-- EINSTELLUNGEN -->
   <div class="sec" id="sST">
     <div class="sh" onclick="tog('sST')"><span class="si">⚙️</span><span class="sl">API Keys</span><span class="chv">▼</span></div>
     <div class="sbody">
-      <div class="fr">
-        <label>CheckWX API Key <a href="https://www.checkwxapi.com" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label>
-        <input id="cwxKey" type="text" placeholder="decoded METAR/TAF" autocomplete="off" spellcheck="false">
-      </div>
+      <div class="fr"><label>CheckWX API Key <a href="https://www.checkwxapi.com" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label><input id="cwxKey" type="text" placeholder="decoded METAR/TAF" autocomplete="off" spellcheck="false"></div>
       <button class="btn bs bfw" onclick="saveCwx()">💾 CheckWX speichern</button>
-      <div class="fr" style="margin-top:4px;">
-        <label>OpenAIP Key <a href="https://www.openaip.net" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label>
-        <input id="aipKey" type="text" placeholder="echte Lufträume auf Karte" autocomplete="off" spellcheck="false">
-      </div>
+      <div class="fr" style="margin-top:4px;"><label>OpenAIP Key <a href="https://www.openaip.net" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label><input id="aipKey" type="text" placeholder="echte Lufträume auf Karte" autocomplete="off" spellcheck="false"></div>
       <button class="btn bs bfw" onclick="saveAip()">💾 OpenAIP aktivieren</button>
+      <div class="dvdr"></div>
+      <div style="font-family:var(--mono);font-size:.6rem;color:var(--mt);line-height:1.8;">
+        ☁️ <b style="color:var(--ac)">Google Drive Sync</b><br>
+        Für geräteübergreifende Routen muss der Scope<br>
+        <span style="color:var(--yw);">drive.appdata</span> in der<br>
+        <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console ↗</a><br>
+        OAuth-App aktiviert sein.
+      </div>
     </div>
   </div>
 
 </div><!-- /sidebar -->
+
 <div class="mwrap">
-  <button class="sidebar-toggle" id="sbToggle" onclick="toggleSidebar()" title="Sidebar ein/ausblenden">◀</button>
   <div id="map"></div>
   <div class="ov" id="ov" style="display:none;">
     <div class="spin"></div><div class="ovt">LADE DATEN</div>
@@ -538,40 +431,12 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
 </div>
 </div><!-- /app -->
 
-
-<!-- ADD WAYPOINT MODAL -->
-<div id="addWptModal">
-  <div class="modal-box">
-    <div class="modal-title">➕ Wegpunkt hinzufügen</div>
-    <div style="font-family:var(--mono);font-size:.62rem;color:var(--mt);margin-bottom:12px;">
-      Wird nach Position <span id="addAfterLabel" style="color:var(--ac)"></span> eingefügt
-    </div>
-    <div class="fr"><label>Name / Bezeichnung</label>
-      <input id="addWptName" type="text" placeholder="z.B. NOVEMBER, Checkpoint A" spellcheck="false"></div>
-    <div class="row2">
-      <div class="fr"><label>Breitengrad (lat)</label>
-        <input id="addWptLat" type="number" placeholder="52.1651" step="0.0001"></div>
-      <div class="fr"><label>Längengrad (lon)</label>
-        <input id="addWptLon" type="number" placeholder="20.9671" step="0.0001"></div>
-    </div>
-    <div style="font-size:.62rem;color:var(--mt);font-family:var(--mono);margin-bottom:10px;">
-      💡 Tipp: Auf der Karte den gewünschten Punkt anklicken → Koordinaten kopieren
-    </div>
-    <div class="modal-btns">
-      <button class="btn bp" onclick="confirmAddWpt()" style="font-size:.72rem;">➕ Hinzufügen</button>
-      <button class="btn bs" onclick="closeAddWptModal()" style="font-size:.72rem;">Abbrechen</button>
-    </div>
-  </div>
-</div>
-
-<!-- ROUTE EDIT MODAL -->
-<div id="routeModal">
+<!-- MODALS -->
+<div class="modal-bg" id="routeModal">
   <div class="modal-box">
     <div class="modal-title">✏️ Route bearbeiten</div>
-    <div class="fr"><label>Route Name</label>
-      <input id="modalName" type="text" placeholder="z.B. Wochenendflug" spellcheck="false"></div>
-    <div class="fr"><label>Notizen</label>
-      <input id="modalNotes" type="text" placeholder="Optionale Notizen" spellcheck="false"></div>
+    <div class="fr"><label>Name</label><input id="modalName" type="text" placeholder="z.B. Wochenendflug" spellcheck="false"></div>
+    <div class="fr"><label>Notizen</label><input id="modalNotes" type="text" placeholder="Optional" spellcheck="false"></div>
     <div class="modal-btns">
       <button class="btn bp" onclick="saveModalEdit()" style="font-size:.72rem;">💾 Speichern</button>
       <button class="btn bs" onclick="closeRouteModal()" style="font-size:.72rem;">Abbrechen</button>
@@ -579,222 +444,206 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
   </div>
 </div>
 
+<div class="modal-bg" id="addWptModal">
+  <div class="modal-box">
+    <div class="modal-title">➕ Wegpunkt hinzufügen</div>
+    <div style="font-family:var(--mono);font-size:.62rem;color:var(--mt);margin-bottom:12px;">Nach: <span id="addAfterLabel" style="color:var(--ac)"></span></div>
+    <div class="fr"><label>Name</label><input id="addWptName" type="text" placeholder="z.B. NOVEMBER" spellcheck="false"></div>
+    <div class="row2">
+      <div class="fr"><label>Latitude</label><input id="addWptLat" type="number" placeholder="52.1651" step="0.0001"></div>
+      <div class="fr"><label>Longitude</label><input id="addWptLon" type="number" placeholder="20.9671" step="0.0001"></div>
+    </div>
+    <div style="font-size:.62rem;color:var(--mt);font-family:var(--mono);margin-bottom:10px;">💡 Auf Karte klicken → Koordinaten übernehmen</div>
+    <div class="modal-btns">
+      <button class="btn bp" onclick="confirmAddWpt()" style="font-size:.72rem;">➕ Hinzufügen</button>
+      <button class="btn bs" onclick="closeAddWptModal()" style="font-size:.72rem;">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <div class="print-only" id="printPanel"></div>
 <div class="toast" id="toast"></div>
 
-<!-- Leaflet -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
-<!-- Google Identity Services – loaded LAST so callback is defined first -->
+<!-- Google Auth (defined BEFORE GSI loads) -->
 <script>
 'use strict';
+var G_CLIENT_ID='876959021639-f3jmr77rnd600ggba6icej1pef6muo87.apps.googleusercontent.com';
+var gUser=null;
+var gdToken=null;
+var gdFileId=null;
+var routesCache=null;
+var _tc=null; // Drive token client
 
-// ══════════════════════════════════════════════════════
-//  GOOGLE AUTH CONFIG
-// ══════════════════════════════════════════════════════
-var G_CLIENT_ID = '876959021639-f3jmr77rnd600ggba6icej1pef6muo87.apps.googleusercontent.com';
-var gUser = null;
-
-// Called by Google GSI library once it has loaded
-window.onGoogleLibraryLoad = function() {
-  // Check for saved session first
-  var saved = localStorage.getItem('vfr_session');
-  if (saved) {
-    try {
-      gUser = JSON.parse(saved);
-      showApp(gUser);
-      return;
-    } catch(e) { localStorage.removeItem('vfr_session'); }
-  }
-
-  // Initialize and render the Sign-In button
-  google.accounts.id.initialize({
-    client_id: G_CLIENT_ID,
-    callback: onGoogleToken,
-    auto_select: true,
-    cancel_on_tap_outside: false,
-    context: 'signin',
-  });
-
-  // Render the button into #g_id_signin
-  google.accounts.id.renderButton(
-    document.getElementById('g_id_signin'),
-    {
-      theme: 'outline',
-      size: 'large',
-      shape: 'rectangular',
-      width: 250,
-      text: 'signin_with',
-      locale: 'de',
-    }
-  );
-
-  // Also show One Tap prompt
+window.onGoogleLibraryLoad=function(){
+  var saved=localStorage.getItem('vfr_session');
+  if(saved){try{gUser=JSON.parse(saved);showApp(gUser);return;}catch(e){localStorage.removeItem('vfr_session');}}
+  google.accounts.id.initialize({client_id:G_CLIENT_ID,callback:onGToken,auto_select:true,cancel_on_tap_outside:false});
+  google.accounts.id.renderButton(document.getElementById('g_id_signin'),{theme:'outline',size:'large',shape:'rectangular',width:250,text:'signin_with',locale:'de'});
   google.accounts.id.prompt();
 };
 
-// JWT decoder
-function decodeJwt(token) {
-  try {
-    var payload = token.split('.')[1];
-    // Pad base64 string
-    payload = payload.replace(/-/g, '+').replace(/_/g, '/');
-    while (payload.length % 4) payload += '=';
-    return JSON.parse(atob(payload));
-  } catch(e) { return null; }
-}
+function decodeJwt(t){try{var p=t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');while(p.length%4)p+='=';return JSON.parse(atob(p));}catch(e){return null;}}
+function onGToken(r){var p=decodeJwt(r.credential);if(!p){toast('Login fehlgeschlagen','err');return;}gUser={name:p.name,email:p.email,picture:p.picture||''};localStorage.setItem('vfr_session',JSON.stringify(gUser));showApp(gUser);}
 
-// Called when Google returns a credential
-function onGoogleToken(response) {
-  var payload = decodeJwt(response.credential);
-  if (!payload) { toast('Login fehlgeschlagen – ungültiges Token', 'err'); return; }
-  gUser = { name: payload.name, email: payload.email, picture: payload.picture || '' };
-  localStorage.setItem('vfr_session', JSON.stringify(gUser));
-  showApp(gUser);
-}
-
-function showApp(user) {
-  // Hide login, show app
-  document.getElementById('loginOverlay').style.display = 'none';
-  var bar = document.getElementById('userBar');
-  bar.style.display = 'flex';
-  document.getElementById('uName').textContent = user.name || user.email;
-  if (user.picture) document.getElementById('uAvatar').src = user.picture;
-  // Load user-specific settings
+function showApp(user){
+  document.getElementById('loginOverlay').style.display='none';
+  var bar=document.getElementById('userBar');bar.style.display='flex';
+  document.getElementById('uName').textContent=user.name||user.email;
+  if(user.picture)document.getElementById('uAvatar').src=user.picture;
   loadUserSettings(user.email);
-  // Init Google Drive token for cross-device route sync
-  setTimeout(initDriveToken, 500);
-  // Render saved routes (will show local first, then Drive data)
-  setTimeout(renderSavedRoutes, 200);
-  toast('Willkommen ' + (user.name ? user.name.split(' ')[0] : user.email) + ' ✓', 'ok');
+  setTimeout(initDriveToken,600);
+  setTimeout(renderSavedRoutes,300);
+  toast('Willkommen '+(user.name?user.name.split(' ')[0]:user.email)+' ✓','ok');
 }
 
-function doSignOut() {
-  saveUserSettings(); // save before logout
-  gUser = null;
+function doSignOut(){
+  saveUserSettings();gUser=null;gdToken=null;gdFileId=null;routesCache=null;
   localStorage.removeItem('vfr_session');
-  document.getElementById('userBar').style.display = 'none';
-  document.getElementById('loginOverlay').style.display = 'flex';
-  if (window.google && google.accounts) {
-    google.accounts.id.disableAutoSelect();
-    // Re-render button for next login
-    google.accounts.id.renderButton(
-      document.getElementById('g_id_signin'),
-      { theme:'outline', size:'large', shape:'rectangular', width:250, text:'signin_with', locale:'de' }
-    );
-  }
+  document.getElementById('userBar').style.display='none';
+  document.getElementById('loginOverlay').style.display='flex';
+  if(window.google&&google.accounts){google.accounts.id.disableAutoSelect();google.accounts.id.renderButton(document.getElementById('g_id_signin'),{theme:'outline',size:'large',shape:'rectangular',width:250,text:'signin_with',locale:'de'});}
   resetAll();
 }
 
-// ── Per-user settings (linked to Google email) ────────
-function uKey(k) {
-  var email = gUser ? gUser.email.replace(/[^a-z0-9]/gi,'_') : 'guest';
-  return 'vfr_' + email + '_' + k;
+function uKey(k){var e=gUser?gUser.email.replace(/[^a-z0-9]/gi,'_'):'guest';return 'vfr_'+e+'_'+k;}
+function saveUserSettings(){
+  if(!gUser)return;
+  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
 }
-function saveUserSettings() {
-  if (!gUser) return;
-  var s = {
-    cwx:    document.getElementById('cwxKey').value.trim(),
-    aip:    document.getElementById('aipKey').value.trim(),
-    cruise: document.getElementById('pCruise').value,
-    fuel:   document.getElementById('pFuel').value,
-    tanks:  document.getElementById('pTanks').value,
-    reg:    document.getElementById('pReg').value,
-    acid:   selAC ? selAC.id : 'at3',
-  };
-  localStorage.setItem(uKey('cfg'), JSON.stringify(s));
+function loadUserSettings(email){
+  var raw=localStorage.getItem('vfr_'+email.replace(/[^a-z0-9]/gi,'_')+'_cfg');
+  if(!raw)return;
+  try{var s=JSON.parse(raw);
+    if(s.cwx){document.getElementById('cwxKey').value=s.cwx;localStorage.setItem('checkwx_key',s.cwx);}
+    if(s.aip){document.getElementById('aipKey').value=s.aip;localStorage.setItem('openaip_key',s.aip);applyAip(s.aip);}
+    if(s.cruise)document.getElementById('pCruise').value=s.cruise;
+    if(s.fuel)document.getElementById('pFuel').value=s.fuel;
+    if(s.tanks)document.getElementById('pTanks').value=s.tanks;
+    if(s.reg)document.getElementById('pReg').value=s.reg;
+    if(s.acid)pickAC(s.acid);
+  }catch(e){}
 }
-function loadUserSettings(email) {
-  var key = 'vfr_' + (email||'').replace(/[^a-z0-9]/gi,'_') + '_cfg';
-  var raw = localStorage.getItem(key);
-  if (!raw) return;
-  try {
-    var s = JSON.parse(raw);
-    if (s.cwx)    { document.getElementById('cwxKey').value = s.cwx; localStorage.setItem('checkwx_key', s.cwx); }
-    if (s.aip)    { document.getElementById('aipKey').value = s.aip; localStorage.setItem('openaip_key', s.aip); applyAip(s.aip); }
-    if (s.cruise) document.getElementById('pCruise').value = s.cruise;
-    if (s.fuel)   document.getElementById('pFuel').value = s.fuel;
-    if (s.tanks)  document.getElementById('pTanks').value = s.tanks;
-    if (s.reg)    document.getElementById('pReg').value = s.reg;
-    if (s.acid)   pickAC(s.acid);
-  } catch(e) {}
+
+// Google Drive appDataFolder sync
+var GD_FILE='vfr-routes.json';
+function initDriveToken(){
+  if(!window.google||!window.google.accounts||!window.google.accounts.oauth2){setTimeout(initDriveToken,800);return;}
+  try{
+    _tc=google.accounts.oauth2.initTokenClient({
+      client_id:G_CLIENT_ID,
+      scope:'https://www.googleapis.com/auth/drive.appdata',
+      callback:function(r){
+        if(r&&r.access_token){
+          gdToken=r.access_token;
+          setTimeout(function(){if(_tc)_tc.requestAccessToken({prompt:''});},55*60*1000);
+          renderSavedRoutes();
+        } else {renderSavedRoutes();}
+      },
+      error_callback:function(){renderSavedRoutes();}
+    });
+    _tc.requestAccessToken({prompt:''});
+  }catch(e){renderSavedRoutes();}
 }
+
+async function driveList(){
+  var r=await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%22'+GD_FILE+'%22&fields=files(id)',{headers:{'Authorization':'Bearer '+gdToken}});
+  var d=await r.json();return d.files||[];
+}
+async function driveRead(){
+  var files=await driveList();if(!files.length)return[];
+  gdFileId=files[0].id;
+  var r=await fetch('https://www.googleapis.com/drive/v3/files/'+gdFileId+'?alt=media',{headers:{'Authorization':'Bearer '+gdToken}});
+  if(!r.ok)return[];
+  try{return await r.json();}catch(e){return[];}
+}
+async function driveWrite(routes){
+  var body=JSON.stringify(routes);
+  if(gdFileId){
+    await fetch('https://www.googleapis.com/upload/drive/v3/files/'+gdFileId+'?uploadType=media',{method:'PATCH',headers:{'Authorization':'Bearer '+gdToken,'Content-Type':'application/json'},body:body});
+  } else {
+    var b='vfr42b';
+    var CRLF='\r\n';
+    var meta=JSON.stringify({name:GD_FILE,parents:['appDataFolder']});
+    var mp='--'+b+CRLF+'Content-Type: application/json; charset=UTF-8'+CRLF+CRLF+meta+CRLF+'--'+b+CRLF+'Content-Type: application/json'+CRLF+CRLF+body+CRLF+'--'+b+'--';
+    var r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Authorization':'Bearer '+gdToken,'Content-Type':'multipart/related; boundary='+b},body:mp});
+    if(r.ok){var d=await r.json();gdFileId=d.id;}
+  }
+  routesCache=routes;
+}
+
+async function loadRoutesAsync(){
+  if(routesCache)return routesCache;
+  if(gdToken){try{var r=await driveRead();routesCache=r;localStorage.setItem(uKey('routes'),JSON.stringify(r));return r;}catch(e){}}
+  try{return JSON.parse(localStorage.getItem(uKey('routes'))||'[]');}catch(e){return[];}
+}
+async function saveRoutesAsync(routes){
+  routesCache=routes;
+  localStorage.setItem(uKey('routes'),JSON.stringify(routes));
+  if(gdToken){try{await driveWrite(routes);}catch(e){console.warn('Drive write:',e);}}
+}
+function loadRoutesSync(){if(routesCache)return routesCache;try{return JSON.parse(localStorage.getItem(uKey('routes'))||'[]');}catch(e){return[];}}
 </script>
 
-<!-- Load Google GSI AFTER the callback is defined above -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>
 'use strict';
 
-// ══════════════════════════════════════════════════════
-//  MAP
-// ══════════════════════════════════════════════════════
-var map = L.map('map', {center:[52.0,19.0], zoom:6});
-var osmL  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  {attribution:'© OpenStreetMap', maxZoom:18, opacity:.9});
-var topoL = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-  {attribution:'© OpenTopoMap', maxZoom:17, opacity:.9});
+// MAP
+var map=L.map('map',{center:[52.0,19.0],zoom:6});
+var osmL=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18,opacity:.9});
+var topoL=L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{attribution:'© OpenTopoMap',maxZoom:17,opacity:.9});
 osmL.addTo(map);
 L.control.layers({'OpenStreetMap':osmL,'Topo':topoL},{},{position:'topright'}).addTo(map);
-var aipLayer = null;
-function lsGet(k){ return localStorage.getItem(k)||''; }
-function applyAip(k){
-  if(aipLayer){map.removeLayer(aipLayer);aipLayer=null;}
-  if(!k)return;
-  aipLayer=L.tileLayer('https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey='+k,
-    {attribution:'© OpenAIP',maxZoom:14,opacity:.75,errorTileUrl:''}).addTo(map);
-}
+var aipLayer=null;
+function lsGet(k){return localStorage.getItem(k)||'';}
+function applyAip(k){if(aipLayer){map.removeLayer(aipLayer);aipLayer=null;}if(!k)return;aipLayer=L.tileLayer('https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey='+k,{attribution:'© OpenAIP',maxZoom:14,opacity:.75,errorTileUrl:''}).addTo(map);}
 applyAip(lsGet('openaip_key'));
 
-// ══════════════════════════════════════════════════════
-//  AIRCRAFT DB
-// ══════════════════════════════════════════════════════
+// AIRCRAFT
 var AIRCRAFT=[
-  {id:'at3', ico:'🛩️',nm:'Aero AT-3',   tp:'SP-TPF · Rotax 912S', cruise:108,fuel:18,tanks:65, cat:'VLA'},
-  {id:'c172',ico:'🛩️',nm:'Cessna 172',  tp:'C172 Skyhawk',         cruise:105,fuel:28,tanks:200,cat:'SEP'},
-  {id:'pa28',ico:'✈️', nm:'Piper PA-28', tp:'Cherokee / Archer',    cruise:115,fuel:30,tanks:189,cat:'SEP'},
-  {id:'da40',ico:'🛸', nm:'Diamond DA40',tp:'DA40 NG',               cruise:135,fuel:20,tanks:148,cat:'SEP'},
-  {id:'cust',ico:'⚙️', nm:'Eigenes AC',  tp:'Manuelle Eingabe',      cruise:105,fuel:25,tanks:180,cat:'SEP'},
+  {id:'at3',ico:'🛩️',nm:'Aero AT-3',  tp:'SP-TPF · Rotax 912S',cruise:108,fuel:18,tanks:65, cat:'VLA'},
+  {id:'c172',ico:'🛩️',nm:'Cessna 172', tp:'C172 Skyhawk',        cruise:105,fuel:28,tanks:200,cat:'SEP'},
+  {id:'pa28',ico:'✈️', nm:'Piper PA-28',tp:'Cherokee / Archer',   cruise:115,fuel:30,tanks:189,cat:'SEP'},
+  {id:'da40',ico:'🛸', nm:'Diamond DA40',tp:'DA40 NG',             cruise:135,fuel:20,tanks:148,cat:'SEP'},
+  {id:'cust',ico:'⚙️', nm:'Eigenes AC', tp:'Manuelle Eingabe',     cruise:105,fuel:25,tanks:180,cat:'SEP'},
 ];
 var selAC=AIRCRAFT[0];
 
-// ══════════════════════════════════════════════════════
-//  AIRPORT DB  (with VFR Reporting Points)
-// ══════════════════════════════════════════════════════
+// AIRPORT DB
 var AP={
-  EPWA:{n:'Warszawa Chopin',    lat:52.1651,lon:20.9671,freq:'APP 119.425',rpts:{NOVEMBER:{lat:52.210,lon:21.030,desc:'Most Siekierkowski (N)'},OSCAR:{lat:52.195,lon:21.010,desc:'Czerniakowska Jct (S)'},ECHO:{lat:52.170,lon:20.960,desc:'Marynarska/S79 (SW)'},WHISKEY:{lat:52.155,lon:20.920,desc:'Radar Tower (W)'},ROMEO:{lat:52.145,lon:20.870,desc:'Janki Shopping Centre'},ALFA:{lat:52.260,lon:20.950,desc:'Babice area (NW)'},TANGO:{lat:51.980,lon:20.880,desc:'Tarczyn factory (S)'},GOLF:{lat:52.020,lon:21.220,desc:'Karczew bridge (SE)'},KILO:{lat:52.070,lon:21.180,desc:'Karczew sewage (SE)'},}},
-  EPKK:{n:'Kraków Balice',      lat:50.0778,lon:19.7847,freq:'APP 119.225',rpts:{INDIA:{lat:50.150,lon:19.633,desc:'Krzeszowice mine (NW)'},OSCAR:{lat:50.200,lon:19.883,desc:'Smardzowice church (N)'},SIERRA:{lat:49.983,lon:19.817,desc:'Skawina (S)'},BRAVO:{lat:50.267,lon:19.433,desc:'Bukowno (TMA NW)'},MIKE:{lat:50.350,lon:20.033,desc:'Miechów (TMA NE)'},ROMEO:{lat:49.911,lon:19.413,desc:'Kalwaria (SW)'},UNIFORM:{lat:49.792,lon:19.778,desc:'Wadowice (S)'},DELTA:{lat:49.857,lon:20.142,desc:'Dobczyce (SE)'},}},
-  EPKT:{n:'Katowice Pyrzowice', lat:50.4744,lon:19.0800,freq:'APP 120.625',rpts:{BRAVO:{lat:50.267,lon:19.433,desc:'Bukowno (S)'},CHARLIE:{lat:50.617,lon:18.933,desc:'Koszęcin (N)'},GOLF:{lat:50.383,lon:19.233,desc:'Rogoźnik (SE)'},HOTEL:{lat:50.333,lon:19.100,desc:'Strzemieszyce (S)'},INDIA:{lat:50.150,lon:19.633,desc:'Krzeszowice (SW)'},JULIETT:{lat:50.617,lon:19.450,desc:'Poraj lake (E)'},NOVEMBER:{lat:50.567,lon:19.233,desc:'Zendek (N)'},TANGO:{lat:50.367,lon:18.983,desc:'Bytom Karb (SW)'},WHISKEY:{lat:50.633,lon:19.100,desc:'Woźniki (N)'},XRAY:{lat:50.467,lon:19.167,desc:'Pyrzowice jct (W)'},}},
-  EPGD:{n:'Gdańsk Lech Wałęsa', lat:54.3776,lon:18.4666,freq:'APP 120.500',rpts:{ALFA:{lat:54.450,lon:18.550,desc:'Gulf of Gdańsk (NE)'},BRAVO:{lat:54.400,lon:18.650,desc:'Sopot'},CHARLIE:{lat:54.350,lon:18.700,desc:'Gdynia harbour'},DELTA:{lat:54.300,lon:18.300,desc:'Vistula delta (W)'},ECHO:{lat:54.250,lon:18.450,desc:'Pruszcz Gdański (S)'},FOXTROT:{lat:54.450,lon:18.300,desc:'Reda (NW)'},GOLF:{lat:54.300,lon:18.600,desc:'Gdańsk centre (E)'},}},
-  EPWR:{n:'Wrocław Strachowice', lat:51.1027,lon:16.8858,freq:'APP 120.300',rpts:{ALFA:{lat:51.180,lon:17.050,desc:'Długołęka (NE)'},BRAVO:{lat:51.000,lon:17.050,desc:'Kobierzyce (SE)'},CHARLIE:{lat:51.000,lon:16.700,desc:'Kąty Wrocławskie (SW)'},DELTA:{lat:51.180,lon:16.700,desc:'Brzeg Dolny (NW)'},ECHO:{lat:51.250,lon:16.900,desc:'Oborniki Śląskie (N)'},FOXTROT:{lat:51.050,lon:16.950,desc:'Siechnice (E)'},}},
-  EPPO:{n:'Poznań Ławica',       lat:52.4210,lon:16.8260,freq:'APP 121.300',rpts:{ALFA:{lat:52.550,lon:16.950,desc:'Murowana Goślina (NE)'},BRAVO:{lat:52.280,lon:16.950,desc:'Mosina (SE)'},CHARLIE:{lat:52.280,lon:16.650,desc:'Śrem (SW)'},DELTA:{lat:52.550,lon:16.650,desc:'Szamotuły (NW)'},ECHO:{lat:52.500,lon:17.100,desc:'Skoki (E)'},FOXTROT:{lat:52.400,lon:16.550,desc:'Buk A2 (W)'},}},
-  EPSC:{n:'Szczecin Goleniów',   lat:53.5847,lon:14.9022,freq:'APP 124.900',rpts:{ALFA:{lat:53.700,lon:14.950,desc:'Goleniów town (N)'},BRAVO:{lat:53.650,lon:15.150,desc:'Stargard (E)'},CHARLIE:{lat:53.400,lon:14.800,desc:'Police (SW)'},DELTA:{lat:53.700,lon:14.600,desc:'Wolin island (NW)'},ECHO:{lat:53.450,lon:15.100,desc:'Stare Czarnowo (SE)'},}},
-  EPLL:{n:'Łódź Lublinek',       lat:51.7219,lon:19.3981,freq:'APP 119.700',rpts:{ALFA:{lat:51.820,lon:19.500,desc:'Zgierz (N)'},BRAVO:{lat:51.620,lon:19.500,desc:'Rzgów (SE)'},CHARLIE:{lat:51.620,lon:19.250,desc:'Pabianice (SW)'},DELTA:{lat:51.820,lon:19.250,desc:'Aleksandrów (NW)'},}},
-  EPRZ:{n:'Rzeszów Jasionka',    lat:50.1100,lon:22.0189,freq:'APP 120.175',rpts:{ALFA:{lat:50.200,lon:22.050,desc:'Łańcut (NE)'},BRAVO:{lat:50.000,lon:22.100,desc:'Boguchwała (SE)'},CHARLIE:{lat:50.000,lon:21.900,desc:'Strzyżów road (SW)'},DELTA:{lat:50.200,lon:21.900,desc:'Głogów Mał. (NW)'},}},
-  EPBY:{n:'Bydgoszcz',           lat:53.0968,lon:17.9777,freq:'APP 119.725',rpts:{ALFA:{lat:53.200,lon:18.050,desc:'Szubin (NE)'},BRAVO:{lat:53.000,lon:18.150,desc:'Solec Kujawski (SE)'},CHARLIE:{lat:53.000,lon:17.800,desc:'Koronowo (SW)'},DELTA:{lat:53.200,lon:17.850,desc:'Nakło (NW)'},}},
-  EPRA:{n:'Warszawa Radom',      lat:51.3892,lon:21.2136,freq:'APP 119.200',rpts:{ALFA:{lat:51.500,lon:21.250,desc:'Kozienice (N)'},BRAVO:{lat:51.250,lon:21.400,desc:'Zwoleń (SE)'},CHARLIE:{lat:51.250,lon:21.000,desc:'Jedlińsk (SW)'},DELTA:{lat:51.500,lon:21.000,desc:'Białobrzegi (NW)'},}},
-  EPMO:{n:'Warszawa Modlin',     lat:52.4511,lon:20.6519,freq:'INFO 121.750',rpts:{ALFA:{lat:52.550,lon:20.750,desc:'Ciechanów (N)'},BRAVO:{lat:52.350,lon:20.750,desc:'Nowy Dwór S (SE)'},CHARLIE:{lat:52.350,lon:20.500,desc:'Sochaczew (SW)'},DELTA:{lat:52.550,lon:20.500,desc:'Płońsk (NW)'},ECHO:{lat:52.480,lon:20.950,desc:'Legionowo (E)'},}},
-  LOWW:{n:'Wien Schwechat',      lat:48.1103,lon:16.5697,freq:'APP 128.200',rpts:{NOVEMBER:{lat:48.220,lon:16.400,desc:'Klosterneuburg (N)'},CHARLIE:{lat:48.080,lon:16.300,desc:'Perchtoldsdorf (SW)'},PAPA:{lat:48.200,lon:16.700,desc:'Raasdorf (NE)'},GOLF:{lat:48.000,lon:16.600,desc:'Fischamend (SE)'},SIERRA:{lat:47.980,lon:16.340,desc:'Baden (S)'},INDIA:{lat:48.140,lon:16.200,desc:'Purkersdorf (W)'},}},
-  LOWI:{n:'Innsbruck',           lat:47.2602,lon:11.3439,freq:'APP 120.100',rpts:{MIKE1:{lat:47.310,lon:11.560,desc:'Inn-Tal Ost'},MIKE3:{lat:47.270,lon:11.350,desc:'CTR Ost'},FOXTROT:{lat:47.220,lon:11.550,desc:'Zillertal (S)'},NOVEMBER:{lat:47.390,lon:11.380,desc:'Seefeld (N)'},WHISKEY1:{lat:47.290,lon:11.220,desc:'Inn-Tal West'},}},
-  LOWS:{n:'Salzburg',            lat:47.7933,lon:13.0043,freq:'APP 123.725',rpts:{}},
-  LOGG:{n:'Graz',                lat:46.9911,lon:15.4396,freq:'APP 121.200',rpts:{}},
-  LORK:{n:'Klagenfurt',          lat:46.6425,lon:14.3378,freq:'APP 123.250',rpts:{}},
-  LOKL:{n:'Linz Hörsching',      lat:48.2332,lon:14.1875,freq:'APP 119.225',rpts:{}},
-  LOAN:{n:'Wr. Neustadt Ost',    lat:47.8433,lon:16.2600,freq:'INFO 126.250',rpts:{}},
-  LSZH:{n:'Zürich',              lat:47.4647,lon:8.5492, freq:'APP 118.000',rpts:{}},
-  LSZB:{n:'Bern-Belp',           lat:46.9141,lon:7.4971, freq:'APP 118.000',rpts:{}},
-  EDDM:{n:'München',             lat:48.3538,lon:11.7861,freq:'APP 120.775',rpts:{}},
-  EDDN:{n:'Nürnberg',            lat:49.4987,lon:11.0669,freq:'APP 123.900',rpts:{}},
-  EDDF:{n:'Frankfurt',           lat:50.0333,lon:8.5706, freq:'APP 120.800',rpts:{}},
-  LKPR:{n:'Prag',                lat:50.1008,lon:14.2600,freq:'APP 120.525',rpts:{}},
-  LJLJ:{n:'Ljubljana',           lat:46.2237,lon:14.4576,freq:'APP 119.150',rpts:{}},
-  LDZA:{n:'Zagreb',              lat:45.7429,lon:16.0688,freq:'APP 119.400',rpts:{}},
+  EPWA:{n:'Warszawa Chopin',   lat:52.1651,lon:20.9671,freq:'APP 119.425',rpts:{NOVEMBER:{lat:52.210,lon:21.030,desc:'Most Siekierkowski (N)'},OSCAR:{lat:52.195,lon:21.010,desc:'Czerniakowska Jct (S)'},ECHO:{lat:52.170,lon:20.960,desc:'Marynarska/S79 (SW)'},WHISKEY:{lat:52.155,lon:20.920,desc:'Radar Tower (W)'},ROMEO:{lat:52.145,lon:20.870,desc:'Janki Shopping Centre'},ALFA:{lat:52.260,lon:20.950,desc:'Babice area (NW)'},TANGO:{lat:51.980,lon:20.880,desc:'Tarczyn factory (S)'},GOLF:{lat:52.020,lon:21.220,desc:'Karczew bridge (SE)'},KILO:{lat:52.070,lon:21.180,desc:'Karczew sewage (SE)'}}},
+  EPKK:{n:'Kraków Balice',     lat:50.0778,lon:19.7847,freq:'APP 119.225',rpts:{INDIA:{lat:50.150,lon:19.633,desc:'Krzeszowice mine (NW)'},OSCAR:{lat:50.200,lon:19.883,desc:'Smardzowice church (N)'},SIERRA:{lat:49.983,lon:19.817,desc:'Skawina (S)'},BRAVO:{lat:50.267,lon:19.433,desc:'Bukowno (TMA NW)'},MIKE:{lat:50.350,lon:20.033,desc:'Miechów (TMA NE)'},ROMEO:{lat:49.911,lon:19.413,desc:'Kalwaria (SW)'},UNIFORM:{lat:49.792,lon:19.778,desc:'Wadowice (S)'},DELTA:{lat:49.857,lon:20.142,desc:'Dobczyce (SE)'}}},
+  EPKT:{n:'Katowice Pyrzowice',lat:50.4744,lon:19.0800,freq:'APP 120.625',rpts:{BRAVO:{lat:50.267,lon:19.433,desc:'Bukowno (S)'},CHARLIE:{lat:50.617,lon:18.933,desc:'Koszęcin (N)'},GOLF:{lat:50.383,lon:19.233,desc:'Rogoźnik (SE)'},HOTEL:{lat:50.333,lon:19.100,desc:'Strzemieszyce (S)'},INDIA:{lat:50.150,lon:19.633,desc:'Krzeszowice (SW)'},JULIETT:{lat:50.617,lon:19.450,desc:'Poraj lake (E)'},NOVEMBER:{lat:50.567,lon:19.233,desc:'Zendek (N)'},TANGO:{lat:50.367,lon:18.983,desc:'Bytom Karb (SW)'},WHISKEY:{lat:50.633,lon:19.100,desc:'Woźniki (N)'},XRAY:{lat:50.467,lon:19.167,desc:'Pyrzowice jct (W)'}}},
+  EPGD:{n:'Gdańsk Lech Wałęsa',lat:54.3776,lon:18.4666,freq:'APP 120.500',rpts:{ALFA:{lat:54.450,lon:18.550,desc:'Gulf of Gdańsk (NE)'},BRAVO:{lat:54.400,lon:18.650,desc:'Sopot'},CHARLIE:{lat:54.350,lon:18.700,desc:'Gdynia harbour'},DELTA:{lat:54.300,lon:18.300,desc:'Vistula delta (W)'},ECHO:{lat:54.250,lon:18.450,desc:'Pruszcz Gdański (S)'},FOXTROT:{lat:54.450,lon:18.300,desc:'Reda (NW)'},GOLF:{lat:54.300,lon:18.600,desc:'Gdańsk centre (E)'}}},
+  EPWR:{n:'Wrocław Strachowice',lat:51.1027,lon:16.8858,freq:'APP 120.300',rpts:{ALFA:{lat:51.180,lon:17.050,desc:'Długołęka (NE)'},BRAVO:{lat:51.000,lon:17.050,desc:'Kobierzyce (SE)'},CHARLIE:{lat:51.000,lon:16.700,desc:'Kąty Wrocławskie (SW)'},DELTA:{lat:51.180,lon:16.700,desc:'Brzeg Dolny (NW)'},ECHO:{lat:51.250,lon:16.900,desc:'Oborniki Śląskie (N)'},FOXTROT:{lat:51.050,lon:16.950,desc:'Siechnice (E)'}}},
+  EPPO:{n:'Poznań Ławica',      lat:52.4210,lon:16.8260,freq:'APP 121.300',rpts:{ALFA:{lat:52.550,lon:16.950,desc:'Murowana Goślina (NE)'},BRAVO:{lat:52.280,lon:16.950,desc:'Mosina (SE)'},CHARLIE:{lat:52.280,lon:16.650,desc:'Śrem (SW)'},DELTA:{lat:52.550,lon:16.650,desc:'Szamotuły (NW)'},ECHO:{lat:52.500,lon:17.100,desc:'Skoki (E)'},FOXTROT:{lat:52.400,lon:16.550,desc:'Buk A2 (W)'}}},
+  EPSC:{n:'Szczecin Goleniów',  lat:53.5847,lon:14.9022,freq:'APP 124.900',rpts:{ALFA:{lat:53.700,lon:14.950,desc:'Goleniów town (N)'},BRAVO:{lat:53.650,lon:15.150,desc:'Stargard (E)'},CHARLIE:{lat:53.400,lon:14.800,desc:'Police (SW)'},DELTA:{lat:53.700,lon:14.600,desc:'Wolin island (NW)'},ECHO:{lat:53.450,lon:15.100,desc:'Stare Czarnowo (SE)'}}},
+  EPLL:{n:'Łódź Lublinek',      lat:51.7219,lon:19.3981,freq:'APP 119.700',rpts:{ALFA:{lat:51.820,lon:19.500,desc:'Zgierz (N)'},BRAVO:{lat:51.620,lon:19.500,desc:'Rzgów (SE)'},CHARLIE:{lat:51.620,lon:19.250,desc:'Pabianice (SW)'},DELTA:{lat:51.820,lon:19.250,desc:'Aleksandrów (NW)'}}},
+  EPRZ:{n:'Rzeszów Jasionka',   lat:50.1100,lon:22.0189,freq:'APP 120.175',rpts:{ALFA:{lat:50.200,lon:22.050,desc:'Łańcut (NE)'},BRAVO:{lat:50.000,lon:22.100,desc:'Boguchwała (SE)'},CHARLIE:{lat:50.000,lon:21.900,desc:'Strzyżów (SW)'},DELTA:{lat:50.200,lon:21.900,desc:'Głogów Mał. (NW)'}}},
+  EPBY:{n:'Bydgoszcz',          lat:53.0968,lon:17.9777,freq:'APP 119.725',rpts:{ALFA:{lat:53.200,lon:18.050,desc:'Szubin (NE)'},BRAVO:{lat:53.000,lon:18.150,desc:'Solec Kujawski (SE)'},CHARLIE:{lat:53.000,lon:17.800,desc:'Koronowo (SW)'},DELTA:{lat:53.200,lon:17.850,desc:'Nakło (NW)'}}},
+  EPRA:{n:'Warszawa Radom',     lat:51.3892,lon:21.2136,freq:'APP 119.200',rpts:{ALFA:{lat:51.500,lon:21.250,desc:'Kozienice (N)'},BRAVO:{lat:51.250,lon:21.400,desc:'Zwoleń (SE)'},CHARLIE:{lat:51.250,lon:21.000,desc:'Jedlińsk (SW)'},DELTA:{lat:51.500,lon:21.000,desc:'Białobrzegi (NW)'}}},
+  EPMO:{n:'Warszawa Modlin',    lat:52.4511,lon:20.6519,freq:'INFO 121.750',rpts:{ALFA:{lat:52.550,lon:20.750,desc:'Ciechanów (N)'},BRAVO:{lat:52.350,lon:20.750,desc:'Nowy Dwór S (SE)'},CHARLIE:{lat:52.350,lon:20.500,desc:'Sochaczew (SW)'},DELTA:{lat:52.550,lon:20.500,desc:'Płońsk (NW)'},ECHO:{lat:52.480,lon:20.950,desc:'Legionowo (E)'}}},
+  LOWW:{n:'Wien Schwechat',     lat:48.1103,lon:16.5697,freq:'APP 128.200',rpts:{NOVEMBER:{lat:48.220,lon:16.400,desc:'Klosterneuburg (N)'},CHARLIE:{lat:48.080,lon:16.300,desc:'Perchtoldsdorf (SW)'},PAPA:{lat:48.200,lon:16.700,desc:'Raasdorf (NE)'},GOLF:{lat:48.000,lon:16.600,desc:'Fischamend (SE)'},SIERRA:{lat:47.980,lon:16.340,desc:'Baden (S)'},INDIA:{lat:48.140,lon:16.200,desc:'Purkersdorf (W)'}}},
+  LOWI:{n:'Innsbruck',          lat:47.2602,lon:11.3439,freq:'APP 120.100',rpts:{MIKE1:{lat:47.310,lon:11.560,desc:'Inn-Tal Ost'},MIKE3:{lat:47.270,lon:11.350,desc:'CTR Ost'},FOXTROT:{lat:47.220,lon:11.550,desc:'Zillertal (S)'},NOVEMBER:{lat:47.390,lon:11.380,desc:'Seefeld (N)'},WHISKEY1:{lat:47.290,lon:11.220,desc:'Inn-Tal West'}}},
+  LOWS:{n:'Salzburg',           lat:47.7933,lon:13.0043,freq:'APP 123.725',rpts:{}},
+  LOGG:{n:'Graz',               lat:46.9911,lon:15.4396,freq:'APP 121.200',rpts:{}},
+  LORK:{n:'Klagenfurt',         lat:46.6425,lon:14.3378,freq:'APP 123.250',rpts:{}},
+  LOKL:{n:'Linz Hörsching',     lat:48.2332,lon:14.1875,freq:'APP 119.225',rpts:{}},
+  LOAN:{n:'Wr. Neustadt Ost',   lat:47.8433,lon:16.2600,freq:'INFO 126.250',rpts:{}},
+  LSZH:{n:'Zürich',             lat:47.4647,lon:8.5492, freq:'APP 118.000',rpts:{}},
+  LSZB:{n:'Bern-Belp',          lat:46.9141,lon:7.4971, freq:'APP 118.000',rpts:{}},
+  EDDM:{n:'München',            lat:48.3538,lon:11.7861,freq:'APP 120.775',rpts:{}},
+  EDDN:{n:'Nürnberg',           lat:49.4987,lon:11.0669,freq:'APP 123.900',rpts:{}},
+  EDDF:{n:'Frankfurt',          lat:50.0333,lon:8.5706, freq:'APP 120.800',rpts:{}},
+  LKPR:{n:'Prag',               lat:50.1008,lon:14.2600,freq:'APP 120.525',rpts:{}},
+  LJLJ:{n:'Ljubljana',          lat:46.2237,lon:14.4576,freq:'APP 119.150',rpts:{}},
+  LDZA:{n:'Zagreb',             lat:45.7429,lon:16.0688,freq:'APP 119.400',rpts:{}},
 };
 
-// ══════════════════════════════════════════════════════
-//  AUTOCOMPLETE AIRPORT DB  (~80 airports)
-// ══════════════════════════════════════════════════════
+// AUTOCOMPLETE DB
 var ACA=[
   {i:'EPWA',n:'Warszawa Chopin',c:'Warszawa',f:'🇵🇱'},{i:'EPMO',n:'Warszawa Modlin',c:'Modlin',f:'🇵🇱'},
   {i:'EPRA',n:'Radom Sadków',c:'Radom',f:'🇵🇱'},{i:'EPKK',n:'Kraków Balice',c:'Kraków',f:'🇵🇱'},
@@ -806,87 +655,37 @@ var ACA=[
   {i:'EPLB',n:'Lublin',c:'Lublin',f:'🇵🇱'},{i:'EPZG',n:'Zielona Góra Babimost',c:'Zielona Góra',f:'🇵🇱'},
   {i:'EPMM',n:'Mielec',c:'Mielec',f:'🇵🇱'},{i:'EPKS',n:'Krosno',c:'Krosno',f:'🇵🇱'},
   {i:'EPSY',n:'Szymany Mazury',c:'Szczytno',f:'🇵🇱'},{i:'EPCN',n:'Częstochowa Rudniki',c:'Częstochowa',f:'🇵🇱'},
-  {i:'EPDE',n:'Dęblin',c:'Dęblin',f:'🇵🇱'},{i:'EPOK',n:'Ostrów Maz.',c:'Ostrów Maz.',f:'🇵🇱'},
-  {i:'EPHY',n:'Nowy Targ',c:'Nowy Targ',f:'🇵🇱'},{i:'EPLK',n:'Leszno Strzyżewice',c:'Leszno',f:'🇵🇱'},
-  {i:'EPGM',n:'Grudziądz',c:'Grudziądz',f:'🇵🇱'},{i:'EPPG',n:'Piła',c:'Piła',f:'🇵🇱'},
-  {i:'EPKN',n:'Kętrzyn Wilamowo',c:'Kętrzyn',f:'🇵🇱'},{i:'EPST',n:'Stalowa Wola',c:'Stalowa Wola',f:'🇵🇱'},
+  {i:'EPDE',n:'Dęblin',c:'Dęblin',f:'🇵🇱'},{i:'EPHY',n:'Nowy Targ',c:'Nowy Targ',f:'🇵🇱'},
+  {i:'EPLK',n:'Leszno',c:'Leszno',f:'🇵🇱'},{i:'EPPG',n:'Piła',c:'Piła',f:'🇵🇱'},
   {i:'LOWW',n:'Wien Schwechat',c:'Wien',f:'🇦🇹'},{i:'LOWI',n:'Innsbruck',c:'Innsbruck',f:'🇦🇹'},
   {i:'LOWS',n:'Salzburg',c:'Salzburg',f:'🇦🇹'},{i:'LOGG',n:'Graz',c:'Graz',f:'🇦🇹'},
   {i:'LORK',n:'Klagenfurt',c:'Klagenfurt',f:'🇦🇹'},{i:'LOKL',n:'Linz Hörsching',c:'Linz',f:'🇦🇹'},
-  {i:'LOAN',n:'Wr. Neustadt Ost',c:'Wr. Neustadt',f:'🇦🇹'},{i:'LOAV',n:'Vöslau',c:'Bad Vöslau',f:'🇦🇹'},
   {i:'LSZH',n:'Zürich',c:'Zürich',f:'🇨🇭'},{i:'LSZB',n:'Bern-Belp',c:'Bern',f:'🇨🇭'},
-  {i:'LSGG',n:'Genf Cointrin',c:'Genf',f:'🇨🇭'},{i:'LSZA',n:'Lugano',c:'Lugano',f:'🇨🇭'},
+  {i:'LSGG',n:'Genf Cointrin',c:'Genf',f:'🇨🇭'},
   {i:'EDDM',n:'München Franz Josef Strauß',c:'München',f:'🇩🇪'},{i:'EDDN',n:'Nürnberg',c:'Nürnberg',f:'🇩🇪'},
   {i:'EDDF',n:'Frankfurt Main',c:'Frankfurt',f:'🇩🇪'},{i:'EDDL',n:'Düsseldorf',c:'Düsseldorf',f:'🇩🇪'},
   {i:'EDDB',n:'Berlin Brandenburg',c:'Berlin',f:'🇩🇪'},{i:'EDDH',n:'Hamburg',c:'Hamburg',f:'🇩🇪'},
-  {i:'EDDS',n:'Stuttgart',c:'Stuttgart',f:'🇩🇪'},{i:'EDDK',n:'Köln Bonn',c:'Köln',f:'🇩🇪'},
   {i:'LKPR',n:'Prag Václav Havel',c:'Prag',f:'🇨🇿'},{i:'LKMT',n:'Ostrava Mošnov',c:'Ostrava',f:'🇨🇿'},
-  {i:'LKPD',n:'Pardubice',c:'Pardubice',f:'🇨🇿'},{i:'LZIB',n:'Bratislava',c:'Bratislava',f:'🇸🇰'},
-  {i:'LZKZ',n:'Košice',c:'Košice',f:'🇸🇰'},{i:'LJLJ',n:'Ljubljana',c:'Ljubljana',f:'🇸🇮'},
-  {i:'LDZA',n:'Zagreb',c:'Zagreb',f:'🇭🇷'},{i:'LDSP',n:'Split',c:'Split',f:'🇭🇷'},
-  {i:'LHBP',n:'Budapest Liszt Ferenc',c:'Budapest',f:'🇭🇺'},
-  {i:'LFLP',n:'Annecy',c:'Annecy',f:'🇫🇷'},{i:'LFMN',n:'Nizza',c:'Nizza',f:'🇫🇷'},
-  {i:'LYBE',n:'Belgrad Nikola Tesla',c:'Belgrad',f:'🇷🇸'},
+  {i:'LZIB',n:'Bratislava',c:'Bratislava',f:'🇸🇰'},{i:'LJLJ',n:'Ljubljana',c:'Ljubljana',f:'🇸🇮'},
+  {i:'LDZA',n:'Zagreb',c:'Zagreb',f:'🇭🇷'},{i:'LHBP',n:'Budapest Liszt Ferenc',c:'Budapest',f:'🇭🇺'},
+  {i:'LFLP',n:'Annecy',c:'Annecy',f:'🇫🇷'},{i:'LYBE',n:'Belgrad',c:'Belgrad',f:'🇷🇸'},
 ];
 
-// ── Autocomplete logic ──────────────────────────────
-var acIdx = -1;
-function acSearch(q){
-  q=q.toUpperCase().trim();
-  if(q.length<2) return [];
-  return ACA.filter(function(a){
-    return a.i.startsWith(q)||a.n.toUpperCase().indexOf(q)>=0||a.c.toUpperCase().indexOf(q)>=0;
-  }).slice(0,5);
-}
-function acShow(inpId,dropId){
-  var inp=document.getElementById(inpId);
-  var drop=document.getElementById(dropId);
-  var results=acSearch(inp.value);
-  if(!results.length){drop.style.display='none';return;}
-  acIdx=-1;
-  drop.innerHTML=results.map(function(a,i){
-    return '<div class="ac-item" data-icao="'+a.i+'" data-i="'+i+'"'+
-      ' onmousedown="acPick(\''+inpId+'\',\''+dropId+'\',\''+a.i+'\')"'+
-      ' onmouseover="acHi(this,\''+dropId+'\')">'+
-      '<span class="ac-code">'+a.i+'</span>'+
-      '<span class="ac-nm">'+a.n+'</span>'+
-      '<span class="ac-flag">'+a.f+'</span>'+
-      '</div>';
-  }).join('');
-  drop.style.display='block';
-}
-function acHi(el,dropId){
-  document.querySelectorAll('#'+dropId+' .ac-item').forEach(function(e){e.classList.remove('hi');});
-  el.classList.add('hi');
-  acIdx=parseInt(el.dataset.i);
-}
-function acPick(inpId,dropId,icao){
-  document.getElementById(inpId).value=icao;
-  document.getElementById(dropId).style.display='none';
-  acIdx=-1;
-}
+var acIdx=-1;
+function acSearch(q){q=q.toUpperCase().trim();if(q.length<2)return[];return ACA.filter(function(a){return a.i.startsWith(q)||a.n.toUpperCase().indexOf(q)>=0||a.c.toUpperCase().indexOf(q)>=0;}).slice(0,5);}
+function acShow(inpId,dropId){var inp=document.getElementById(inpId);var drop=document.getElementById(dropId);var res=acSearch(inp.value);if(!res.length){drop.style.display='none';return;}acIdx=-1;drop.innerHTML=res.map(function(a,i){return '<div class="ac-item" data-icao="'+a.i+'" data-i="'+i+'" onmousedown="acPick(\''+inpId+'\',\''+dropId+'\',\''+a.i+'\')" onmouseover="acHi(this,\''+dropId+'\')"><span class="ac-code">'+a.i+'</span><span class="ac-nm">'+a.n+'</span><span class="ac-flag">'+a.f+'</span></div>';}).join('');drop.style.display='block';}
+function acHi(el,dropId){document.querySelectorAll('#'+dropId+' .ac-item').forEach(function(e){e.classList.remove('hi');});el.classList.add('hi');acIdx=parseInt(el.dataset.i);}
+function acPick(inpId,dropId,icao){document.getElementById(inpId).value=icao;document.getElementById(dropId).style.display='none';acIdx=-1;}
 function acHide(dropId){setTimeout(function(){var d=document.getElementById(dropId);if(d)d.style.display='none';},200);}
-function acKeys(e,inpId,dropId){
-  var drop=document.getElementById(dropId);
-  var items=drop.querySelectorAll('.ac-item');
-  if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);items.forEach(function(el,i){el.classList.toggle('hi',i===acIdx);});}
-  else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,-1);items.forEach(function(el,i){el.classList.toggle('hi',i===acIdx);});}
-  else if(e.key==='Enter'){
-    if(acIdx>=0&&items[acIdx]){e.preventDefault();acPick(inpId,dropId,items[acIdx].dataset.icao);}
-    else{drop.style.display='none';plan();}
-  }
-  else if(e.key==='Escape'){drop.style.display='none';}
-}
+function acKeys(e,inpId,dropId){var drop=document.getElementById(dropId);var items=drop.querySelectorAll('.ac-item');if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);items.forEach(function(el,i){el.classList.toggle('hi',i===acIdx);});}else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,-1);items.forEach(function(el,i){el.classList.toggle('hi',i===acIdx);});}else if(e.key==='Enter'){if(acIdx>=0&&items[acIdx]){e.preventDefault();acPick(inpId,dropId,items[acIdx].dataset.icao);}else{drop.style.display='none';plan();}}else if(e.key==='Escape'){drop.style.display='none';}}
 
-// ══════════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════════
+// STATE
 var dmk=null,amk=null,rln=null,wptMks=[],zps=[];
 var PS={dep:null,arr:null,route:null,lastData:null};
+var routeLocked=false;
+var sidebarOpen=true;
 
-// ══════════════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════════════
+// HELPERS
 function tog(id){document.getElementById(id).classList.toggle('open');}
 function opn(id){document.getElementById(id).classList.add('open');}
 function showOv(t){document.getElementById('ov').style.display='flex';document.getElementById('ovS').textContent=t||'...';}
@@ -897,57 +696,57 @@ function d2r(d){return d*Math.PI/180;}
 function nmDist(a,b){var R=3440.065,dl=d2r(b.lat-a.lat),dn=d2r(b.lon-a.lon);var x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(d2r(a.lat))*Math.cos(d2r(b.lat))*Math.sin(dn/2)*Math.sin(dn/2);return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 function brng(a,b){var dl=d2r(b.lon-a.lon),la1=d2r(a.lat),la2=d2r(b.lat);return((Math.atan2(Math.sin(dl)*Math.cos(la2),Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dl))*180/Math.PI)+360)%360;}
 
-// ══════════════════════════════════════════════════════
-//  AIRCRAFT UI
-// ══════════════════════════════════════════════════════
+// SIDEBAR TOGGLE
+function toggleSidebar(){
+  var sb=document.querySelector('.sidebar');
+  var btn=document.getElementById('sbToggle');
+  sidebarOpen=!sidebarOpen;
+  sb.classList.toggle('collapsed',!sidebarOpen);
+  btn.classList.toggle('closed',!sidebarOpen);
+  btn.textContent=sidebarOpen?'◀':'▶';
+  btn.title=sidebarOpen?'Sidebar einklappen':'Sidebar ausklappen';
+  // Move button left when closed (CSS transition handles the animation)
+  btn.style.left=sidebarOpen?'var(--sb-w)':'0';
+  setTimeout(function(){map.invalidateSize();},320);
+}
+
+// LOCK
+function toggleLock(){
+  routeLocked=!routeLocked;
+  var btn=document.getElementById('lockBtn');
+  if(!btn)return;
+  btn.textContent=routeLocked?'🔒 Wegpunkte gesperrt':'🔓 Wegpunkte bearbeitbar';
+  btn.classList.toggle('locked',routeLocked);
+  if(PS.route&&PS.route.length)drawRoute(PS.route);
+  if(PS.route&&PS.lastData)renderRouteDetails(PS.route,PS.lastData.perf);
+}
+
+// AIRCRAFT UI
 function buildAcGrid(){document.getElementById('acGrid').innerHTML=AIRCRAFT.map(function(ac){return '<div class="ac-card'+(ac.id===selAC.id?' sel':'')+'" onclick="pickAC(\''+ac.id+'\')"><div class="ac-ico">'+ac.ico+'</div><div class="ac-name">'+ac.nm+'</div><div class="ac-type">'+ac.tp+'</div></div>';}).join('');}
 function pickAC(id){selAC=AIRCRAFT.find(function(a){return a.id===id;})||AIRCRAFT[0];buildAcGrid();document.getElementById('pCruise').value=selAC.cruise;document.getElementById('pFuel').value=selAC.fuel;document.getElementById('pTanks').value=selAC.tanks;if(selAC.id==='at3')document.getElementById('pReg').value='SP-TPF';if(gUser)setTimeout(saveUserSettings,200);}
 function getPerf(){return{cruise:parseInt(document.getElementById('pCruise').value)||108,fuel:parseFloat(document.getElementById('pFuel').value)||18,tanks:parseInt(document.getElementById('pTanks').value)||65,reg:document.getElementById('pReg').value.trim()||'SP-TPF'};}
 
-// ══════════════════════════════════════════════════════
-//  ROUTING
-// ══════════════════════════════════════════════════════
+// ROUTING
 function closestRpt(rpts,airport,target,incoming){var keys=Object.keys(rpts);if(!keys.length)return null;var tb=brng(airport,target),best=null,bs=999;keys.forEach(function(k){var r=rpts[k],rb=brng(airport,r),d=Math.abs(tb-rb);if(d>180)d=360-d;if(incoming)d=Math.abs(180-d);if(d<bs){bs=d;best={name:k,lat:r.lat,lon:r.lon,desc:r.desc};}});return best;}
 function cparam(a,b,p){var dx=b.lon-a.lon,dy=b.lat-a.lat,l=dx*dx+dy*dy;if(!l)return 0;return Math.max(0,Math.min(1,((p.lon-a.lon)*dx+(p.lat-a.lat)*dy)/l));}
 function enrouteCTRs(dep,arr){var r=[];Object.keys(AP).forEach(function(ic){if(ic===dep.icao||ic===arr.icao)return;var ap=AP[ic];if(!ap.rpts||!Object.keys(ap.rpts).length)return;var t=cparam(dep,arr,ap);if(t<=0.05||t>=0.95)return;var cp={lat:dep.lat+(arr.lat-dep.lat)*t,lon:dep.lon+(arr.lon-dep.lon)*t};if(nmDist(cp,ap)<25)r.push(ic);});return r;}
 function computeRoute(dep,arr,rt){var base=[{name:dep.icao,lat:dep.lat,lon:dep.lon,type:'apt',color:'#00ff9f',desc:dep.name||dep.icao},{name:arr.icao,lat:arr.lat,lon:arr.lon,type:'apt',color:'#ff6b35',desc:arr.name||arr.icao}];if(rt==='direct')return base;var route=[base[0]];var dR=AP[dep.icao]&&AP[dep.icao].rpts||{},aR=AP[arr.icao]&&AP[arr.icao].rpts||{};var dE=closestRpt(dR,dep,arr,false);if(dE)route.push({name:dE.name,lat:dE.lat,lon:dE.lon,type:'rpt',color:'#ffd60a',desc:dE.desc,icao:dep.icao});enrouteCTRs(dep,arr).forEach(function(ci){var cAP=AP[ci];if(!cAP||!cAP.rpts)return;var en=closestRpt(cAP.rpts,cAP,dep,true),ex=closestRpt(cAP.rpts,cAP,arr,false);if(en)route.push({name:en.name,lat:en.lat,lon:en.lon,type:'rpt',color:'#a78bfa',desc:en.desc+' ('+ci+' Entry)',icao:ci});if(ex)route.push({name:ex.name,lat:ex.lat,lon:ex.lon,type:'rpt',color:'#a78bfa',desc:ex.desc+' ('+ci+' Exit)',icao:ci});});var aE=closestRpt(aR,arr,dep,true);if(aE)route.push({name:aE.name,lat:aE.lat,lon:aE.lon,type:'rpt',color:'#ffd60a',desc:aE.desc,icao:arr.icao});route.push(base[1]);var mid=route.slice(1,route.length-1);mid.sort(function(a,b){return nmDist(dep,a)-nmDist(dep,b);});var seen={};return[base[0]].concat(mid.filter(function(w){var k=w.lat.toFixed(3)+','+w.lon.toFixed(3);if(seen[k])return false;seen[k]=true;return true;})).concat([base[1]]);}
 
-// ══════════════════════════════════════════════════════
-//  WEATHER
-// ══════════════════════════════════════════════════════
-// Airports without live METAR → fall back to EPWA
+// WEATHER
 var NO_METAR=['EPBC','EPNC','EPLB','EPOL','EPZG','EPKP','EPMM','EPPG','EPKS','EPCN','EPDE','EPOK','EPST','EPHY','EPGM','EPKN','EPLK'];
 function wxIcao(icao){return NO_METAR.indexOf(icao)>=0?'EPWA':icao;}
-
 async function fetchWx(icao){
   var dispIcao=wxIcao(icao);
   var key=document.getElementById('cwxKey').value.trim()||lsGet('checkwx_key');
-  if(key){
-    try{
-      var rm=await fetch('https://api.checkwx.com/metar/'+dispIcao+'/decoded',{headers:{'X-API-Key':key}});
-      var dm=rm.ok?await rm.json():null;
-      var metar=dm&&dm.data&&dm.data[0]?dm.data[0].raw_text:null;
-      var decoded=dm&&dm.data&&dm.data[0]?dm.data[0]:null;
-      var fc=decoded?decoded.flight_category:null;
-      var taf=null;
-      try{var rt=await fetch('https://api.checkwx.com/taf/'+dispIcao+'/decoded',{headers:{'X-API-Key':key}});var dt=rt.ok?await rt.json():null;taf=dt&&dt.data&&dt.data[0]?dt.data[0].raw_text:null;}catch(e){}
-      if(metar)return{metar:metar,taf:taf,decoded:decoded,flightCat:fc,icao:dispIcao,orig:icao,src:'CheckWX'};
-    }catch(e){}
-  }
+  if(key){try{var rm=await fetch('https://api.checkwx.com/metar/'+dispIcao+'/decoded',{headers:{'X-API-Key':key}});var dm=rm.ok?await rm.json():null;var metar=dm&&dm.data&&dm.data[0]?dm.data[0].raw_text:null;var decoded=dm&&dm.data&&dm.data[0]?dm.data[0]:null;var fc=decoded?decoded.flight_category:null;var taf=null;try{var rt=await fetch('https://api.checkwx.com/taf/'+dispIcao+'/decoded',{headers:{'X-API-Key':key}});var dt=rt.ok?await rt.json():null;taf=dt&&dt.data&&dt.data[0]?dt.data[0].raw_text:null;}catch(e){}if(metar)return{metar:metar,taf:taf,decoded:decoded,flightCat:fc,icao:dispIcao,orig:icao,src:'CheckWX'};}catch(e){}}
   var metar=null,taf=null;
   try{var r=await fetch('https://aviationweather.gov/api/data/metar?ids='+dispIcao+'&format=raw&taf=false&hours=2');if(r.ok){var t=await r.text();var l=t.trim().split('\n').filter(function(x){return x.trim()&&!x.startsWith('#');});if(l.length)metar=l[0].trim();}}catch(e){}
   try{var r2=await fetch('https://aviationweather.gov/api/data/taf?ids='+dispIcao+'&format=raw');if(r2.ok){var t2=await r2.text();var l2=t2.trim().split('\n').filter(function(x){return x.trim()&&!x.startsWith('#');});if(l2.length)taf=l2.slice(0,8).join('\n').trim();}}catch(e){}
   return{metar:metar,taf:taf,decoded:null,flightCat:null,icao:dispIcao,orig:icao,src:metar?'aviationweather.gov':'–'};
 }
-
 function vfrCls(wx){if(wx.flightCat){var f=wx.flightCat.toLowerCase();return f==='lifr'?'ifr':f;}var m=wx.metar;if(!m)return 'unknown';if(/\bCAVOK\b/.test(m))return 'vfr';var vm=m.match(/\b(\d{4})\b/);var vis=vm?parseInt(vm[1]):9999;if(vis<1500||/\bOVC00[0-3]\b/.test(m))return 'ifr';if(vis<5000||/\bBKN0[0-3]\d\b/.test(m))return 'mvfr';return 'vfr';}
-
 function wxChips(wx){var cls=vfrCls(wx);var cn=cls==='vfr'?'c-vfr':cls==='mvfr'?'c-mvfr':'c-ifr';var lb=cls==='vfr'?'✅ VFR':cls==='mvfr'?'⚠️ MVFR':'❌ IFR';var r='<div class="chip"><span class="v '+cn+'">'+lb+'</span></div>';if(!wx.metar)return r;var m=wx.metar;var w=m.match(/\b(\d{3}|VRB)(\d{2,3})(G\d{2,3})?KT\b/);if(w)r+='<div class="chip">🌬️ <span class="v">'+w[1]+'°/'+w[2]+(w[3]||'')+'kt</span></div>';if(/\bCAVOK\b/.test(m))r+='<div class="chip">👁️ <span class="v c-vfr">CAVOK</span></div>';else{var vi=m.match(/\b(\d{4})\b/);if(vi)r+='<div class="chip">👁️ <span class="v">'+(parseInt(vi[1])/1000).toFixed(1)+'km</span></div>';(m.match(/\b(FEW|SCT|BKN|OVC)\d{3}\b/g)||[]).forEach(function(c){r+='<div class="chip">☁️ <span class="v">'+c+'</span></div>';});}var td=m.match(/\b(M?\d{2})\/(M?\d{2})\b/);if(td)r+='<div class="chip">🌡️ <span class="v">'+td[1]+'°/'+td[2]+'°</span></div>';var q=m.match(/\bQ(\d{4})\b/);if(q)r+='<div class="chip">🔵 <span class="v">QNH '+q[1]+'</span></div>';return r;}
-
 function wxDecTable(decoded){if(!decoded)return '';var rows=[],dc=decoded;if(dc.wind)rows.push(['Wind',(dc.wind.degrees||'VRB')+'° / '+(dc.wind.speed_kts||'–')+' kt'+(dc.wind.gust_kts?' G'+dc.wind.gust_kts+'kt':'')]);if(dc.visibility){var vm=dc.visibility.meters_float;rows.push(['Sicht',vm>=9999?'10+ km':(vm/1000).toFixed(1)+' km']);}if(dc.clouds&&dc.clouds.length)rows.push(['Wolken',dc.clouds.map(function(cl){return cl.code+' '+(cl.base_feet_agl||'–')+'ft';}).join(' · ')]);if(dc.temperature)rows.push(['Temp/Tau',dc.temperature.celsius+'°C / '+(dc.dewpoint?dc.dewpoint.celsius:'–')+'°C']);if(dc.barometer)rows.push(['QNH',dc.barometer.hpa+' hPa']);if(!rows.length)return '';return '<table class="wx-dec">'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join('')+'</table>';}
-
-// metar-taf: using direct links only
-
 function renderWx(elId,origIcao,name,wx,type){
   var el=document.getElementById(elId);
   var dispIcao=wx.icao||origIcao;
@@ -956,121 +755,77 @@ function renderWx(elId,origIcao,name,wx,type){
   var typeCol=type==='dep'?'var(--gn)':'var(--a2)';
   var typeLbl=type==='dep'?'▲ ABFLUG':'▼ ZIEL';
   var decoded=wxDecTable(wx.decoded);
-
-  // Clean metar-taf link (no widget, no embedded script)
   var fbNote=isFallback?'<span style="font-family:var(--mono);font-size:.58rem;color:var(--yw);"> (Daten von '+esc(dispIcao)+')</span>':'';
-  // Link always uses origIcao so EPBC links to EPBC, not EPWA
-  var mtafLink=
-    '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+  // Link always uses origIcao
+  var mtafLink='<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
     '<a href="https://metar-taf.com/de/metar/'+origIcao+'" target="_blank" '+
-       'style="font-family:var(--mono);font-size:.68rem;display:inline-flex;align-items:center;gap:5px;'+
-       'background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);padding:4px 10px;border-radius:4px;">'+
-    '🌐 metar-taf.com/'+esc(origIcao)+'</a>'+
-    fbNote+
-    '</div>';
-
-  var html=
-    '<div class="wxcard '+type+'">'+
-    '<div class="wxh"><span class="icaob">'+esc(origIcao)+'</span>'+
+    'style="font-family:var(--mono);font-size:.68rem;display:inline-flex;align-items:center;gap:5px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);padding:4px 10px;border-radius:4px;">'+
+    '🌐 metar-taf.com/'+esc(origIcao)+'</a>'+fbNote+'</div>';
+  var html='<div class="wxcard '+type+'"><div class="wxh"><span class="icaob">'+esc(origIcao)+'</span>'+
     '<div><div style="font-family:var(--mono);font-size:.58rem;color:'+typeCol+';">'+typeLbl+'</div>'+
     '<div style="font-size:.72rem;color:var(--mt);">'+esc(name||origIcao)+'</div></div>'+srcBadge+'</div>';
-  if(wx.metar){
-    html+='<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">METAR RAW</div>'+
-      '<div class="wx-raw">'+esc(wx.metar)+'</div>'+
-      '<div class="chips">'+wxChips(wx)+'</div>'+decoded;
-  }
+  if(wx.metar){html+='<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">METAR RAW</div><div class="wx-raw">'+esc(wx.metar)+'</div><div class="chips">'+wxChips(wx)+'</div>'+decoded;}
   if(wx.taf){html+='<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;margin-top:6px;">TAF</div><div class="wx-raw">'+esc(wx.taf)+'</div>';}
   if(!wx.metar&&!wx.taf){html+='<div style="color:var(--mt);font-size:.74rem;margin:6px 0;">⚠️ Keine Wetterdaten verfügbar</div>';}
   html+=mtafLink+'</div>';
   el.innerHTML=html;
 }
 
-// ══════════════════════════════════════════════════════
-//  NOTAMs
-// ══════════════════════════════════════════════════════
+// NOTAMs
 async function fetchNtm(dep,arr){
   var ntms=[];
-  for(var i=0;i<2;i++){var icao=i===0?dep:arr;
+  for(var i=0;i<2;i++){
+    var icao=i===0?dep:arr;
     try{var r=await fetch('https://icaonotam.eurocontrol.int/notamSearch/search?icaos='+icao+'&briefingType=PILOT&reportFormat=HTML',{mode:'cors'});if(r.ok){var h=await r.text();var re=/\b([A-Z]\d{4}\/\d{2})\b([\s\S]*?)(?=[A-Z]\d{4}\/\d{2}|<\/pre|$)/g;var m;while((m=re.exec(h))!==null){var raw=m[2].replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();if(raw.length>15)ntms.push({id:m[1],icao:icao,src:'Eurocontrol',txt:raw.substring(0,280),crit:/\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(raw)});}}}catch(e){}
     if(!ntms.filter(function(n){return n.icao===icao;}).length){try{var r2=await fetch('https://aviationweather.gov/api/data/notam?icaos='+icao+'&format=raw');if(r2.ok){(await r2.text()).split('\n').filter(function(l){return l.trim().length>10;}).forEach(function(line,j){var im=line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);ntms.push({id:im?im[1].replace(/\s/,''):'N'+icao+j,icao:icao,src:'aviationweather.gov',txt:line.trim().substring(0,280),crit:/\b(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(line)});});}}catch(e){}}
   }
-  if(!ntms.length){var d=new Date(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');ntms=[{id:'A'+mm+dd+'0/26',icao:dep,src:'Demo',crit:false,txt:dep+' TWY ALFA CLSD DUE MAINTENANCE'},{id:'A'+mm+dd+'1/26',icao:dep,src:'Demo',crit:false,txt:dep+' ATIS UNSERVICEABLE'},{id:'A'+mm+dd+'2/26',icao:arr,src:'Demo',crit:false,txt:arr+' BIRDS VIC AERODROME 1500FT'},{id:'B'+mm+dd+'0/26',icao:dep,src:'Demo',crit:true,txt:'DANGER AREA VIC '+dep+' FL060-FL100 0800-1600'},];}
+  if(!ntms.length){var d=new Date(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');ntms=[{id:'A'+mm+dd+'0/26',icao:dep,src:'Demo',crit:false,txt:dep+' TWY ALFA CLSD'},{id:'A'+mm+dd+'1/26',icao:dep,src:'Demo',crit:false,txt:dep+' ATIS UNSERVICEABLE'},{id:'A'+mm+dd+'2/26',icao:arr,src:'Demo',crit:false,txt:arr+' BIRDS VIC AERODROME 1500FT'},{id:'B'+mm+dd+'0/26',icao:dep,src:'Demo',crit:true,txt:'DANGER AREA VIC '+dep+' FL060-FL100'}];}
   return ntms.slice(0,15);
 }
 function renderNtm(ntms){var el=document.getElementById('ntC');if(!ntms.length){el.innerHTML='<div class="empty"><div class="ico">✅</div>Keine NOTAMs</div>';return;}var src=[...new Set(ntms.map(function(n){return n.src;}))].join('+');el.innerHTML='<div class="meta">'+ntms.length+' NOTAM(s) · <b>'+src+'</b><br><a href="https://icaonotam.eurocontrol.int" target="_blank">Eurocontrol ↗</a></div><div class="ntm-list">'+ntms.map(function(n){return '<div class="ntm '+(n.crit?'crit':'')+'"><div class="ntmid">'+esc(n.id)+' | '+esc(n.icao)+'</div><div class="ntmtxt">'+esc(n.txt)+'</div><div class="ntmsrc">'+esc(n.src)+'</div></div>';}).join('')+'</div>';}
 
-// ══════════════════════════════════════════════════════
-//  ZONES
-// ══════════════════════════════════════════════════════
-function buildZones(dep,arr,alt){var ml=(dep.lat+arr.lat)/2,mn=(dep.lon+arr.lon)/2;return [{n:dep.icao+' CTR',tp:'CTR',col:'#ff6b35',from:'GND',to:'2500ft',active:true,lat:dep.lat,lon:dep.lon,r:.13},{n:arr.icao+' CTR',tp:'CTR',col:'#ff6b35',from:'GND',to:'2500ft',active:true,lat:arr.lat,lon:arr.lon,r:.13},{n:dep.icao+' TMA',tp:'TMA',col:'#ffd60a',from:'1500ft',to:'FL095',active:true,lat:dep.lat+.16,lon:dep.lon+.06,r:.28},{n:arr.icao+' TMA',tp:'TMA',col:'#ffd60a',from:'1500ft',to:'FL095',active:true,lat:arr.lat-.10,lon:arr.lon-.06,r:.26},{n:'Danger Area',tp:'DANGER',col:'#ff3b3b',from:'GND',to:'FL100',active:alt>4500,lat:ml-.08,lon:mn+.20,r:.15},{n:'Class C',tp:'CLASS C',col:'#00d4ff',from:'FL075',to:'FL195',active:alt>7500,lat:ml,lon:mn,r:.40},];}
-function renderZones(zones){document.getElementById('znC').innerHTML='<div class="meta">Routennahe Zonen · <a href="https://www.openaip.net" target="_blank">OpenAIP ↗</a></div><div class="zn-list">'+zones.map(function(z){return '<div class="zn"><div class="zndot" style="background:'+z.col+';box-shadow:0 0 4px '+z.col+'99;"></div><div style="flex:1"><div class="znnm">'+esc(z.n)+'</div><div class="zntp">'+esc(z.tp)+'</div></div><div class="znalt">'+esc(z.from)+'<br>'+esc(z.to)+'</div><div style="font-size:.6rem;font-family:var(--mono);color:'+(z.active?'var(--rd)':'var(--gn)')+';">'+(z.active?'●AKTIV':'○')+'</div></div>';}).join('')+'</div>';}
+// ZONES
+function buildZones(dep,arr,alt){var ml=(dep.lat+arr.lat)/2,mn=(dep.lon+arr.lon)/2;return [{n:dep.icao+' CTR',tp:'CTR',col:'#ff6b35',from:'GND',to:'2500ft',active:true,lat:dep.lat,lon:dep.lon,r:.13},{n:arr.icao+' CTR',tp:'CTR',col:'#ff6b35',from:'GND',to:'2500ft',active:true,lat:arr.lat,lon:arr.lon,r:.13},{n:dep.icao+' TMA',tp:'TMA',col:'#ffd60a',from:'1500ft',to:'FL095',active:true,lat:dep.lat+.16,lon:dep.lon+.06,r:.28},{n:arr.icao+' TMA',tp:'TMA',col:'#ffd60a',from:'1500ft',to:'FL095',active:true,lat:arr.lat-.10,lon:arr.lon-.06,r:.26},{n:'Danger Area',tp:'DANGER',col:'#ff3b3b',from:'GND',to:'FL100',active:alt>4500,lat:ml-.08,lon:mn+.20,r:.15},{n:'Class C',tp:'CLASS C',col:'#00d4ff',from:'FL075',to:'FL195',active:alt>7500,lat:ml,lon:mn,r:.40}];}
+function renderZones(zones){document.getElementById('znC').innerHTML='<div class="meta">Routennahe Zonen · <a href="https://www.openaip.net" target="_blank">OpenAIP ↗</a></div><div class="zn-list">'+zones.map(function(z){return '<div class="zn"><div class="zndot" style="background:'+z.col+';box-shadow:0 0 4px '+z.col+'99;"></div><div style="flex:1"><div class="znnm">'+esc(z.n)+'</div><div class="zntp">'+esc(z.tp)+'</div></div><div class="znalt">'+esc(z.from)+'<br>'+esc(z.to)+'</div><div style="font-size:.6rem;font-family:var(--mono);color:'+(z.active?'var(--rd)':'var(--gn)')+'">'+(z.active?'●AKTIV':'○')+'</div></div>';}).join('')+'</div>';}
 function drawZones(zones){zps.forEach(function(p){map.removeLayer(p);});zps=[];zones.forEach(function(z){var c=L.circle([z.lat,z.lon],{radius:z.r*111000,color:z.col,fillColor:z.col,fillOpacity:.06,weight:1.5,dashArray:['DANGER','CTR'].indexOf(z.tp)>=0?'5,4':undefined}).addTo(map).bindPopup('<b>'+z.n+'</b><br>'+z.tp+'<br>'+z.from+' – '+z.to);zps.push(c);});}
 
-// ══════════════════════════════════════════════════════
-//  ROUTE DETAILS
-// ══════════════════════════════════════════════════════
+// ROUTE DETAILS
 function renderRouteDetails(route,perf){
   var rType=document.getElementById('routeType').value;
   var hasRpts=route.some(function(w){return w.type==='rpt';});
-  var html=(hasRpts?'<div class="drag-hint">🖱️ Wegpunkte verschiebbar (Drag) · ✕ löschen · ➕ hinzufügen</div>':'<div class="drag-hint">✕ Wegpunkte löschen · ➕ hinzufügen</div>')+
-    '<div class="meta">Routentyp: <b>'+(rType==='rpt'?'Via Reporting Points':'Direkt')+'</b> · '+
-    route.filter(function(w){return w.type==='rpt';}).length+' VRP(s)</div>'+
-    '<div class="wpt-list">';
-
+  var html='<div class="drag-hint">'+(routeLocked?'🔒 Gesperrt':'🖱️ Drag · ✕ löschen · ➕ hinzufügen')+'</div>'+
+    '<div class="meta">'+( rType==='rpt'?'Via Reporting Points':'Direkt')+' · '+route.filter(function(w){return w.type==='rpt';}).length+' VRP(s)</div><div class="wpt-list">';
   var cumNm=0;
   route.forEach(function(w,i){
-    if(i>0) cumNm+=nmDist(route[i-1],w);
+    if(i>0)cumNm+=nmDist(route[i-1],w);
     var toNext=i<route.length-1?nmDist(w,route[i+1]):null;
     var hdg=i<route.length-1?Math.round(brng(w,route[i+1])):null;
     var ete=toNext?Math.round(toNext/perf.cruise*60):null;
     var dc=w.type==='apt'?(i===0?'#00ff9f':'#ff6b35'):w.type==='rpt'?'#ffd60a':'#a78bfa';
     var tl=w.type==='apt'?(i===0?'DEP':'ARR'):w.type==='rpt'?'VRP':'WPT';
-    // Delete button only for intermediate waypoints (not dep/arr)
-    var canDel=(i>0&&i<route.length-1);
-    html+=
-      '<div class="wpt">'+
-      '<div class="wdot" style="background:'+dc+';box-shadow:0 0 4px '+dc+'80;"></div>'+
-      '<div style="flex:1">'+
-        '<div class="wname">'+esc(w.name)+'</div>'+
-        (w.desc?'<div class="wdesc">'+esc(w.desc)+'</div>':'')+
-        '<div class="wtype">'+tl+(w.icao&&w.type==='rpt'?' · '+w.icao:'')+'</div>'+
-      '</div>'+
-      '<div style="text-align:right">'+
-        (i>0?'<div class="wdist">'+Math.round(cumNm)+' NM</div>':'<div class="wdist">START</div>')+
-        (hdg!==null?'<div class="whdg">'+hdg+'° '+ete+'min</div>':'<div class="whdg">ZIEL</div>')+
-      '</div>'+
-      (canDel&&!routeLocked?'<button class="wpt-del" data-wptidx="'+i+'" title="Wegpunkt löschen">✕</button>':'')+
+    var canDel=i>0&&i<route.length-1;
+    html+='<div class="wpt"><div class="wdot" style="background:'+dc+';box-shadow:0 0 4px '+dc+'80;"></div>'+
+      '<div style="flex:1"><div class="wname">'+esc(w.name)+'</div>'+(w.desc?'<div class="wdesc">'+esc(w.desc)+'</div>':'')+
+      '<div class="wtype">'+tl+(w.icao&&w.type==='rpt'?' · '+w.icao:'')+'</div></div>'+
+      '<div style="text-align:right">'+(i>0?'<div class="wdist">'+Math.round(cumNm)+' NM</div>':'<div class="wdist">START</div>')+
+      (hdg!==null?'<div class="whdg">'+hdg+'° '+ete+'min</div>':'<div class="whdg">ZIEL</div>')+'</div>'+
+      (canDel&&!routeLocked?'<button class="wpt-del" data-idx="'+i+'" title="Löschen">✕</button>':'')+
       '</div>';
-
-    // "Add waypoint" button between every pair of points
-    if(i<route.length-1){
-      if(!routeLocked) html+='<button class="wpt-add" data-addafter="'+i+'">➕ Wegpunkt nach '+esc(w.name)+' einfügen</button>';
+    if(i<route.length-1&&!routeLocked){
+      html+='<button class="wpt-add" data-after="'+i+'">➕ nach '+esc(w.name)+'</button>';
     }
   });
-
   var el=document.getElementById('rdC');
   el.innerHTML=html+'</div>';
-
-  // Delete waypoint buttons
-  el.querySelectorAll('.wpt-del[data-wptidx]').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      var idx=parseInt(this.dataset.wptidx);
-      deleteWaypoint(idx);
-    });
+  el.querySelectorAll('.wpt-del[data-idx]').forEach(function(btn){
+    btn.addEventListener('click',function(){deleteWaypoint(parseInt(this.dataset.idx));});
   });
-
-  // Add waypoint buttons
-  el.querySelectorAll('.wpt-add[data-addafter]').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      var after=parseInt(this.dataset.addafter);
-      openAddWptModal(after);
-    });
+  el.querySelectorAll('.wpt-add[data-after]').forEach(function(btn){
+    btn.addEventListener('click',function(){openAddWptModal(parseInt(this.dataset.after));});
   });
 }
 
-// ══════════════════════════════════════════════════════
-//  SUMMARY
-// ══════════════════════════════════════════════════════
+// SUMMARY
 function renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf){
   var cd=vfrCls(wD),ca=vfrCls(wA),cn=ntms.filter(function(n){return n.crit;}).length;
   var az=zones.filter(function(z){return z.active&&z.from!=='GND';}).length;
@@ -1097,15 +852,13 @@ function renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf){
     '<div><div class="slbl">Krit. NOTAMs</div><div class="sval '+(cn>0?'nogo':'go')+'">'+cn+'</div></div>'+
     '<div><div class="slbl">VRPs</div><div class="sval '+(nV>0?'caution':'go')+'">'+nV+'</div></div>'+
     '</div><div style="margin-top:12px;display:flex;gap:8px;">'+
-    '<button class="btn bp" style="font-size:.72rem;" onclick="exportPDF()">🖨️ PDF EXPORT</button>'+
-    '<button class="btn bs" style="font-size:.72rem;" onclick="saveCurrentRoute()">💾 ROUTE SPEICHERN</button></div>'+
-    '<div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--bd);font-family:var(--mono);font-size:.58rem;color:var(--mt);line-height:1.7;">'+
+    '<button class="btn bp" style="font-size:.72rem;" onclick="exportPDF()">🖨️ PDF</button>'+
+    '<button class="btn bs" style="font-size:.72rem;" onclick="saveCurrentRoute()">💾 SPEICHERN</button>'+
+    '</div><div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--bd);font-family:var(--mono);font-size:.58rem;color:var(--mt);line-height:1.7;">'+
     '⚡ Kein Ersatz für offizielle Flugvorbereitung · <a href="https://metar-taf.com" target="_blank">metar-taf.com</a></div></div>';
 }
 
-// ══════════════════════════════════════════════════════
-//  MAP MARKERS + DRAGGABLE WAYPOINTS
-// ══════════════════════════════════════════════════════
+// MAP MARKERS
 var mkD=L.divIcon({html:'<div style="width:15px;height:15px;background:#00ff9f;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px #000b;"></div>',iconSize:[15,15],iconAnchor:[7,15],className:''});
 var mkA=L.divIcon({html:'<div style="width:15px;height:15px;background:#ff6b35;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px #000b;"></div>',iconSize:[15,15],iconAnchor:[7,15],className:''});
 var mkR=L.divIcon({html:'<div style="width:12px;height:12px;background:#ffd60a;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px #000b;"></div>',iconSize:[12,12],iconAnchor:[6,6],className:''});
@@ -1119,7 +872,7 @@ function drawRoute(route){
   redrawLine();
   route.forEach(function(w,i){
     var icon=i===0?mkD:(i===route.length-1?mkA:(w.type==='rpt'?mkR:mkW));
-    var draggable=(i>0&&i<route.length-1&&!routeLocked);
+    var draggable=i>0&&i<route.length-1&&!routeLocked;
     var mk=L.marker([w.lat,w.lon],{icon:icon,draggable:draggable}).addTo(map)
       .bindPopup('<b>'+w.name+'</b>'+(w.type==='rpt'?' <span style="color:#ffd60a">▲ VRP</span>':'')+'<br>'+(w.desc||''));
     if(draggable){(function(wi){mk.on('drag',function(e){var ll=e.target.getLatLng();PS.route[wi].lat=ll.lat;PS.route[wi].lon=ll.lng;redrawLine();});mk.on('dragend',function(){if(PS.route[wi].name.indexOf(' *')<0)PS.route[wi].name+=' *';PS.route[wi].type='wpt';var p=getPerf();renderRouteDetails(PS.route,p);if(PS.lastData)renderSummary(PS.dep.icao,PS.arr.icao,PS.lastData.alt,PS.lastData.wD,PS.lastData.wA,PS.lastData.ntms,PS.lastData.zones,PS.route,p);toast('Wegpunkt verschoben ✓','ok');});})(i);}
@@ -1128,22 +881,115 @@ function drawRoute(route){
   map.fitBounds(L.latLngBounds(route.map(function(w){return[w.lat,w.lon];})),{padding:[50,50]});
 }
 
-// ══════════════════════════════════════════════════════
-//  GEOCODE
-// ══════════════════════════════════════════════════════
+// WAYPOINT EDIT
+function deleteWaypoint(idx){
+  if(!PS.route||PS.route.length<=2){toast('Mindestens Abflug und Ziel erforderlich','err');return;}
+  if(idx<=0||idx>=PS.route.length-1){toast('Abflug/Ziel können nicht gelöscht werden','err');return;}
+  PS.route.splice(idx,1);drawRoute(PS.route);var p=getPerf();renderRouteDetails(PS.route,p);
+  if(PS.lastData){PS.lastData.perf=p;renderSummary(PS.dep.icao,PS.arr.icao,PS.lastData.alt,PS.lastData.wD,PS.lastData.wA,PS.lastData.ntms,PS.lastData.zones,PS.route,p);}
+  toast('Wegpunkt gelöscht ✓','ok');
+}
+var addAfterIdx=-1;
+function openAddWptModal(afterIdx){addAfterIdx=afterIdx;document.getElementById('addAfterLabel').textContent=PS.route[afterIdx]?PS.route[afterIdx].name:'Start';document.getElementById('addWptName').value='';document.getElementById('addWptLat').value='';document.getElementById('addWptLon').value='';document.getElementById('addWptModal').classList.add('open');map.once('click',function(e){document.getElementById('addWptLat').value=e.latlng.lat.toFixed(5);document.getElementById('addWptLon').value=e.latlng.lng.toFixed(5);if(!document.getElementById('addWptName').value)document.getElementById('addWptName').value='WPT-'+(addAfterIdx+1);toast('Koordinaten übernommen ✓','ok');});}
+function closeAddWptModal(){document.getElementById('addWptModal').classList.remove('open');addAfterIdx=-1;map.off('click');}
+function confirmAddWpt(){var name=document.getElementById('addWptName').value.trim();var lat=parseFloat(document.getElementById('addWptLat').value);var lon=parseFloat(document.getElementById('addWptLon').value);if(!name){toast('Name eingeben','err');return;}if(isNaN(lat)||isNaN(lon)){toast('Gültige Koordinaten eingeben','err');return;}PS.route.splice(addAfterIdx+1,0,{name:name.toUpperCase(),lat:lat,lon:lon,type:'wpt',color:'#a78bfa',desc:'Manuell'});closeAddWptModal();drawRoute(PS.route);var p=getPerf();renderRouteDetails(PS.route,p);if(PS.lastData){PS.lastData.perf=p;renderSummary(PS.dep.icao,PS.arr.icao,PS.lastData.alt,PS.lastData.wD,PS.lastData.wA,PS.lastData.ntms,PS.lastData.zones,PS.route,p);}toast(name+' hinzugefügt ✓','ok');}
+
+// SAVED ROUTES
+async function saveCurrentRoute(){
+  if(!gUser){toast('Bitte anmelden','err');return;}
+  if(!PS.dep||!PS.arr||!PS.route||!PS.lastData){toast('Erst Route berechnen','err');return;}
+  var routes=await loadRoutesAsync();
+  var now=new Date();
+  var entry={id:Date.now().toString(),name:PS.dep.icao+' → '+PS.arr.icao,notes:'',dep:PS.dep.icao,arr:PS.arr.icao,depName:PS.dep.name||PS.dep.icao,arrName:PS.arr.name||PS.arr.icao,alt:PS.lastData.alt,cruise:PS.lastData.perf.cruise,fuel:PS.lastData.perf.fuel,tanks:PS.lastData.perf.tanks,reg:PS.lastData.perf.reg,acid:selAC.id,rType:document.getElementById('routeType').value,waypoints:PS.route.map(function(w){return{name:w.name,lat:w.lat,lon:w.lon,type:w.type,desc:w.desc||'',icao:w.icao||'',color:w.color||''};}),savedAt:now.toISOString(),dateStr:now.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})};
+  var fiveMin=5*60*1000;
+  var dup=routes.findIndex(function(r){return r.dep===entry.dep&&r.arr===entry.arr&&(now-new Date(r.savedAt))<fiveMin;});
+  if(dup>=0){routes[dup]=entry;toast('Route aktualisiert ✓','ok');}else{routes.unshift(entry);toast('Route gespeichert ✓','ok');}
+  if(routes.length>20)routes=routes.slice(0,20);
+  await saveRoutesAsync(routes);renderSavedRoutes();opn('sSV');
+}
+async function deleteRoute(id){
+  if(!confirm('Route löschen?'))return;
+  var routes=(await loadRoutesAsync()).filter(function(r){return r.id!==id;});
+  await saveRoutesAsync(routes);renderSavedRoutes();toast('Route gelöscht','ok');
+}
+var editingRouteId=null;
+function openRouteModal(id){var r=loadRoutesSync().find(function(r){return r.id===id;});if(!r)return;editingRouteId=id;document.getElementById('modalName').value=r.name;document.getElementById('modalNotes').value=r.notes||'';document.getElementById('routeModal').classList.add('open');}
+function closeRouteModal(){document.getElementById('routeModal').classList.remove('open');editingRouteId=null;}
+async function saveModalEdit(){if(!editingRouteId)return;var routes=await loadRoutesAsync();var idx=routes.findIndex(function(r){return r.id===editingRouteId;});if(idx<0){closeRouteModal();return;}routes[idx].name=document.getElementById('modalName').value.trim()||routes[idx].name;routes[idx].notes=document.getElementById('modalNotes').value.trim();await saveRoutesAsync(routes);renderSavedRoutes();closeRouteModal();toast('Route aktualisiert ✓','ok');}
+
+async function loadRoute(id){
+  var routes=await loadRoutesAsync();
+  var r=routes.find(function(rt){return rt.id===id;});
+  if(!r){toast('Route nicht gefunden','err');return;}
+  document.getElementById('depI').value=r.dep;document.getElementById('arrI').value=r.arr;
+  document.getElementById('altI').value=r.alt||4500;document.getElementById('routeType').value=r.rType||'rpt';
+  document.getElementById('pCruise').value=r.cruise||108;document.getElementById('pFuel').value=r.fuel||18;
+  document.getElementById('pTanks').value=r.tanks||65;document.getElementById('pReg').value=r.reg||'SP-TPF';
+  if(r.acid)pickAC(r.acid);
+  document.getElementById('sysStatus').textContent='● LADEN...';
+  document.getElementById('planBtn').disabled=true;
+  try{
+    showOv('Lade gespeicherte Route...');
+    var dAP=AP[r.dep],aAP=AP[r.arr];
+    var dp=dAP?{lat:dAP.lat,lon:dAP.lon,name:dAP.n,rpts:dAP.rpts,freq:dAP.freq}:await geo(r.dep);
+    var ap=aAP?{lat:aAP.lat,lon:aAP.lon,name:aAP.n,rpts:aAP.rpts,freq:aAP.freq}:await geo(r.arr);
+    dp.icao=r.dep;ap.icao=r.arr;PS.dep=dp;PS.arr=ap;
+    var perf=getPerf();
+    var route=r.waypoints&&r.waypoints.length>=2?r.waypoints.map(function(w){return{name:w.name,lat:w.lat,lon:w.lon,type:w.type||'wpt',color:w.color||(w.type==='apt'?(w.name===r.dep?'#00ff9f':'#ff6b35'):w.type==='rpt'?'#ffd60a':'#a78bfa'),desc:w.desc||'',icao:w.icao||''};}):computeRoute(dp,ap,r.rType||'rpt');
+    drawRoute(route);renderRouteDetails(route,perf);opn('sRD');
+    showOv('Hole aktuelle METAR/TAF...');
+    var wxRes=await Promise.all([fetchWx(r.dep),fetchWx(r.arr)]);
+    var wD=wxRes[0],wA=wxRes[1];
+    renderWx('wxD',r.dep,dp.name||r.dep,wD,'dep');renderWx('wxA',r.arr,ap.name||r.arr,wA,'arr');opn('sWD');opn('sWA');
+    showOv('Hole NOTAMs...');
+    var ntms=await fetchNtm(r.dep,r.arr);renderNtm(ntms);opn('sNT');
+    showOv('Zonen...');
+    var zones=buildZones(dp,ap,r.alt||4500);renderZones(zones);drawZones(zones);opn('sZN');
+    PS.lastData={alt:r.alt||4500,wD:wD,wA:wA,ntms:ntms,zones:zones,perf:perf};
+    renderSummary(r.dep,r.arr,r.alt||4500,wD,wA,ntms,zones,route,perf);opn('sSM');
+    document.getElementById('sysStatus').textContent='● BEREIT';
+    toast('"'+r.name+'" geladen · METAR & NOTAMs aktuell ✓','ok');
+    document.querySelector('.sidebar').scrollTop=0;
+  }catch(e){console.error(e);toast('Fehler: '+e.message,'err');document.getElementById('sysStatus').textContent='● FEHLER';}
+  hideOv();document.getElementById('planBtn').disabled=false;
+}
+
+async function renderSavedRoutes(){
+  var el=document.getElementById('savedRoutesContent');if(!el)return;
+  if(!gUser){el.innerHTML='<div class="empty"><div class="ico">🔐</div>Anmeldung erforderlich</div>';return;}
+  el.innerHTML='<div class="empty"><div class="ico">⏳</div>Lade...</div>';
+  var routes=await loadRoutesAsync();
+  if(!routes.length){el.innerHTML='<div class="empty"><div class="ico">💾</div>Keine Routen gespeichert<br><span style="font-size:.68rem;">Nach dem Planen „SPEICHERN" klicken</span></div>';return;}
+  var syncStr=gdToken?'<span style="font-family:var(--mono);font-size:.58rem;color:var(--gn);">☁️ Drive Sync aktiv</span>':
+    '<span style="font-family:var(--mono);font-size:.58rem;color:var(--yw);">📱 Nur dieses Gerät <button onclick="initDriveToken()" style="font-family:var(--mono);font-size:.58rem;background:transparent;border:1px solid var(--yw);color:var(--yw);padding:1px 6px;border-radius:3px;cursor:pointer;">↺ Verbinden</button></span>';
+  var html='<div style="margin-bottom:8px;">'+syncStr+'</div><div class="route-list">';
+  routes.forEach(function(r){
+    html+='<div class="route-item">'+
+      '<div class="route-item-head"><span class="route-icao">'+esc(r.dep)+'</span><span class="route-arrow">→</span><span class="route-icao">'+esc(r.arr)+'</span><span class="route-date">'+esc(r.dateStr||'')+'</span></div>'+
+      '<div class="route-meta"><span class="route-tag hi">'+esc(String(r.alt||''))+'ft</span><span class="route-tag">'+esc(String(r.cruise||''))+'kt</span><span class="route-tag">'+esc(r.reg||'')+'</span>'+(r.waypoints?'<span class="route-tag">'+r.waypoints.length+' WPTs</span>':'')+(r.notes?'<span class="route-tag" style="color:var(--yw);">'+esc(r.notes)+'</span>':'')+'</div>'+
+      (r.name&&r.name!==r.dep+' → '+r.arr?'<div style="font-family:var(--mono);font-size:.62rem;color:var(--ac);margin-bottom:5px;">'+esc(r.name)+'</div>':'')+
+      '<div class="route-btns"><button class="rbtn rbtn-load" data-act="load" data-id="'+r.id+'">▶ Laden</button><button class="rbtn rbtn-edit" data-act="edit" data-id="'+r.id+'">✏️ Bearb.</button><button class="rbtn rbtn-del" data-act="del" data-id="'+r.id+'">🗑️ Löschen</button></div>'+
+      '</div>';
+  });
+  el.innerHTML=html+'</div>';
+  el.querySelectorAll('.rbtn[data-act]').forEach(function(btn){btn.addEventListener('click',function(){var act=this.dataset.act,id=this.dataset.id;if(act==='load')loadRoute(id);else if(act==='edit')openRouteModal(id);else if(act==='del')deleteRoute(id);});});
+}
+
+// GEOCODE
 async function geo(icao){var r=await fetch('https://nominatim.openstreetmap.org/search?q='+icao+'+airport&format=json&limit=1');var d=await r.json();if(d&&d.length)return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon),name:d[0].display_name.split(',')[0],rpts:{}};throw new Error('Flugplatz '+icao+' nicht gefunden');}
 
-// ══════════════════════════════════════════════════════
-//  RESET
-// ══════════════════════════════════════════════════════
-function resetAll(){document.getElementById('depI').value='';document.getElementById('arrI').value='';if(dmk)map.removeLayer(dmk);if(amk)map.removeLayer(amk);if(rln)map.removeLayer(rln);dmk=amk=rln=null;wptMks.forEach(function(m){map.removeLayer(m);});wptMks=[];zps.forEach(function(p){map.removeLayer(p);});zps=[];['wxD','wxA','ntC','znC','smC','rdC'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div>';});['sWD','sWA','sNT','sZN','sSM','sRD'].forEach(function(id){document.getElementById(id).classList.remove('open');});PS={dep:null,arr:null,route:null,lastData:null};map.setView([52.0,19.0],6);
-  routeLocked=false;
-  var lb=document.getElementById('lockBtn');
-  if(lb){lb.textContent='🔓 Wegpunkte bearbeitbar';lb.classList.remove('locked');}}
+// RESET
+function resetAll(){
+  document.getElementById('depI').value='';document.getElementById('arrI').value='';
+  if(dmk)map.removeLayer(dmk);if(amk)map.removeLayer(amk);if(rln)map.removeLayer(rln);dmk=amk=rln=null;
+  wptMks.forEach(function(m){map.removeLayer(m);});wptMks=[];zps.forEach(function(p){map.removeLayer(p);});zps=[];
+  ['wxD','wxA','ntC','znC','smC','rdC'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div>';});
+  ['sWD','sWA','sNT','sZN','sSM','sRD'].forEach(function(id){document.getElementById(id).classList.remove('open');});
+  PS={dep:null,arr:null,route:null,lastData:null};map.setView([52.0,19.0],6);
+  routeLocked=false;var lb=document.getElementById('lockBtn');if(lb){lb.textContent='🔓 Wegpunkte bearbeitbar';lb.classList.remove('locked');}
+}
 
-// ══════════════════════════════════════════════════════
-//  MAIN PLAN
-// ══════════════════════════════════════════════════════
+// MAIN PLAN
 async function plan(){
   var dep=document.getElementById('depI').value.trim().toUpperCase();
   var arr=document.getElementById('arrI').value.trim().toUpperCase();
@@ -1152,28 +998,22 @@ async function plan(){
   if(dep.length<3){toast('ICAO Abflug eingeben','err');return;}
   if(arr.length<3){toast('ICAO Ziel eingeben','err');return;}
   if(dep===arr){toast('Start ≠ Ziel','err');return;}
-  document.getElementById('sysStatus').textContent='● LADEN...';
-  document.getElementById('planBtn').disabled=true;
+  document.getElementById('sysStatus').textContent='● LADEN...';document.getElementById('planBtn').disabled=true;
   try{
     showOv('Suche Flugplätze...');
     var dAP=AP[dep],aAP=AP[arr];
     var dp=dAP?{lat:dAP.lat,lon:dAP.lon,name:dAP.n,rpts:dAP.rpts,freq:dAP.freq}:await geo(dep);
     var ap=aAP?{lat:aAP.lat,lon:aAP.lon,name:aAP.n,rpts:aAP.rpts,freq:aAP.freq}:await geo(arr);
     dp.icao=dep;ap.icao=arr;PS.dep=dp;PS.arr=ap;
-    showOv('Berechne Route...');
-    var route=computeRoute(dp,ap,rt);var perf=getPerf();
+    showOv('Berechne Route...');var route=computeRoute(dp,ap,rt);var perf=getPerf();
     drawRoute(route);renderRouteDetails(route,perf);opn('sRD');
     showOv('Hole METAR/TAF...');
-    var wxRes=await Promise.all([fetchWx(dep),fetchWx(arr)]);
-    var wD=wxRes[0],wA=wxRes[1];
-    renderWx('wxD',dep,dp.name||dep,wD,'dep');
-    renderWx('wxA',arr,ap.name||arr,wA,'arr');
-    if(!lsGet('checkwx_key')&&!document.getElementById('cwxKey').value)toast('Tipp: CheckWX Key in ⚙️ für decoded METAR','warn');
+    var wxRes=await Promise.all([fetchWx(dep),fetchWx(arr)]);var wD=wxRes[0],wA=wxRes[1];
+    renderWx('wxD',dep,dp.name||dep,wD,'dep');renderWx('wxA',arr,ap.name||arr,wA,'arr');
+    if(!lsGet('checkwx_key')&&!document.getElementById('cwxKey').value)toast('Tipp: CheckWX Key in ⚙️','warn');
     opn('sWD');opn('sWA');
-    showOv('Hole NOTAMs...');
-    var ntms=await fetchNtm(dep,arr);renderNtm(ntms);opn('sNT');
-    showOv('Berechne Zonen...');
-    var zones=buildZones(dp,ap,alt);renderZones(zones);drawZones(zones);opn('sZN');
+    showOv('Hole NOTAMs...');var ntms=await fetchNtm(dep,arr);renderNtm(ntms);opn('sNT');
+    showOv('Zonen...');var zones=buildZones(dp,ap,alt);renderZones(zones);drawZones(zones);opn('sZN');
     PS.lastData={alt:alt,wD:wD,wA:wA,ntms:ntms,zones:zones,perf:perf};
     renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf);opn('sSM');
     document.getElementById('sysStatus').textContent='● BEREIT';
@@ -1183,11 +1023,9 @@ async function plan(){
   hideOv();document.getElementById('planBtn').disabled=false;
 }
 
-// ══════════════════════════════════════════════════════
-//  PDF EXPORT
-// ══════════════════════════════════════════════════════
+// PDF EXPORT
 function exportPDF(){
-  if(!PS.dep||!PS.arr||!PS.route||!PS.lastData){toast('Bitte zuerst Route berechnen','err');return;}
+  if(!PS.dep||!PS.arr||!PS.route||!PS.lastData){toast('Erst Route berechnen','err');return;}
   var d=PS.lastData,route=PS.route,perf=d.perf;
   var now=new Date(),dateStr=now.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'}),timeStr=now.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})+' UTC';
   var tnm=0;for(var i=0;i<route.length-1;i++)tnm+=nmDist(route[i],route[i+1]);tnm=Math.round(tnm);
@@ -1195,420 +1033,48 @@ function exportPDF(){
   var cd=vfrCls(d.wD),ca=vfrCls(d.wA),cn=d.ntms.filter(function(n){return n.crit;}).length;
   var st='GO',stC='p-go';if(['ifr','lifr'].indexOf(cd)>=0||['ifr','lifr'].indexOf(ca)>=0||cn>0){st='NO-GO';stC='p-nogo';}else if(cd==='mvfr'||ca==='mvfr'){st='CAUTION';stC='p-caution';}
   var depAP=AP[PS.dep.icao]||{},arrAP=AP[PS.arr.icao]||{};
-  var wptRows='',cumNm=0;route.forEach(function(w,i){if(i>0)cumNm+=nmDist(route[i-1],w);var tn=i<route.length-1?Math.round(nmDist(w,route[i+1])):null;var hdg=i<route.length-1?Math.round(brng(w,route[i+1])):null;var el=tn?Math.round(tn/perf.cruise*60):null,fl=el?Math.round(el/60*perf.fuel):null;var tl=w.type==='apt'?(i===0?'DEP':'ARR'):w.type==='rpt'?'VRP':'WPT';wptRows+='<tr><td><b>'+esc(w.name)+'</b>'+(w.desc?'<br><span style="font-size:7pt;color:#555">'+esc(w.desc)+'</span>':'')+'</td><td style="text-align:center">'+tl+'</td><td style="text-align:right">'+(i>0?Math.round(cumNm)+' NM':'–')+'</td><td style="text-align:center">'+(hdg!==null?hdg+'°':'–')+'</td><td style="text-align:right">'+(tn!==null?tn+' NM':'–')+'</td><td style="text-align:right">'+(el!==null?el+' min':'–')+'</td><td style="text-align:right">'+(fl!==null?fl+' L':'–')+'</td></tr>';});
+  var wptRows='',cumNm=0;
+  route.forEach(function(w,i){if(i>0)cumNm+=nmDist(route[i-1],w);var tn=i<route.length-1?Math.round(nmDist(w,route[i+1])):null;var hdg=i<route.length-1?Math.round(brng(w,route[i+1])):null;var el=tn?Math.round(tn/perf.cruise*60):null,fl=el?Math.round(el/60*perf.fuel):null;var tl=w.type==='apt'?(i===0?'DEP':'ARR'):w.type==='rpt'?'VRP':'WPT';wptRows+='<tr><td><b>'+esc(w.name)+'</b>'+(w.desc?'<br><span style="font-size:7pt;color:#555">'+esc(w.desc)+'</span>':'')+'</td><td style="text-align:center">'+tl+'</td><td style="text-align:right">'+(i>0?Math.round(cumNm)+' NM':'–')+'</td><td style="text-align:center">'+(hdg!==null?hdg+'°':'–')+'</td><td style="text-align:right">'+(tn!==null?tn+' NM':'–')+'</td><td style="text-align:right">'+(el!==null?el+' min':'–')+'</td><td style="text-align:right">'+(fl!==null?fl+' L':'–')+'</td></tr>';});
   var ntmRows=d.ntms.slice(0,8).map(function(n){return '<tr><td>'+esc(n.icao)+'</td><td style="color:'+(n.crit?'#cc0000':'#000')+'">'+esc(n.id)+'</td><td style="font-family:Courier New,monospace;font-size:7.5pt">'+esc(n.txt.substring(0,120))+'</td></tr>';}).join('');
   function wxRows(wx){var rows='<tr><td colspan="2"><div class="p-mono">'+esc(wx.metar||'Keine Daten')+'</div></td></tr>';var cls=vfrCls(wx)==='vfr'?'p-go':vfrCls(wx)==='mvfr'?'p-caution':'p-nogo';rows+='<tr><td style="width:35%">VFR Status</td><td><b class="'+cls+'">'+vfrCls(wx).toUpperCase()+'</b></td></tr>';if(wx.decoded){var dc=wx.decoded;if(dc.wind)rows+='<tr><td>Wind</td><td>'+(dc.wind.degrees||'VRB')+'° / '+(dc.wind.speed_kts||'–')+' kt'+(dc.wind.gust_kts?' G'+dc.wind.gust_kts+'kt':'')+'</td></tr>';if(dc.visibility){var vm=dc.visibility.meters_float;rows+='<tr><td>Sicht</td><td>'+(vm>=9999?'10+ km':(vm/1000).toFixed(1)+' km')+'</td></tr>';}if(dc.clouds&&dc.clouds.length)rows+='<tr><td>Wolken</td><td>'+dc.clouds.map(function(cl){return cl.code+' '+(cl.base_feet_agl||'–')+'ft';}).join(', ')+'</td></tr>';if(dc.temperature)rows+='<tr><td>Temp/Tau</td><td>'+dc.temperature.celsius+'°C / '+(dc.dewpoint?dc.dewpoint.celsius:'–')+'°C</td></tr>';if(dc.barometer)rows+='<tr><td>QNH</td><td>'+dc.barometer.hpa+' hPa</td></tr>';}rows+='<tr><td>Quelle</td><td>'+(wx.src||'–')+'</td></tr>';return rows;}
   document.getElementById('printPanel').innerHTML=
-    '<div class="p-page"><div class="p-hdr"><div class="p-title">✈ VFR FLUGPLAN</div><div class="p-sub">'+dateStr+' · '+timeStr+' &nbsp;|&nbsp; Planungshilfe – kein Ersatz für ATC FPL</div></div>'+
+    '<div class="p-page"><div class="p-hdr"><div class="p-title">✈ VFR FLUGPLAN</div><div class="p-sub">'+dateStr+' · '+timeStr+'</div></div>'+
     '<div class="p-sec"><div class="p-sec-ttl">ÜBERSICHT</div><div class="p-status"><span class="'+stC+'" style="font-size:14pt;font-weight:bold;">'+st+'</span> &nbsp;·&nbsp; '+esc(PS.dep.icao)+' → '+esc(PS.arr.icao)+' &nbsp;·&nbsp; '+dateStr+'</div>'+
     '<table class="p-tbl"><tr><th>Kennzeichen</th><th>Muster</th><th>Abflug</th><th>Ziel</th><th>Höhe</th><th>Cruise</th></tr><tr><td><b>'+esc(perf.reg)+'</b></td><td>'+esc(selAC.nm)+'</td><td><b>'+esc(PS.dep.icao)+'</b> '+esc(PS.dep.name||'')+'</td><td><b>'+esc(PS.arr.icao)+'</b> '+esc(PS.arr.name||'')+'</td><td>'+d.alt+' ft</td><td>'+perf.cruise+' kt</td></tr></table>'+
     '<table class="p-tbl"><tr><th>Distanz</th><th>ETE</th><th>Fuel (+20%)</th><th>Tanks</th><th>Reserve</th><th>Reichweite</th></tr><tr><td><b>'+tnm+' NM</b></td><td><b>'+ete+' min</b></td><td class="'+(fR>perf.tanks?'p-nogo':'p-go')+'"><b>'+fR+' L</b></td><td>'+perf.tanks+' L</td><td>'+Math.round(perf.tanks-fR)+' L</td><td>'+Math.round(perf.tanks/perf.fuel*perf.cruise)+' NM</td></tr></table></div>'+
-    '<div class="p-sec"><div class="p-sec-ttl">ROUTE &amp; WAYPOINTS</div><table class="p-tbl"><tr><th>Wegpunkt</th><th style="text-align:center">Typ</th><th style="text-align:right">Kum.</th><th style="text-align:center">HDG</th><th style="text-align:right">Leg NM</th><th style="text-align:right">ETE</th><th style="text-align:right">Fuel</th></tr>'+wptRows+'</table></div>'+
+    '<div class="p-sec"><div class="p-sec-ttl">ROUTE</div><table class="p-tbl"><tr><th>Wegpunkt</th><th style="text-align:center">Typ</th><th style="text-align:right">Kum.</th><th style="text-align:center">HDG</th><th style="text-align:right">Leg NM</th><th style="text-align:right">ETE</th><th style="text-align:right">Fuel</th></tr>'+wptRows+'</table></div>'+
     '<div class="p-sec"><div class="p-sec-ttl">FREQUENZEN</div><table class="p-tbl"><tr><th>Flugplatz</th><th>APP / INFO</th></tr><tr><td><b>'+esc(PS.dep.icao)+'</b> '+esc(PS.dep.name||'')+'</td><td>'+esc(depAP.freq||PS.dep.freq||'–')+'</td></tr><tr><td><b>'+esc(PS.arr.icao)+'</b> '+esc(PS.arr.name||'')+'</td><td>'+esc(arrAP.freq||PS.arr.freq||'–')+'</td></tr></table></div></div>'+
     '<div class="p-page"><div class="p-hdr"><div class="p-title">✈ VFR FLUGPLAN – Seite 2</div><div class="p-sub">'+esc(PS.dep.icao)+' → '+esc(PS.arr.icao)+' · '+dateStr+'</div></div>'+
-    '<div class="p-sec"><div class="p-sec-ttl">WETTERDATEN</div><table class="p-tbl"><tr><th colspan="2">▲ ABFLUG: '+esc(PS.dep.icao)+'</th></tr>'+wxRows(d.wD)+'</table><table class="p-tbl" style="margin-top:6px"><tr><th colspan="2">▼ ZIEL: '+esc(PS.arr.icao)+'</th></tr>'+wxRows(d.wA)+'</table></div>'+
-    '<div class="p-sec"><div class="p-sec-ttl">NOTAMs ('+d.ntms.length+', kritisch: '+cn+')</div>'+(d.ntms.length?'<table class="p-tbl"><tr><th>ICAO</th><th>ID</th><th>Text</th></tr>'+ntmRows+'</table>':'<div style="padding:6px;color:#006600">✅ Keine NOTAMs</div>')+'</div>'+
+    '<div class="p-sec"><div class="p-sec-ttl">WETTERDATEN</div><table class="p-tbl"><tr><th colspan="2">▲ '+esc(PS.dep.icao)+'</th></tr>'+wxRows(d.wD)+'</table><table class="p-tbl" style="margin-top:6px"><tr><th colspan="2">▼ '+esc(PS.arr.icao)+'</th></tr>'+wxRows(d.wA)+'</table></div>'+
+    '<div class="p-sec"><div class="p-sec-ttl">NOTAMs</div>'+(d.ntms.length?'<table class="p-tbl"><tr><th>ICAO</th><th>ID</th><th>Text</th></tr>'+ntmRows+'</table>':'<div style="padding:6px;color:#006600">✅ Keine NOTAMs</div>')+'</div>'+
     '<div class="p-sec"><div class="p-sec-ttl">LOGBUCH</div><table class="p-tbl"><tr><th>Block ab</th><th>Block an</th><th>Air time</th><th>Ldg</th><th>Fuel</th><th>Unterschrift PIC</th></tr><tr class="p-logrow"><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></table></div>'+
-    '<div class="p-warn">⚡ <b>WICHTIG:</b> Planungshilfe – NOTAMs via PANSA AIS/AustroControl prüfen. VFR-Mindestbedingungen gemäß SERA/EASA.</div></div>';
+    '<div class="p-warn">⚡ Planungshilfe – NOTAMs via PANSA AIS/AustroControl prüfen.</div></div>';
   setTimeout(function(){window.print();},200);
 }
 
-
-
-
-// ══════════════════════════════════════════════════════
-//  SIDEBAR TOGGLE
-// ══════════════════════════════════════════════════════
-var sidebarOpen = true;
-function toggleSidebar(){
-  var sb=document.querySelector('.sidebar');
-  var btn=document.getElementById('sbToggle');
-  sidebarOpen=!sidebarOpen;
-  sb.classList.toggle('collapsed', !sidebarOpen);
-  btn.textContent=sidebarOpen?'◀':'▶';
-  btn.title=sidebarOpen?'Sidebar einklappen':'Sidebar ausklappen';
-  // Trigger map resize after transition
-  setTimeout(function(){ map.invalidateSize(); }, 320);
-}
-
-// ══════════════════════════════════════════════════════
-//  WAYPOINT LOCK
-// ══════════════════════════════════════════════════════
-var routeLocked = false;
-function toggleLock(){
-  routeLocked=!routeLocked;
-  var btn=document.getElementById('lockBtn');
-  if(!btn) return;
-  if(routeLocked){
-    btn.textContent='🔒 Wegpunkte gesperrt';
-    btn.classList.add('locked');
-  } else {
-    btn.textContent='🔓 Wegpunkte bearbeitbar';
-    btn.classList.remove('locked');
-  }
-  // Redraw route markers with new draggable state
-  if(PS.route&&PS.route.length) drawRoute(PS.route);
-  // Re-render list (shows/hides del+add buttons)
-  if(PS.route&&PS.lastData) renderRouteDetails(PS.route,PS.lastData.perf);
-}
-
-// ══════════════════════════════════════════════════════
-//  WAYPOINT EDIT  (delete / add)
-// ══════════════════════════════════════════════════════
-function deleteWaypoint(idx){
-  if(!PS.route||PS.route.length<=2){toast('Mindestens Abflug und Ziel erforderlich','err');return;}
-  if(idx<=0||idx>=PS.route.length-1){toast('Abflug und Ziel können nicht gelöscht werden','err');return;}
-  PS.route.splice(idx,1);
-  // Redraw map markers
-  drawRoute(PS.route);
-  // Re-render sidebar
-  var perf=getPerf();
-  renderRouteDetails(PS.route,perf);
-  if(PS.lastData){
-    PS.lastData.perf=perf;
-    renderSummary(PS.dep.icao,PS.arr.icao,PS.lastData.alt,PS.lastData.wD,PS.lastData.wA,
-      PS.lastData.ntms,PS.lastData.zones,PS.route,perf);
-  }
-  toast('Wegpunkt gelöscht ✓','ok');
-}
-
-var addAfterIdx=-1;
-function openAddWptModal(afterIdx){
-  addAfterIdx=afterIdx;
-  var afterName=PS.route[afterIdx]?PS.route[afterIdx].name:'Start';
-  document.getElementById('addAfterLabel').textContent=afterName;
-  document.getElementById('addWptName').value='';
-  document.getElementById('addWptLat').value='';
-  document.getElementById('addWptLon').value='';
-  document.getElementById('addWptModal').classList.add('open');
-  // Enable map click to pick coordinates
-  map.once('click',function(e){
-    document.getElementById('addWptLat').value=e.latlng.lat.toFixed(5);
-    document.getElementById('addWptLon').value=e.latlng.lng.toFixed(5);
-    if(!document.getElementById('addWptName').value){
-      document.getElementById('addWptName').value='WPT-'+(addAfterIdx+1);
-    }
-    toast('Koordinaten von Karte übernommen ✓','ok');
-  });
-}
-function closeAddWptModal(){
-  document.getElementById('addWptModal').classList.remove('open');
-  addAfterIdx=-1;
-  // Remove any pending map click listener
-  map.off('click');
-  // Restore normal map click (none by default)
-}
-function confirmAddWpt(){
-  var name=document.getElementById('addWptName').value.trim();
-  var lat=parseFloat(document.getElementById('addWptLat').value);
-  var lon=parseFloat(document.getElementById('addWptLon').value);
-  if(!name){toast('Bitte Name eingeben','err');return;}
-  if(isNaN(lat)||isNaN(lon)||lat<-90||lat>90||lon<-180||lon>180){
-    toast('Bitte gültige Koordinaten eingeben','err');return;
-  }
-  var newWpt={name:name.toUpperCase(),lat:lat,lon:lon,type:'wpt',color:'#a78bfa',desc:'Manuell hinzugefügt'};
-  // Insert after addAfterIdx
-  PS.route.splice(addAfterIdx+1,0,newWpt);
-  closeAddWptModal();
-  // Redraw
-  drawRoute(PS.route);
-  var perf=getPerf();
-  renderRouteDetails(PS.route,perf);
-  if(PS.lastData){
-    PS.lastData.perf=perf;
-    renderSummary(PS.dep.icao,PS.arr.icao,PS.lastData.alt,PS.lastData.wD,PS.lastData.wA,
-      PS.lastData.ntms,PS.lastData.zones,PS.route,perf);
-  }
-  toast('Wegpunkt '+name+' hinzugefügt ✓','ok');
-}
-
-// Close add-wpt modal on background click
-document.addEventListener('click',function(e){
-  var modal=document.getElementById('addWptModal');
-  if(modal&&modal.classList.contains('open')&&e.target===modal) closeAddWptModal();
-});
-
-
-// ══════════════════════════════════════════════════════
-//  SAVED ROUTES  –  Google Drive appDataFolder (cross-device sync)
-// ══════════════════════════════════════════════════════
-// Routes are stored in Google Drive "appDataFolder" – invisible to user
-// but accessible from any device with the same Google account.
-// Fallback: localStorage (when no access token available).
-
-var gdAccessToken = null;       // set after Google login
-var GDRIVE_FILENAME = 'vfr-routes.json';
-var gdFileId = null;            // cached Drive file ID
-var routesCache = null;         // in-memory cache
-
-// Called from showApp() after login – request Drive scope via GSI token
-function initDriveToken() {
-  if (!window.google || !google.accounts || !google.accounts.oauth2) {
-    setTimeout(initDriveToken, 1000);
-    return;
-  }
-  var tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: G_CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/drive.appdata',
-    callback: function(resp) {
-      if (resp.error) { console.warn('Drive token error:', resp.error); return; }
-      gdAccessToken = resp.access_token;
-      renderSavedRoutes(); // refresh list now that we have token
-    },
-  });
-  tokenClient.requestAccessToken({prompt: ''});
-}
-
-// ── Drive API helpers ──────────────────────────────────────────────────────
-async function driveListFiles() {
-  var r = await fetch(
-    'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%22'+GDRIVE_FILENAME+'%22&fields=files(id,name)',
-    {headers: {'Authorization': 'Bearer '+gdAccessToken}}
-  );
-  var d = await r.json();
-  return d.files || [];
-}
-
-async function driveReadRoutes() {
-  // 1. Find file ID
-  var files = await driveListFiles();
-  if (!files.length) return [];
-  gdFileId = files[0].id;
-  // 2. Download content
-  var r = await fetch(
-    'https://www.googleapis.com/drive/v3/files/'+gdFileId+'?alt=media',
-    {headers: {'Authorization': 'Bearer '+gdAccessToken}}
-  );
-  if (!r.ok) return [];
-  try { return await r.json(); } catch(e) { return []; }
-}
-
-async function driveWriteRoutes(routes) {
-  var body = JSON.stringify(routes);
-  var boundary = 'vfr_boundary_42';
-  var meta = JSON.stringify({name: GDRIVE_FILENAME, parents: ['appDataFolder']});
-
-  if (gdFileId) {
-    // Update existing file (PATCH)
-    await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files/'+gdFileId+'?uploadType=media',
-      {method:'PATCH', headers:{'Authorization':'Bearer '+gdAccessToken,'Content-Type':'application/json'}, body: body}
-    );
-  } else {
-    // Create new file (multipart POST)
-    var multipart =
-      '--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+meta+
-      '\r\n--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+body+
-      '\r\n--'+boundary+'--';
-    var r = await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-      {method:'POST', headers:{'Authorization':'Bearer '+gdAccessToken,
-       'Content-Type':'multipart/related; boundary='+boundary}, body: multipart}
-    );
-    var d = await r.json();
-    gdFileId = d.id;
-  }
-  routesCache = routes;
-}
-
-// ── Public load/save (Drive with localStorage fallback) ────────────────────
-function lsRoutesKey() {
-  return uKey('routes');
-}
-
-async function loadRoutesAsync() {
-  if (routesCache) return routesCache;
-  // Try Drive first
-  if (gdAccessToken) {
-    try {
-      var routes = await driveReadRoutes();
-      routesCache = routes;
-      // Also mirror to localStorage for offline
-      localStorage.setItem(lsRoutesKey(), JSON.stringify(routes));
-      return routes;
-    } catch(e) { console.warn('Drive read failed, using localStorage:', e); }
-  }
-  // localStorage fallback
-  try { return JSON.parse(localStorage.getItem(lsRoutesKey())||'[]'); } catch(e) { return []; }
-}
-
-async function saveRoutesAsync(routes) {
-  routesCache = routes;
-  // Always write to localStorage immediately
-  localStorage.setItem(lsRoutesKey(), JSON.stringify(routes));
-  // Write to Drive if token available
-  if (gdAccessToken) {
-    try { await driveWriteRoutes(routes); }
-    catch(e) { console.warn('Drive write failed:', e); }
-  }
-}
-
-// Synchronous fallback for cases where we need routes immediately
-function loadRoutesSync() {
-  if (routesCache) return routesCache;
-  try { return JSON.parse(localStorage.getItem(lsRoutesKey())||'[]'); } catch(e) { return []; }
-}
-
-// ── Save current route ──────────────────────────────────────────────────────
-async function saveCurrentRoute(){
-  if(!gUser){ toast('Bitte zuerst anmelden','err'); return; }
-  if(!PS.dep||!PS.arr||!PS.route||!PS.lastData){ toast('Bitte zuerst Route berechnen','err'); return; }
-  var routes = await loadRoutesAsync();
-  var now = new Date();
-  var route = {
-    id:      Date.now().toString(),
-    name:    PS.dep.icao+' → '+PS.arr.icao,
-    notes:   '',
-    dep:     PS.dep.icao, arr:     PS.arr.icao,
-    depName: PS.dep.name||PS.dep.icao, arrName: PS.arr.name||PS.arr.icao,
-    alt:     PS.lastData.alt,
-    cruise:  PS.lastData.perf.cruise, fuel: PS.lastData.perf.fuel,
-    tanks:   PS.lastData.perf.tanks,  reg:  PS.lastData.perf.reg,
-    acid:    selAC.id,
-    rType:   document.getElementById('routeType').value,
-    waypoints: PS.route.map(function(w){
-      return {name:w.name,lat:w.lat,lon:w.lon,type:w.type,desc:w.desc||'',icao:w.icao||'',color:w.color||''};
-    }),
-    savedAt: now.toISOString(),
-    dateStr: now.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'})+
-             ' '+now.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}),
-  };
-  // Replace duplicate (same dep/arr within 5 min)
-  var fiveMin=5*60*1000;
-  var dup=routes.findIndex(function(r){ return r.dep===route.dep&&r.arr===route.arr&&(now-new Date(r.savedAt))<fiveMin; });
-  if(dup>=0){ routes[dup]=route; toast('Route aktualisiert ✓','ok'); }
-  else{ routes.unshift(route); toast('Route gespeichert ✓','ok'); }
-  if(routes.length>20) routes=routes.slice(0,20);
-  await saveRoutesAsync(routes);
-  renderSavedRoutes();
-  opn('sSV');
-}
-
-async function deleteRoute(id){
-  if(!confirm('Route löschen?')) return;
-  var routes=(await loadRoutesAsync()).filter(function(r){ return r.id!==id; });
-  await saveRoutesAsync(routes);
-  renderSavedRoutes();
-  toast('Route gelöscht','ok');
-}
-
-var editingRouteId=null;
-function openRouteModal(id){
-  var routes=loadRoutesSync();
-  var r=routes.find(function(r){ return r.id===id; });
-  if(!r) return;
-  editingRouteId=id;
-  document.getElementById('modalName').value=r.name;
-  document.getElementById('modalNotes').value=r.notes||'';
-  document.getElementById('routeModal').classList.add('open');
-}
-function closeRouteModal(){
-  document.getElementById('routeModal').classList.remove('open');
-  editingRouteId=null;
-}
-async function saveModalEdit(){
-  if(!editingRouteId) return;
-  var routes=await loadRoutesAsync();
-  var idx=routes.findIndex(function(r){ return r.id===editingRouteId; });
-  if(idx<0){ closeRouteModal(); return; }
-  routes[idx].name  = document.getElementById('modalName').value.trim()||routes[idx].name;
-  routes[idx].notes = document.getElementById('modalNotes').value.trim();
-  await saveRoutesAsync(routes);
-  renderSavedRoutes();
-  closeRouteModal();
-  toast('Route aktualisiert ✓','ok');
-}
-
-async function renderSavedRoutes(){
-  var el=document.getElementById('savedRoutesContent');
-  if(!el) return;
-  if(!gUser){
-    el.innerHTML='<div class="empty"><div class="ico">🔐</div>Anmeldung erforderlich</div>';
-    return;
-  }
-  el.innerHTML='<div class="empty"><div class="ico">⏳</div>Lade Routen...</div>';
-  var routes=await loadRoutesAsync();
-  if(!routes.length){
-    el.innerHTML='<div class="empty"><div class="ico">💾</div>Keine gespeicherten Routen<br>'+
-      '<span style="font-size:.68rem;">Route planen → „ROUTE SPEICHERN" klicken</span></div>';
-    return;
-  }
-  var sync=gdAccessToken?
-    '<span style="font-family:var(--mono);font-size:.58rem;color:var(--gn);">☁️ Google Drive Sync aktiv</span>':
-    '<span style="font-family:var(--mono);font-size:.58rem;color:var(--yw);">⚠️ Nur lokale Daten (Drive lädt...)</span>';
-  var html='<div style="margin-bottom:8px;">'+sync+'</div>'+
-    '<div class="route-list">';
-  routes.forEach(function(r){
-    html+=
-      '<div class="route-item">'+
-      '<div class="route-item-head">'+
-        '<span class="route-icao">'+esc(r.dep)+'</span>'+
-        '<span class="route-arrow">→</span>'+
-        '<span class="route-icao">'+esc(r.arr)+'</span>'+
-        '<span class="route-date">'+esc(r.dateStr||'')+'</span>'+
-      '</div>'+
-      '<div class="route-meta">'+
-        '<span class="route-tag hi">'+esc(String(r.alt||''))+'ft</span>'+
-        '<span class="route-tag">'+esc(String(r.cruise||''))+'kt</span>'+
-        '<span class="route-tag">'+esc(r.reg||'')+'</span>'+
-        (r.waypoints?'<span class="route-tag">'+r.waypoints.length+' WPTs</span>':'')+
-        (r.notes?'<span class="route-tag" style="color:var(--yw);">'+esc(r.notes)+'</span>':'')+
-      '</div>'+
-      (r.name&&r.name!==r.dep+' → '+r.arr?
-        '<div style="font-family:var(--mono);font-size:.62rem;color:var(--ac);margin-bottom:5px;">'+esc(r.name)+'</div>':'')+ 
-      '<div class="route-btns">'+
-        '<button class="rbtn rbtn-load" data-act="load" data-id="'+r.id+'">▶ Laden</button>'+
-        '<button class="rbtn rbtn-edit" data-act="edit" data-id="'+r.id+'">✏️ Bearb.</button>'+
-        '<button class="rbtn rbtn-del"  data-act="del"  data-id="'+r.id+'">🗑️ Löschen</button>'+
-      '</div>'+
-      '</div>';
-  });
-  el.innerHTML=html+'</div>';
-  el.querySelectorAll('.rbtn[data-act]').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      var act=this.dataset.act, id=this.dataset.id;
-      if(act==='load') loadRoute(id);
-      else if(act==='edit') openRouteModal(id);
-      else if(act==='del')  deleteRoute(id);
-    });
-  });
-}
-
-// Close modal on background click
-document.addEventListener('click',function(e){
-  var modal=document.getElementById('routeModal');
-  if(modal&&modal.classList.contains('open')&&e.target===modal) closeRouteModal();
-});
-
-
-// ══════════════════════════════════════════════════════
-//  SETTINGS
-// ══════════════════════════════════════════════════════
+// SETTINGS
 function saveCwx(){var k=document.getElementById('cwxKey').value.trim();localStorage.setItem('checkwx_key',k);saveUserSettings();toast(k?'CheckWX gespeichert ✓':'CheckWX entfernt',k?'ok':'');}
 function saveAip(){var k=document.getElementById('aipKey').value.trim();localStorage.setItem('openaip_key',k);applyAip(k);saveUserSettings();toast(k?'OpenAIP aktiviert ✓':'OpenAIP deaktiviert',k?'ok':'');}
 
-// ══════════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', function() {
-  // Restore global API keys (before user login)
-  document.getElementById('cwxKey').value = lsGet('checkwx_key');
-  document.getElementById('aipKey').value = lsGet('openaip_key');
+// CLOSE MODALS ON BG CLICK
+document.addEventListener('click',function(e){
+  ['routeModal','addWptModal'].forEach(function(id){var m=document.getElementById(id);if(m&&m.classList.contains('open')&&e.target===m){if(id==='routeModal')closeRouteModal();else closeAddWptModal();}});
+});
 
-  // Build aircraft grid
-  buildAcGrid();
-  pickAC('at3');
-
-  // Autocomplete for ICAO inputs
-  ['depI','arrI'].forEach(function(pair,pi){
-    var inpId=pair,dropId=pi===0?'dropDep':'dropArr';
+// INIT
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('cwxKey').value=lsGet('checkwx_key');
+  document.getElementById('aipKey').value=lsGet('openaip_key');
+  buildAcGrid();pickAC('at3');
+  // Autocomplete
+  [['depI','dropDep'],['arrI','dropArr']].forEach(function(pair){
+    var inpId=pair[0],dropId=pair[1];
     var el=document.getElementById(inpId);
     el.addEventListener('input',function(){var p=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(p,p);acShow(inpId,dropId);});
     el.addEventListener('keydown',function(e){acKeys(e,inpId,dropId);});
     el.addEventListener('blur',function(){acHide(dropId);});
     el.addEventListener('focus',function(){if(this.value.length>=2)acShow(inpId,dropId);});
   });
-
   document.getElementById('altI').addEventListener('keydown',function(e){if(e.key==='Enter')plan();});
   document.getElementById('pReg').addEventListener('input',function(){var p=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(p,p);});
 });
