@@ -458,7 +458,22 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
         → workers.cloudflare.com → Create Worker → Code einfügen → Deploy
       </div>
       <div class="dvdr"></div>
-      <div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">⚠️ FAA FNS-NDS NOTAMs</div>
+      <div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">🌍 AvDelphi NOTAMs (weltweite Abdeckung)</div>
+      <div class="fr">
+        <label>AvDelphi API Key <a href="https://www.avdelphi.com/dataapi.html" target="_blank" style="font-size:.58rem;">(avdelphi.com ↗)</a></label>
+        <input id="avdKey" type="text" placeholder="AvDelphi api_key" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="fr">
+        <label>AvDelphi Access Token</label>
+        <input id="avdToken" type="text" placeholder="AvDelphi api_access_token" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn bs bfw" onclick="saveAvd()">💾 AvDelphi speichern</button>
+      <div style="font-family:var(--mono);font-size:.58rem;color:var(--mt);margin-bottom:6px;line-height:1.6;">
+        avdelphi.com → API Key + Access Token eintragen<br>
+        Anfragen laufen über CORS Proxy Worker
+      </div>
+      <div class="dvdr"></div>
+      <div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">⚠️ FAA FNS-NDS NOTAMs (optional, nur US)</div>
       <div class="fr">
         <label>FAA FNS-NDS Benutzername <a href="https://aa.data.faa.gov" target="_blank" style="font-size:.58rem;">(aa.data.faa.gov ↗)</a></label>
         <input id="ntmUser" type="text" placeholder="FNS-NDS Benutzername" autocomplete="off" spellcheck="false">
@@ -580,7 +595,7 @@ function doSignOut(){
 function uKey(k){var e=gUser?gUser.email.replace(/[^a-z0-9]/gi,'_'):'guest';return 'vfr_'+e+'_'+k;}
 function saveUserSettings(){
   if(!gUser)return;
-  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),ntmUser:document.getElementById('ntmUser').value.trim(),ntmPass:document.getElementById('ntmPass').value.trim(),proxy:document.getElementById('proxyUrl').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
+  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),ntmUser:document.getElementById('ntmUser').value.trim(),ntmPass:document.getElementById('ntmPass').value.trim(),proxy:document.getElementById('proxyUrl').value.trim(),avdKey:document.getElementById('avdKey').value.trim(),avdToken:document.getElementById('avdToken').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
 }
 function loadUserSettings(email){
   var raw=localStorage.getItem('vfr_'+email.replace(/[^a-z0-9]/gi,'_')+'_cfg');
@@ -590,6 +605,8 @@ function loadUserSettings(email){
     if(s.ntmUser){document.getElementById('ntmUser').value=s.ntmUser;localStorage.setItem('fns_user',s.ntmUser);}
     if(s.ntmPass){document.getElementById('ntmPass').value=s.ntmPass;localStorage.setItem('fns_pass',s.ntmPass);}
     if(s.proxy){document.getElementById('proxyUrl').value=s.proxy;localStorage.setItem('cors_proxy_url',s.proxy);}
+    if(s.avdKey){document.getElementById('avdKey').value=s.avdKey;localStorage.setItem('avd_key',s.avdKey);}
+    if(s.avdToken){document.getElementById('avdToken').value=s.avdToken;localStorage.setItem('avd_token',s.avdToken);}
     if(s.aip){document.getElementById('aipKey').value=s.aip;localStorage.setItem('openaip_key',s.aip);applyAip(s.aip);}
     if(s.cruise)document.getElementById('pCruise').value=s.cruise;
     if(s.fuel)document.getElementById('pFuel').value=s.fuel;
@@ -820,6 +837,32 @@ function cparam(a,b,p){var dx=b.lon-a.lon,dy=b.lat-a.lat,l=dx*dx+dy*dy;if(!l)ret
 function enrouteCTRs(dep,arr){var r=[];Object.keys(AP).forEach(function(ic){if(ic===dep.icao||ic===arr.icao)return;var ap=AP[ic];if(!ap.rpts||!Object.keys(ap.rpts).length)return;var t=cparam(dep,arr,ap);if(t<=0.05||t>=0.95)return;var cp={lat:dep.lat+(arr.lat-dep.lat)*t,lon:dep.lon+(arr.lon-dep.lon)*t};if(nmDist(cp,ap)<25)r.push(ic);});return r;}
 function computeRoute(dep,arr,rt){var base=[{name:dep.icao,lat:dep.lat,lon:dep.lon,type:'apt',color:'#00ff9f',desc:dep.name||dep.icao},{name:arr.icao,lat:arr.lat,lon:arr.lon,type:'apt',color:'#ff6b35',desc:arr.name||arr.icao}];if(rt==='direct')return base;var route=[base[0]];var dR=AP[dep.icao]&&AP[dep.icao].rpts||{},aR=AP[arr.icao]&&AP[arr.icao].rpts||{};var dE=closestRpt(dR,dep,arr,false);if(dE)route.push({name:dE.name,lat:dE.lat,lon:dE.lon,type:'rpt',color:'#ffd60a',desc:dE.desc,icao:dep.icao});enrouteCTRs(dep,arr).forEach(function(ci){var cAP=AP[ci];if(!cAP||!cAP.rpts)return;var en=closestRpt(cAP.rpts,cAP,dep,true),ex=closestRpt(cAP.rpts,cAP,arr,false);if(en)route.push({name:en.name,lat:en.lat,lon:en.lon,type:'rpt',color:'#a78bfa',desc:en.desc+' ('+ci+' Entry)',icao:ci});if(ex)route.push({name:ex.name,lat:ex.lat,lon:ex.lon,type:'rpt',color:'#a78bfa',desc:ex.desc+' ('+ci+' Exit)',icao:ci});});var aE=closestRpt(aR,arr,dep,true);if(aE)route.push({name:aE.name,lat:aE.lat,lon:aE.lon,type:'rpt',color:'#ffd60a',desc:aE.desc,icao:arr.icao});route.push(base[1]);var mid=route.slice(1,route.length-1);mid.sort(function(a,b){return nmDist(dep,a)-nmDist(dep,b);});var seen={};return[base[0]].concat(mid.filter(function(w){var k=w.lat.toFixed(3)+','+w.lon.toFixed(3);if(seen[k])return false;seen[k]=true;return true;})).concat([base[1]]);}
 
+
+// ── CORS Proxy helpers (via Cloudflare Worker) ────────────────────────────
+function getCorsProxyUrl(){
+  var el=document.getElementById('proxyUrl');
+  return (el?el.value.trim():'')||lsGet('cors_proxy_url');
+}
+
+async function corsPost(targetUrl, body, headers){
+  var proxy=getCorsProxyUrl();
+  if(!proxy) return {ok:false,error:'no proxy configured'};
+  try{
+    var r=await fetch(proxy+'?url='+encodeURIComponent(targetUrl),{method:'POST',headers:headers,body:body});
+    return r.ok?{ok:true,text:await r.text()}:{ok:false,error:'HTTP '+r.status};
+  }catch(e){return {ok:false,error:e.message};}
+}
+
+async function corsGet(targetUrl, extraHeaders){
+  var proxy=getCorsProxyUrl();
+  if(!proxy) return {ok:false,error:'no proxy configured'};
+  try{
+    var opts=extraHeaders?{headers:extraHeaders}:{};
+    var r=await fetch(proxy+'?url='+encodeURIComponent(targetUrl),opts);
+    return r.ok?{ok:true,text:await r.text()}:{ok:false,error:'HTTP '+r.status};
+  }catch(e){return {ok:false,error:e.message};}
+}
+
 // WEATHER
 var NO_METAR=['EPBC','EPNC','EPLB','EPOL','EPZG','EPKP','EPMM','EPPG','EPKS','EPCN','EPDE','EPOK','EPST','EPHY','EPGM','EPKN','EPLK'];
 function wxIcao(icao){return NO_METAR.indexOf(icao)>=0?'EPWA':icao;}
@@ -895,45 +938,50 @@ function renderWx(elId,origIcao,name,wx,type){
 // NOTAMs
 // ── NOTAM helpers ─────────────────────────────────────────────────────────
 //
-// Source priority:
-//   1. autorouter.aero  – European NOTAMs via Eurocontrol EAD (free, REST, CORS OK)
-//   2. aviationweather.gov – US NOTAMs (via CORS proxy)
-//   3. FAA FNS-NDS SOAP    – US NOTAMs via proxy (username+password)
+// Source priority (alle via Cloudflare Worker CORS proxy):
+//   1. AvDelphi – weltweite NOTAMs (api_key + api_access_token)
+//      GET https://www.avdelphi.com/api/1.0/notam.svc?api_key=K&api_access_token=T&cmd=latest&code_icao=ICAO
+//   2. aviationweather.gov – US-NOTAMs Fallback (kein Key)
+//   3. FAA FNS-NDS SOAP – US-NOTAMs (optional, User+Pass)
 //
-// autorouter.aero API:
-//   GET https://api.autorouter.aero/v1.0/notam?itemas=["ICAO"]&limit=50
-//   No auth needed. Returns JSON. Supports CORS from browser directly.
+// CORS proxy (Cloudflare Worker) leitet alle Requests durch.
 
-async function fetchNtmForIcao(icao, user, pass) {
+async function fetchNtmForIcao(icao, avdKey, avdToken, user, pass) {
   var results = [];
 
-  // ── 1. autorouter.aero (European NOTAMs, free, no key, CORS OK) ──────────
-  try {
-    var arUrl = 'https://api.autorouter.aero/v1.0/notam?itemas='+
-      encodeURIComponent('["'+icao+'"]')+'&offset=0&limit=50';
-    var r = await fetch(arUrl, {headers:{'Accept':'application/json'}});
-    if (r.ok) {
-      var d = await r.json();
-      var list = d.rows || d.notams || d.data || (Array.isArray(d)?d:[]);
-      list.forEach(function(n) {
-        var raw  = n.icaoMessage || n.raw || n.text ||
-                   (n.iteme ? 'E) '+n.iteme : '') || JSON.stringify(n);
-        var ntmId= n.itemNumber || n.number || n.id || 'NTM';
-        // Try to extract standard NOTAM number from text
-        var idM  = raw.match(/\b([A-Z]\d{4}\/\d{2})\b/);
-        if (idM) ntmId = idM[1];
-        var txt  = raw.replace(/\s+/g,' ').trim().substring(0,300);
-        var crit = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/i.test(raw);
-        if (txt.length > 5) results.push({id:String(ntmId), icao:icao, src:'autorouter/EAD', txt:txt, crit:crit});
-      });
-      if (results.length) {
-        console.log('autorouter: '+results.length+' NOTAMs for '+icao);
-        return results;
+  // ── 1. AvDelphi (primary – weltweite NOTAMs, europäische Airports) ────────
+  // GET https://www.avdelphi.com/api/1.0/notam.svc
+  //   ?api_key=KEY&api_access_token=TOKEN&cmd=latest&code_icao=ICAO
+  // Response JSON: { result: [ { icao, notam_id, text }, ... ] }
+  if (avdKey && avdToken) {
+    try {
+      var avdUrl = 'https://www.avdelphi.com/api/1.0/notam.svc' +
+        '?api_key='   + encodeURIComponent(avdKey) +
+        '&api_access_token=' + encodeURIComponent(avdToken) +
+        '&cmd=latest&code_icao=' + encodeURIComponent(icao.toLowerCase());
+      var res = await corsGet(avdUrl);
+      if (res.ok && res.text) {
+        var d = JSON.parse(res.text);
+        var list = d.result || d.results || [];
+        list.forEach(function(n) {
+          var raw   = n.text || n.icao_message || n.message || '';
+          var ntmId = n.notam_id || '';
+          var idM   = raw.match(/\b([A-Z]\d{4}\/\d{2})\b/);
+          if (idM) ntmId = idM[1];
+          if (!ntmId) ntmId = 'AVD-'+icao;
+          var txt  = raw.replace(/\s+/g,' ').trim().substring(0, 300);
+          var crit = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/i.test(raw);
+          if (txt.length > 5) results.push({id:String(ntmId), icao:icao, src:'AvDelphi', txt:txt, crit:crit});
+        });
+        if (results.length) {
+          console.log('AvDelphi: '+results.length+' NOTAMs for '+icao);
+          return results;
+        }
       }
-    }
-  } catch(e) { console.warn('autorouter NOTAM error:', e.message); }
+    } catch(e) { console.warn('AvDelphi NOTAM error:', e.message); }
+  }
 
-  // ── 2. aviationweather.gov via CORS proxy (US airports fallback) ──────────
+  // ── 2. aviationweather.gov via CORS proxy (US-Fallback) ─────────────────
   try {
     var awUrl = 'https://aviationweather.gov/api/data/notam?icaos='+icao+'&format=raw';
     var res2  = await corsGet(awUrl);
@@ -949,29 +997,21 @@ async function fetchNtmForIcao(icao, user, pass) {
     }
   } catch(e) { console.warn('aviationweather NOTAM error:', e.message); }
 
-  // ── 3. FAA FNS-NDS SOAP via CORS proxy (US only, needs credentials) ──────
+  // ── 3. FAA FNS-NDS SOAP via proxy (optional, nur US) ─────────────────────
   if (user && pass) {
     try {
-      var CRLF = '\r\n';
       var soapBody =
         '<?xml version="1.0" encoding="UTF-8"?>'+
         '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"'+
         ' xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"'+
         ' xmlns:fn="http://fnsnds.faa.gov/">'+
-        '<soapenv:Header>'+
-        '<wsse:Security>'+
-        '<wsse:UsernameToken>'+
+        '<soapenv:Header><wsse:Security><wsse:UsernameToken>'+
         '<wsse:Username>'+user+'</wsse:Username>'+
         '<wsse:Password>'+pass+'</wsse:Password>'+
-        '</wsse:UsernameToken>'+
-        '</wsse:Security>'+
-        '</soapenv:Header>'+
-        '<soapenv:Body>'+
-        '<fn:RetrieveNotams>'+
+        '</wsse:UsernameToken></wsse:Security></soapenv:Header>'+
+        '<soapenv:Body><fn:RetrieveNotams>'+
         '<fn:icaoLocation>'+icao+'</fn:icaoLocation>'+
-        '</fn:RetrieveNotams>'+
-        '</soapenv:Body>'+
-        '</soapenv:Envelope>';
+        '</fn:RetrieveNotams></soapenv:Body></soapenv:Envelope>';
       var res3 = await corsPost(
         'https://notams.aim.faa.gov/fnsnds/FnsNds',
         soapBody,
@@ -1000,12 +1040,17 @@ async function fetchNtmForIcao(icao, user, pass) {
 
 
 async function fetchNtm(dep, arr) {
-  var user = document.getElementById('ntmUser').value.trim() || lsGet('fns_user');
-  var pass = document.getElementById('ntmPass').value.trim() || lsGet('fns_pass');
-  var results = [];
+  var avdKey   = document.getElementById('avdKey').value.trim()   || lsGet('avd_key');
+  var avdToken = document.getElementById('avdToken').value.trim() || lsGet('avd_token');
+  var user     = document.getElementById('ntmUser').value.trim()  || lsGet('fns_user');
+  var pass     = document.getElementById('ntmPass').value.trim()  || lsGet('fns_pass');
+  var results  = [];
 
   // Beide Flughäfen parallel abfragen
-  var both = await Promise.all([fetchNtmForIcao(dep, user, pass), fetchNtmForIcao(arr, user, pass)]);
+  var both = await Promise.all([
+    fetchNtmForIcao(dep, avdKey, avdToken, user, pass),
+    fetchNtmForIcao(arr, avdKey, avdToken, user, pass)
+  ]);
   both.forEach(function(list){ results = results.concat(list); });
 
   // Demo-Fallback wenn nichts geliefert
@@ -1018,7 +1063,7 @@ async function fetchNtm(dep, arr) {
       {id:'B'+mm+dd+'0/26',icao:dep,src:'Demo',crit:true, txt:'DANGER AREA VIC '+dep+' FL060-FL100 0800-1600'},
     ];
     if (!user) results.push({id:'INFO',icao:dep,src:'Info',crit:false,
-      txt:'Keine NOTAMs gefunden. CORS Proxy URL in ⚙️ Einstellungen prüfen.'});
+      txt:'Keine NOTAMs. Bitte CORS Proxy URL + AvDelphi API Key/Token in ⚙️ Einstellungen eintragen.'});
   }
 
   return results.slice(0, 20);
@@ -1331,6 +1376,14 @@ function saveNtm(){
   saveUserSettings();
   toast(u?'FAA FNS-NDS Zugangsdaten gespeichert ✓':'FNS-NDS Zugangsdaten entfernt',u?'ok':'');
 }
+function saveAvd(){
+  var k=document.getElementById('avdKey').value.trim();
+  var t=document.getElementById('avdToken').value.trim();
+  localStorage.setItem('avd_key',k);
+  localStorage.setItem('avd_token',t);
+  saveUserSettings();
+  toast(k?'AvDelphi gespeichert ✓':'AvDelphi entfernt',k?'ok':'');
+}
 function saveProxy(){
   var v=document.getElementById('proxyUrl').value.trim();
   localStorage.setItem('cors_proxy_url',v);
@@ -1351,6 +1404,8 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('ntmUser').value=lsGet('fns_user');
   document.getElementById('ntmPass').value=lsGet('fns_pass');
   document.getElementById('proxyUrl').value=lsGet('cors_proxy_url');
+  document.getElementById('avdKey').value=lsGet('avd_key');
+  document.getElementById('avdToken').value=lsGet('avd_token');
   buildAcGrid();pickAC('at3');
   // Autocomplete
   [['depI','dropDep'],['arrI','dropArr']].forEach(function(pair){
