@@ -848,14 +848,49 @@ function renderWx(elId,origIcao,name,wx,type){
 
 // NOTAMs
 // ── FAA FNS-NDS SOAP helper ───────────────────────────────────────────────
-// FNS-NDS endpoint: https://notams.aim.faa.gov/fnsnds/FnsNds
-// Auth: WS-Security UsernameToken (plaintext)
-// Operation: RetrieveNotams – query by icaoLocation
+// FNS-NDS endpoint: https://notams.aim.faa.gov/fnsnds/FnsNds  (SOAP 1.1)
+// Auth: WS-Security UsernameToken
+// CORS is blocked by FAA → requests are routed through a CORS proxy.
+// Strategy: try corsproxy.io first, then allorigins.win as fallback.
+
+var CORS_PROXIES = [
+  function(url){ return 'https://corsproxy.io/?url='+encodeURIComponent(url); },
+  function(url){ return 'https://api.allorigins.win/raw?url='+encodeURIComponent(url); },
+];
+
+async function corsPost(targetUrl, body, headers) {
+  var lastErr = null;
+  for (var pi = 0; pi < CORS_PROXIES.length; pi++) {
+    try {
+      var proxyUrl = CORS_PROXIES[pi](targetUrl);
+      var r = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: headers,
+        body: body,
+      });
+      if (r.ok) { return {ok:true, text: await r.text(), proxy: pi}; }
+    } catch(e) { lastErr = e; }
+  }
+  return {ok:false, error: lastErr};
+}
+
+async function corsGet(targetUrl) {
+  var lastErr = null;
+  for (var pi = 0; pi < CORS_PROXIES.length; pi++) {
+    try {
+      var proxyUrl = CORS_PROXIES[pi](targetUrl);
+      var r = await fetch(proxyUrl);
+      if (r.ok) { return {ok:true, text: await r.text(), proxy: pi}; }
+    } catch(e) { lastErr = e; }
+  }
+  return {ok:false, error: lastErr};
+}
+
 function fnsSOAPBody(user, pass, icao) {
   return '<?xml version="1.0" encoding="UTF-8"?>' +
   '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"' +
-  '  xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"' +
-  '  xmlns:fn="http://fnsnds.faa.gov/">' +
+  ' xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"' +
+  ' xmlns:fn="http://fnsnds.faa.gov/">' +
   '<soapenv:Header>' +
   '<wsse:Security>' +
   '<wsse:UsernameToken>' +
@@ -874,82 +909,78 @@ function fnsSOAPBody(user, pass, icao) {
 
 function parseFnsResponse(xml, icao) {
   var results = [];
-  // Parse NOTAM entries from SOAP XML response
-  // FNS-NDS returns <notamList> with <notam> elements
-  // Each <notam> has <notamNumber>, <icaoMessage> or <traditionalMessage>
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
-  // Try multiple possible element names from FNS-NDS schema
-  var notamEls = doc.querySelectorAll('notam, Notam, NOTAM, notamEntity');
-  if (!notamEls.length) {
-    // Try to extract raw text between tags
-    var raw = xml.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-    if (raw.length > 20 && raw.indexOf('NOTAM') >= 0) {
-      results.push({id:'FNS-RAW',icao:icao,src:'FAA FNS-NDS',txt:raw.substring(0,500),crit:false});
+  try {
+    var doc = new DOMParser().parseFromString(xml, 'text/xml');
+    var notamEls = doc.querySelectorAll('notam,Notam,NOTAM,notamEntity');
+    notamEls.forEach(function(el) {
+      var numEl  = el.querySelector('notamNumber,notamId,number,id');
+      var ntmId  = numEl ? numEl.textContent.trim() : 'FNS';
+      var msgEl  = el.querySelector('icaoMessage,traditionalMessage,message,text,notamText');
+      var raw    = msgEl ? msgEl.textContent.trim() : el.textContent.replace(/<[^>]+>/g,' ').trim();
+      if (!raw || raw.length < 5) return;
+      var idM    = raw.match(/\b([A-Z]\d{4}\/\d{2})\b/);
+      if (idM) ntmId = idM[1];
+      var txt    = raw.replace(/\s+/g,' ').trim().substring(0, 300);
+      var crit   = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED|RWY CLSD|TWY CLSD)\b/i.test(raw);
+      if (txt.length > 10) results.push({id:ntmId, icao:icao, src:'FAA FNS-NDS', txt:txt, crit:crit});
+    });
+    // If no structured elements found, try raw extraction from XML text
+    if (!results.length) {
+      var rawText = xml.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+      var re = /\b([A-Z]\d{4}\/\d{2})\b([\s\S]{10,250}?)(?=\b[A-Z]\d{4}\/\d{2}\b|$)/g;
+      var m;
+      while ((m = re.exec(rawText)) !== null) {
+        var txt2 = m[2].replace(/\s+/g,' ').trim();
+        if (txt2.length > 5) results.push({
+          id: m[1], icao: icao, src: 'FAA FNS-NDS',
+          txt: (m[1]+' '+txt2).substring(0,300),
+          crit: /\b(CLSD|RESTRICTED|DANGER|PROHIBITED|HAZARD)\b/i.test(txt2)
+        });
+      }
     }
-    return results;
-  }
-  notamEls.forEach(function(el) {
-    // Get NOTAM number
-    var numEl = el.querySelector('notamNumber,notamId,number,id');
-    var ntmId = numEl ? numEl.textContent.trim() : 'FNS';
-    // Get NOTAM text (icaoMessage preferred, traditionalMessage as fallback)
-    var msgEl = el.querySelector('icaoMessage,traditionalMessage,message,text,notamText');
-    var raw = msgEl ? msgEl.textContent.trim() : el.textContent.trim();
-    if (!raw || raw.length < 5) return;
-    // Extract proper ID from raw text if not found in element
-    var idMatch = raw.match(/\b([A-Z]\d{4}\/\d{2})\b/);
-    if (idMatch) ntmId = idMatch[1];
-    var txt = raw.replace(/\s+/g,' ').trim().substring(0, 300);
-    var crit = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED|RWY CLSD|TWY CLSD)\b/i.test(raw);
-    if (txt.length > 10) results.push({id:ntmId, icao:icao, src:'FAA FNS-NDS', txt:txt, crit:crit});
-  });
+  } catch(e) { console.warn('parseFnsResponse error:', e); }
   return results;
 }
 
 async function fetchNtmForIcao(icao, user, pass) {
   var results = [];
 
-  // ── 1. FAA FNS-NDS SOAP (primary, wenn Zugangsdaten vorhanden) ───────────
+  // ── 1. FAA FNS-NDS via CORS proxy (primary) ───────────────────────────
   if (user && pass) {
     try {
       var soapBody = fnsSOAPBody(user, pass, icao);
-      var r = await fetch('https://notams.aim.faa.gov/fnsnds/FnsNds', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/xml; charset=utf-8',
-          'SOAPAction': 'RetrieveNotams',
-        },
-        body: soapBody,
-      });
-      if (r.ok) {
-        var xml = await r.text();
-        results = parseFnsResponse(xml, icao);
+      var res = await corsPost(
+        'https://notams.aim.faa.gov/fnsnds/FnsNds',
+        soapBody,
+        {'Content-Type':'text/xml; charset=utf-8', 'SOAPAction':'RetrieveNotams'}
+      );
+      if (res.ok && res.text) {
+        results = parseFnsResponse(res.text, icao);
         if (results.length) {
-          console.log('FAA FNS-NDS: '+results.length+' NOTAMs for '+icao);
+          console.log('FAA FNS-NDS (proxy '+res.proxy+'): '+results.length+' NOTAMs for '+icao);
           return results;
         }
-      } else {
-        var errTxt = await r.text();
-        console.warn('FNS-NDS HTTP '+r.status+' for '+icao+':', errTxt.substring(0,200));
       }
-    } catch(e) { console.warn('FAA FNS-NDS fetch error:', e.message); }
+    } catch(e) { console.warn('FNS-NDS error:', e.message); }
   }
 
-  // ── 2. aviationweather.gov (freier Fallback, kein Key nötig) ─────────────
+  // ── 2. aviationweather.gov via CORS proxy (fallback) ─────────────────
   try {
-    var r2 = await fetch('https://aviationweather.gov/api/data/notam?icaos='+icao+'&format=raw');
-    if (r2.ok) {
-      var txt2 = await r2.text();
-      txt2.split('\n').filter(function(l){return l.trim().length>10;}).forEach(function(line,j){
-        var im = line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);
-        var ntmId = im ? im[1].replace(/\s/,'') : 'N'+icao+j;
+    var awUrl = 'https://aviationweather.gov/api/data/notam?icaos='+icao+'&format=raw';
+    var res2 = await corsGet(awUrl);
+    if (res2.ok && res2.text) {
+      res2.text.split('\n').filter(function(l){return l.trim().length>10;}).forEach(function(line,j){
+        var im   = line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);
+        var ntmId= im ? im[1].replace(/\s/,'') : 'N'+icao+j;
         var crit = /\b(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(line);
         results.push({id:ntmId, icao:icao, src:'aviationweather.gov', txt:line.trim().substring(0,280), crit:crit});
       });
-      if (results.length) return results;
+      if (results.length) {
+        console.log('aviationweather (proxy '+res2.proxy+'): '+results.length+' NOTAMs for '+icao);
+        return results;
+      }
     }
-  } catch(e) {}
+  } catch(e) { console.warn('aviationweather NOTAM error:', e.message); }
 
   return results;
 }
@@ -973,7 +1004,7 @@ async function fetchNtm(dep, arr) {
       {id:'B'+mm+dd+'0/26',icao:dep,src:'Demo',crit:true, txt:'DANGER AREA VIC '+dep+' FL060-FL100 0800-1600'},
     ];
     if (!user) results.push({id:'INFO',icao:dep,src:'Info',crit:false,
-      txt:'FAA FNS-NDS Zugangsdaten in ⚙️ Einstellungen für echte NOTAMs eintragen'});
+      txt:'FAA FNS-NDS Zugangsdaten in ⚙️ Einstellungen eintragen · NOTAMs via corsproxy.io geroutet'});
   }
 
   return results.slice(0, 20);
