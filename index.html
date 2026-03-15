@@ -459,7 +459,19 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
       </div>
 
       <div class="dvdr"></div>
-      <div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">⚠️ FAA FNS-NDS NOTAMs (optional, nur US)</div>
+      <div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">✈️ FAA NOTAM API (weltweite NOTAMs)</div>
+      <div class="fr">
+        <label>FAA API Client ID <a href="https://api.faa.gov" target="_blank" style="font-size:.58rem;">(kostenlos registrieren ↗)</a></label>
+        <input id="faaClientId" type="text" placeholder="Client ID von api.faa.gov" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn bs bfw" onclick="saveFaaClientId()">💾 FAA Client ID speichern</button>
+      <div style="font-family:var(--mono);font-size:.58rem;color:var(--mt);margin-bottom:6px;line-height:1.6;">
+        api.faa.gov → kostenlos registrieren → Client ID<br>
+        Weltweite NOTAMs inkl. Europa (EP*, LO*, LS* etc.)<br>
+        Anfragen via CORS Proxy Worker
+      </div>
+      <div class="dvdr"></div>
+      <div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">⚠️ FAA FNS-NDS SOAP (optional, nur US)</div>
       <div class="fr">
         <label>FAA FNS-NDS Benutzername <a href="https://aa.data.faa.gov" target="_blank" style="font-size:.58rem;">(aa.data.faa.gov ↗)</a></label>
         <input id="ntmUser" type="text" placeholder="FNS-NDS Benutzername" autocomplete="off" spellcheck="false">
@@ -581,13 +593,14 @@ function doSignOut(){
 function uKey(k){var e=gUser?gUser.email.replace(/[^a-z0-9]/gi,'_'):'guest';return 'vfr_'+e+'_'+k;}
 function saveUserSettings(){
   if(!gUser)return;
-  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),ntmUser:document.getElementById('ntmUser').value.trim(),ntmPass:document.getElementById('ntmPass').value.trim(),proxy:document.getElementById('proxyUrl').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
+  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),faaClientId:document.getElementById('faaClientId').value.trim(),ntmUser:document.getElementById('ntmUser').value.trim(),ntmPass:document.getElementById('ntmPass').value.trim(),proxy:document.getElementById('proxyUrl').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
 }
 function loadUserSettings(email){
   var raw=localStorage.getItem('vfr_'+email.replace(/[^a-z0-9]/gi,'_')+'_cfg');
   if(!raw)return;
   try{var s=JSON.parse(raw);
     if(s.cwx){document.getElementById('cwxKey').value=s.cwx;localStorage.setItem('checkwx_key',s.cwx);}
+    if(s.faaClientId){document.getElementById('faaClientId').value=s.faaClientId;localStorage.setItem('faa_client_id',s.faaClientId);}
     if(s.ntmUser){document.getElementById('ntmUser').value=s.ntmUser;localStorage.setItem('fns_user',s.ntmUser);}
     if(s.ntmPass){document.getElementById('ntmPass').value=s.ntmPass;localStorage.setItem('fns_pass',s.ntmPass);}
     if(s.proxy){document.getElementById('proxyUrl').value=s.proxy;localStorage.setItem('cors_proxy_url',s.proxy);}
@@ -954,116 +967,123 @@ function renderWx(elId,origIcao,name,wx,type){
 
 async function fetchNtmForIcao(icao, user, pass) {
   var results = [];
-  // Guard: only query known-valid ICAO formats
-  if(!icao||icao.length<3||icao.length>4) return results;
+  if (!icao || icao.length < 3 || icao.length > 4) return results;
 
-  // ── FAA FNS-NDS SOAP via CORS proxy ─────────────────────────────────────
-  // Endpoint: https://notams.aim.faa.gov/fnsnds/FnsNds
-  // Auth: WS-Security UsernameToken (Benutzername + Passwort)
-  // Hinweis: liefert US-NOTAMs; für europäische Airports (EP*, LO*, LS* etc.)
-  // werden keine NOTAMs zurückgegeben – aviationweather.gov als Fallback.
-  if (user && pass) {
+  var isUS = /^[KCP]/.test(icao);
+
+  // ── 1. FAA OpenAPI REST (api.faa.gov/notams) ─────────────────────────────
+  // Free, no API key, worldwide NOTAMs (US + international via ICAO)
+  // GET https://api.faa.gov/notams/v1/notams?icaoLocation=ICAO&pageSize=50
+  //   &sortOrder=Desc&notamType=N&expand=true&responseFormat=JSON
+  // Requires Client ID in header: client_id = "YOUR_CLIENT_ID" (free from api.faa.gov)
+  try {
+    var faaClientId = document.getElementById('faaClientId').value.trim() || lsGet('faa_client_id');
+    if (faaClientId) {
+      var faaUrl = 'https://api.faa.gov/notams/v1/notams' +
+        '?icaoLocation=' + encodeURIComponent(icao) +
+        '&pageSize=50&pageNum=0&sortBy=&sortOrder=Desc' +
+        '&notamType=N&expand=true&responseFormat=JSON';
+      var faaHeaders = {
+        'Accept': 'application/json',
+        'client_id': faaClientId,
+      };
+      var res = await corsGet(faaUrl, faaHeaders);
+      if (res.ok && res.text) {
+        var d = JSON.parse(res.text);
+        // Response: { items: [ { coreNOTAMData: { notam: { id, number, type, ... },
+        //   notamTranslation: [{ type:'ICAO', simpleText:'...' }] } } ] }
+        var items = d.items || d.notams || d.data || [];
+        items.forEach(function(item) {
+          var core  = item.coreNOTAMData || item;
+          var notam = core.notam || core;
+          // Get NOTAM text - prefer ICAO translation, fall back to plain
+          var raw = '';
+          var trans = core.notamTranslation || [];
+          for (var ti = 0; ti < trans.length; ti++) {
+            if (trans[ti].type === 'ICAO' || trans[ti].type === 'LOCAL_FORMAT') {
+              raw = trans[ti].simpleText || trans[ti].formattedText || '';
+              if (raw) break;
+            }
+          }
+          if (!raw) raw = notam.icaoMessage || notam.traditionalMessage ||
+                          notam.text || notam.number || '';
+          var ntmId = notam.number || notam.notamNumber || notam.id || 'FAA';
+          var txt   = raw.replace(/\s+/g,' ').trim().substring(0, 300);
+          var crit  = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/i.test(raw);
+          if (txt.length > 5) results.push({
+            id: String(ntmId), icao: icao, src: 'FAA OpenAPI', txt: txt, crit: crit
+          });
+        });
+        if (results.length) {
+          console.log('FAA OpenAPI: ' + results.length + ' NOTAMs for ' + icao);
+          return results;
+        }
+        if (d.items !== undefined) {
+          // Valid response but 0 NOTAMs – airport has no active NOTAMs
+          console.log('FAA OpenAPI: 0 active NOTAMs for ' + icao);
+          return results;
+        }
+      }
+    }
+  } catch(e) { console.warn('FAA OpenAPI error:', e.message); }
+
+  // ── 2. FAA FNS-NDS SOAP (only for US airports with credentials) ─────────
+  if (isUS && user && pass) {
     try {
-      var CRLF = '\r\n';
       var soapBody =
         '<?xml version="1.0" encoding="UTF-8"?>' +
         '<soapenv:Envelope' +
         ' xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"' +
         ' xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"' +
         ' xmlns:fn="http://fnsnds.faa.gov/">' +
-        '<soapenv:Header>' +
-        '<wsse:Security>' +
-        '<wsse:UsernameToken>' +
+        '<soapenv:Header><wsse:Security><wsse:UsernameToken>' +
         '<wsse:Username>' + user + '</wsse:Username>' +
         '<wsse:Password>' + pass + '</wsse:Password>' +
-        '</wsse:UsernameToken>' +
-        '</wsse:Security>' +
-        '</soapenv:Header>' +
-        '<soapenv:Body>' +
-        '<fn:RetrieveNotams>' +
+        '</wsse:UsernameToken></wsse:Security></soapenv:Header>' +
+        '<soapenv:Body><fn:RetrieveNotams>' +
         '<fn:icaoLocation>' + icao + '</fn:icaoLocation>' +
-        '</fn:RetrieveNotams>' +
-        '</soapenv:Body>' +
-        '</soapenv:Envelope>';
-
-      var res = await corsPost(
+        '</fn:RetrieveNotams></soapenv:Body></soapenv:Envelope>';
+      var res2 = await corsPost(
         'https://notams.aim.faa.gov/fnsnds/FnsNds',
         soapBody,
-        { 'Content-Type': 'text/xml; charset=utf-8', 'SOAPAction': 'RetrieveNotams' }
+        {'Content-Type':'text/xml; charset=utf-8', 'SOAPAction':'RetrieveNotams'}
       );
-
-      if (res.ok && res.text) {
-        console.log('FNS-NDS raw for ' + icao + ':', res.text.substring(0, 400));
-        var doc = new DOMParser().parseFromString(res.text, 'text/xml');
-
-        // Check for SOAP fault
-        var fault = doc.querySelector('faultstring, faultCode, Fault');
-        if (fault) {
-          console.warn('FNS-NDS SOAP fault:', fault.textContent.trim());
-        }
-
-        // Parse NOTAM elements – try all known tag names
-        var notamEls = doc.querySelectorAll(
-          'notam, Notam, NOTAM, notamEntity, notamList > *, NotamList > *'
-        );
-        notamEls.forEach(function(el) {
-          var numEl = el.querySelector('notamNumber, notamId, number, id, itemA, item_a');
-          var ntmId = numEl ? numEl.textContent.trim() : '';
-          var msgEl = el.querySelector(
-            'icaoMessage, traditionalMessage, message, text, notamText, full_text, itemE, item_e'
-          );
-          var raw = msgEl ? msgEl.textContent.trim() : el.textContent.trim();
+      if (res2.ok && res2.text) {
+        var doc = new DOMParser().parseFromString(res2.text, 'text/xml');
+        doc.querySelectorAll('notam, Notam, NOTAM').forEach(function(el) {
+          var numEl = el.querySelector('notamNumber, notamId, number, id');
+          var ntmId = numEl ? numEl.textContent.trim() : 'FNS';
+          var msgEl = el.querySelector('icaoMessage, traditionalMessage, message, text, notamText');
+          var raw   = msgEl ? msgEl.textContent.trim() : el.textContent.trim();
           if (!raw || raw.length < 5) return;
           var idM = raw.match(/\b([A-Z]\d{4}\/\d{2})\b/);
           if (idM) ntmId = idM[1];
-          if (!ntmId) ntmId = 'FNS-' + icao;
-          var txt  = raw.replace(/\s+/g, ' ').trim().substring(0, 300);
+          var txt  = raw.replace(/\s+/g,' ').trim().substring(0, 300);
           var crit = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/i.test(raw);
-          if (txt.length > 5) results.push({ id: ntmId, icao: icao, src: 'FAA FNS-NDS', txt: txt, crit: crit });
+          if (txt.length > 5) results.push({id:ntmId, icao:icao, src:'FAA FNS-NDS', txt:txt, crit:crit});
         });
-
-        // Fallback: try raw text extraction if no XML elements found
-        if (!results.length) {
-          var rawXml = res.text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-          var re2 = /\b([A-Z]\d{4}\/\d{2})\b(.{10,250}?)(?=\b[A-Z]\d{4}\/\d{2}\b|$)/g;
-          var m2;
-          while ((m2 = re2.exec(rawXml)) !== null) {
-            var txt2 = (m2[1] + ' ' + m2[2]).replace(/\s+/g, ' ').trim();
-            var crit2 = /\b(CLSD|RESTRICTED|DANGER|PROHIBITED|HAZARD)\b/i.test(txt2);
-            results.push({ id: m2[1], icao: icao, src: 'FAA FNS-NDS', txt: txt2.substring(0, 300), crit: crit2 });
-          }
-        }
-
-        if (results.length) {
-          console.log('FNS-NDS: ' + results.length + ' NOTAMs for ' + icao);
-          return results;
-        }
-        console.log('FNS-NDS: 0 NOTAMs for ' + icao + ' (European airports not in FAA system)');
-      } else {
-        // Silently skip – 404 = airport not in FAA system (normal for non-US airports)
-        if(res.error !== '404') console.warn('FNS-NDS error:', res.error);
+        if (results.length) return results;
       }
     } catch(e) { console.warn('FNS-NDS error:', e.message); }
   }
 
-  // ── aviationweather.gov via CORS proxy (Fallback) ────────────────────────
-  try {
-    var awUrl = 'https://aviationweather.gov/api/data/notam?icaos=' + icao + '&format=raw';
-    var res2  = await corsGet(awUrl);
-    if (res2.ok && res2.text) {
-      var NL = '\n';
-      res2.text.split(NL).filter(function(l) { return l.trim().length > 10; }).forEach(function(line, j) {
-        var im    = line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);
-        var ntmId = im ? im[1].replace(/\s/, '') : 'N' + icao + j;
-        var crit  = /\b(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(line);
-        results.push({ id: ntmId, icao: icao, src: 'aviationweather.gov', txt: line.trim().substring(0, 280), crit: crit });
-      });
-      if (results.length) {
-        console.log('aviationweather: ' + results.length + ' NOTAMs for ' + icao);
-        return results;
+  // ── 3. aviationweather.gov (US airports fallback) ────────────────────────
+  if (isUS) {
+    try {
+      var awUrl = 'https://aviationweather.gov/api/data/notam?icaos=' + icao + '&format=raw';
+      var res3  = await corsGet(awUrl);
+      if (res3.ok && res3.text) {
+        var NL = '\n';
+        res3.text.split(NL).filter(function(l){return l.trim().length>10;}).forEach(function(line,j){
+          var im    = line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);
+          var ntmId = im ? im[1].replace(/\s/,'') : 'N'+icao+j;
+          var crit  = /\b(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(line);
+          results.push({id:ntmId, icao:icao, src:'aviationweather.gov', txt:line.trim().substring(0,280), crit:crit});
+        });
+        if (results.length) return results;
       }
-    }
-  } catch(e) { if(e.message!=='404') console.warn('aviationweather NOTAM error:', e.message); }
+    } catch(e) { /* silent */ }
+  }
 
   return results;
 }
@@ -1096,7 +1116,7 @@ async function fetchNtm(dep, arr) {
       { id:'B'+mm+dd+'0/26', icao:dep, src:'Demo', crit:true,  txt:'DANGER AREA VIC '+dep+' FL060-FL100 0800-1600' },
     ];
     if (!user) results.push({ id:'INFO', icao:dep, src:'Info', crit:false,
-      txt:'FAA FNS-NDS Zugangsdaten in ⚙️ eintragen für echte NOTAMs (Hinweis: nur US-Airports).' });
+      txt:'FAA OpenAPI Client ID in ⚙️ eintragen für weltweite NOTAMs (kostenlos auf api.faa.gov registrieren).' });
   }
 
   return results.slice(0, 20);
@@ -1419,6 +1439,12 @@ function saveNtm(){
   saveUserSettings();
   toast(u?'FAA FNS-NDS Zugangsdaten gespeichert ✓':'FNS-NDS Zugangsdaten entfernt',u?'ok':'');
 }
+function saveFaaClientId(){
+  var k=document.getElementById('faaClientId').value.trim();
+  localStorage.setItem('faa_client_id',k);
+  saveUserSettings();
+  toast(k?'FAA Client ID gespeichert ✓':'FAA Client ID entfernt',k?'ok':'');
+}
 function saveProxy(){
   var v=document.getElementById('proxyUrl').value.trim();
   localStorage.setItem('cors_proxy_url',v);
@@ -1436,6 +1462,7 @@ document.addEventListener('click',function(e){
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('cwxKey').value=lsGet('checkwx_key');
   document.getElementById('aipKey').value=lsGet('openaip_key');
+  document.getElementById('faaClientId').value=lsGet('faa_client_id');
   document.getElementById('ntmUser').value=lsGet('fns_user');
   document.getElementById('ntmPass').value=lsGet('fns_pass');
   document.getElementById('proxyUrl').value=lsGet('cors_proxy_url');
