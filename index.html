@@ -604,7 +604,9 @@ function loadUserSettings(email){
 // Google Drive appDataFolder sync
 var GD_FILE='vfr-routes.json';
 function initDriveToken(){
-  if(!window.google||!window.google.accounts||!window.google.accounts.oauth2){setTimeout(initDriveToken,800);return;}
+  if(!window.google||!window.google.accounts||!window.google.accounts.oauth2){
+    setTimeout(initDriveToken,800);return;
+  }
   try{
     _tc=google.accounts.oauth2.initTokenClient({
       client_id:G_CLIENT_ID,
@@ -612,14 +614,31 @@ function initDriveToken(){
       callback:function(r){
         if(r&&r.access_token){
           gdToken=r.access_token;
+          // Refresh 5 min before expiry (token valid ~60 min)
           setTimeout(function(){if(_tc)_tc.requestAccessToken({prompt:''});},55*60*1000);
           renderSavedRoutes();
-        } else {renderSavedRoutes();}
+        } else {
+          // Token denied – don't retry, fall back to localStorage only
+          console.warn('Drive token not granted – using localStorage for routes.');
+          gdToken=null;
+          renderSavedRoutes();
+        }
       },
-      error_callback:function(){renderSavedRoutes();}
+      error_callback:function(err){
+        // Stop retrying on error – scope may not be enabled in Google Cloud Console
+        console.warn('Drive token error (scope enabled in Cloud Console?):',
+          err&&err.type?err.type:err);
+        gdToken=null;
+        renderSavedRoutes();
+      }
     });
+    // prompt:'' = silent (no popup if already consented)
+    // If scope not yet consented, this will silently fail → error_callback fires once
     _tc.requestAccessToken({prompt:''});
-  }catch(e){renderSavedRoutes();}
+  }catch(e){
+    console.warn('initDriveToken failed:',e.message);
+    renderSavedRoutes();
+  }
 }
 
 async function driveList(){
