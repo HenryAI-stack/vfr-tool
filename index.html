@@ -1332,24 +1332,94 @@ function saveModalEdit(){
   toast('Route aktualisiert ✓','ok');
 }
 
-function loadRoute(id){
+async function loadRoute(id){
   var routes=loadRoutes();
   var r=routes.find(function(rt){ return rt.id===id; });
   if(!r){ toast('Route nicht gefunden','err'); return; }
-  // Restore inputs
-  document.getElementById('depI').value=r.dep;
-  document.getElementById('arrI').value=r.arr;
-  document.getElementById('altI').value=r.alt||4500;
+
+  var dep=r.dep, arr=r.arr, alt=r.alt||4500;
+
+  // Restore all form inputs
+  document.getElementById('depI').value=dep;
+  document.getElementById('arrI').value=arr;
+  document.getElementById('altI').value=alt;
   document.getElementById('routeType').value=r.rType||'rpt';
   document.getElementById('pCruise').value=r.cruise||108;
   document.getElementById('pFuel').value=r.fuel||18;
   document.getElementById('pTanks').value=r.tanks||65;
   document.getElementById('pReg').value=r.reg||'SP-TPF';
   if(r.acid) pickAC(r.acid);
-  toast('Route geladen – ▶ PLANEN drücken zum Ausführen','ok');
-  // Scroll to route section
-  opn('sRT');
-  document.querySelector('.sidebar').scrollTop=0;
+
+  document.getElementById('sysStatus').textContent='● LADEN...';
+  document.getElementById('planBtn').disabled=true;
+
+  try{
+    // 1 – Airport data
+    showOv('Lade gespeicherte Route...');
+    var dAP=AP[dep], aAP=AP[arr];
+    var dp=dAP?{lat:dAP.lat,lon:dAP.lon,name:dAP.n,rpts:dAP.rpts,freq:dAP.freq}:await geo(dep);
+    var ap=aAP?{lat:aAP.lat,lon:aAP.lon,name:aAP.n,rpts:aAP.rpts,freq:aAP.freq}:await geo(arr);
+    dp.icao=dep; ap.icao=arr;
+    PS.dep=dp; PS.arr=ap;
+
+    // 2 – Restore saved waypoints (with fallback to fresh compute)
+    var perf=getPerf();
+    var route;
+    if(r.waypoints&&r.waypoints.length>=2){
+      // Reconstruct waypoints from saved data
+      route=r.waypoints.map(function(w){
+        return {
+          name:  w.name||'WPT',
+          lat:   w.lat,
+          lon:   w.lon,
+          type:  w.type||'wpt',
+          color: w.color||(w.type==='apt'?(w.name===dep?'#00ff9f':'#ff6b35'):w.type==='rpt'?'#ffd60a':'#a78bfa'),
+          desc:  w.desc||'',
+          icao:  w.icao||'',
+        };
+      });
+    } else {
+      // No saved waypoints – compute fresh
+      route=computeRoute(dp,ap,r.rType||'rpt');
+    }
+    drawRoute(route);
+    renderRouteDetails(route,perf);
+    opn('sRD');
+
+    // 3 – Fresh METAR/TAF
+    showOv('Hole aktuelle METAR/TAF Daten...');
+    var wxRes=await Promise.all([fetchWx(dep),fetchWx(arr)]);
+    var wD=wxRes[0], wA=wxRes[1];
+    renderWx('wxD',dep,dp.name||dep,wD,'dep');
+    renderWx('wxA',arr,ap.name||arr,wA,'arr');
+    opn('sWD'); opn('sWA');
+
+    // 4 – Fresh NOTAMs
+    showOv('Hole aktuelle NOTAMs...');
+    var ntms=await fetchNtm(dep,arr);
+    renderNtm(ntms); opn('sNT');
+
+    // 5 – Zones
+    showOv('Berechne Luftraumzonen...');
+    var zones=buildZones(dp,ap,alt);
+    renderZones(zones); drawZones(zones); opn('sZN');
+
+    // 6 – Summary
+    PS.lastData={alt:alt,wD:wD,wA:wA,ntms:ntms,zones:zones,perf:perf};
+    renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf);
+    opn('sSM');
+
+    document.getElementById('sysStatus').textContent='● BEREIT';
+    toast('Route „'+r.name+'" geladen · METAR & NOTAMs aktuell ✓','ok');
+    document.querySelector('.sidebar').scrollTop=0;
+
+  } catch(e){
+    console.error(e);
+    toast('Fehler beim Laden: '+e.message,'err');
+    document.getElementById('sysStatus').textContent='● FEHLER';
+  }
+  hideOv();
+  document.getElementById('planBtn').disabled=false;
 }
 
 function renderSavedRoutes(){
