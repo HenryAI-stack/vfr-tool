@@ -6,8 +6,6 @@
 <title>VFR FlightPlan</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet">
-<!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{
   --bg:#0a0e17;--sf:#111827;--sf2:#1a2236;--bd:#1e3a5f;
@@ -19,56 +17,66 @@
 html,body{height:100%;overflow:hidden;}
 body{background:var(--bg);color:var(--tx);font-family:var(--sans);display:flex;flex-direction:column;}
 
-/* LOGIN OVERLAY */
-#loginOverlay{position:fixed;inset:0;background:linear-gradient(135deg,#0a0e17 0%,#0d1f33 60%,#0a0e17 100%);
-  display:flex;align-items:center;justify-content:center;z-index:9000;flex-direction:column;gap:20px;}
-.login-box{background:#111827;border:1px solid #1e3a5f;border-radius:14px;padding:36px 40px;
-  text-align:center;max-width:340px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.6);}
-.login-logo{font-size:3rem;margin-bottom:10px;}
-.login-title{font-family:var(--mono);font-size:1.1rem;color:var(--ac);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;}
-.login-sub{font-size:.78rem;color:var(--mt);margin-bottom:24px;line-height:1.6;}
-#googleSignInBtn{display:flex;justify-content:center;min-height:44px;align-items:center;}
-.g-fallback-btn{display:none;align-items:center;justify-content:center;gap:10px;
-  background:#fff;border:1px solid #dadce0;border-radius:4px;padding:10px 18px;
-  cursor:pointer;font-size:.88rem;font-weight:500;color:#3c4043;width:260px;
-  transition:box-shadow .2s;-webkit-tap-highlight-color:transparent;}
-.g-fallback-btn:hover{box-shadow:0 1px 3px rgba(0,0,0,.2);}
-.g-fallback-btn svg{width:18px;height:18px;flex-shrink:0;}
-.login-divider{height:1px;background:var(--bd);margin:20px 0;}
-.login-note{font-size:.62rem;color:var(--mt);line-height:1.7;}
-/* USER BAR */
-#userBar{display:none;align-items:center;gap:9px;background:var(--sf2);
-  border:1px solid var(--bd);border-radius:8px;padding:5px 10px;
-  font-family:var(--mono);font-size:.68rem;color:var(--tx);
-  position:fixed;top:58px;right:10px;z-index:8999;}
+/* ── LOGIN OVERLAY ── */
+#loginOverlay{
+  position:fixed;inset:0;z-index:9000;
+  background:linear-gradient(135deg,#0a0e17 0%,#0d1f33 60%,#0a0e17 100%);
+  display:flex;align-items:center;justify-content:center;
+}
+.lbox{
+  background:#111827;border:1px solid #1e3a5f;border-radius:16px;
+  padding:40px 36px;text-align:center;width:320px;max-width:90vw;
+  box-shadow:0 16px 60px rgba(0,0,0,.7);
+}
+.lbox-logo{font-size:2.8rem;margin-bottom:8px;}
+.lbox-title{font-family:var(--mono);font-size:1rem;color:var(--ac);
+  letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;}
+.lbox-sub{font-size:.76rem;color:var(--mt);margin-bottom:28px;line-height:1.7;}
+/* The ONE Google button – rendered by GSI into this div */
+#g_id_signin{
+  display:flex;justify-content:center;align-items:center;min-height:44px;
+}
+.lbox-note{font-size:.6rem;color:var(--mt);margin-top:20px;line-height:1.7;
+  border-top:1px solid var(--bd);padding-top:14px;}
+
+/* ── USER BAR ── */
+#userBar{
+  display:none;position:fixed;top:56px;right:10px;z-index:8000;
+  background:var(--sf2);border:1px solid var(--bd);border-radius:8px;
+  padding:5px 10px;display:none;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:.65rem;
+}
 #userBar img{width:24px;height:24px;border-radius:50%;border:2px solid var(--ac);}
-#userBar .uname{color:var(--ac);}
+#userBar .uname{color:var(--ac);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .logout-btn{background:transparent;border:1px solid var(--bd);color:var(--mt);
-  font-family:var(--mono);font-size:.6rem;padding:2px 7px;border-radius:4px;
-  cursor:pointer;transition:all .2s;}
+  font-family:var(--mono);font-size:.58rem;padding:2px 7px;border-radius:4px;cursor:pointer;}
 .logout-btn:hover{border-color:var(--rd);color:var(--rd);}
 
-/* HEADER */
-header{height:52px;flex-shrink:0;background:linear-gradient(90deg,#0a0e17,#0d1f33 50%,#0a0e17);
-  border-bottom:1px solid var(--bd);padding:0 14px;display:flex;align-items:center;gap:10px;}
-.logo{width:30px;height:30px;background:linear-gradient(135deg,var(--ac),#006fa8);border-radius:6px;
-  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
-header h1{font-family:var(--mono);font-size:.9rem;color:var(--ac);letter-spacing:2px;text-transform:uppercase;}
+/* ── HEADER ── */
+header{height:52px;flex-shrink:0;
+  background:linear-gradient(90deg,#0a0e17,#0d1f33 50%,#0a0e17);
+  border-bottom:1px solid var(--bd);padding:0 14px;
+  display:flex;align-items:center;gap:10px;z-index:100;}
+.logo{width:30px;height:30px;background:linear-gradient(135deg,var(--ac),#006fa8);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;}
+header h1{font-family:var(--mono);font-size:.9rem;color:var(--ac);
+  letter-spacing:2px;text-transform:uppercase;}
 header small{font-size:.6rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;}
-.spill{margin-left:auto;font-family:var(--mono);font-size:.6rem;background:rgba(0,212,255,.1);
-  border:1px solid var(--ac);color:var(--ac);padding:2px 8px;border-radius:20px;white-space:nowrap;
-  animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.4);}50%{box-shadow:0 0 0 4px rgba(0,212,255,0);}}
+.spill{margin-left:auto;font-family:var(--mono);font-size:.6rem;
+  background:rgba(0,212,255,.1);border:1px solid var(--ac);color:var(--ac);
+  padding:2px 8px;border-radius:20px;white-space:nowrap;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.4);}
+  50%{box-shadow:0 0 0 4px rgba(0,212,255,0);}}
 
-/* LAYOUT */
+/* ── LAYOUT ── */
 .app{flex:1;display:flex;overflow:hidden;}
-.sidebar{width:375px;flex-shrink:0;background:var(--sf);border-right:1px solid var(--bd);
-  overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.sidebar{width:375px;flex-shrink:0;background:var(--sf);
+  border-right:1px solid var(--bd);overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .sidebar::-webkit-scrollbar{width:3px;}
 .sidebar::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px;}
 .mwrap{flex:1;position:relative;min-width:0;}
 #map{width:100%;height:100%;background:#0d1520;}
-
 @media(max-width:820px){
   html,body{overflow:auto;}
   .app{flex-direction:column;overflow:visible;}
@@ -76,31 +84,35 @@ header small{font-size:.6rem;color:var(--mt);letter-spacing:1px;text-transform:u
   .mwrap{height:52vw;min-height:260px;flex:none;}
 }
 
-/* SECTIONS */
+/* ── SECTIONS ── */
 .sec{border-bottom:1px solid var(--bd);}
-.sh{padding:11px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;transition:background .2s;}
+.sh{padding:11px 14px;display:flex;align-items:center;gap:8px;
+  cursor:pointer;user-select:none;transition:background .2s;}
 .sh:hover{background:var(--sf2);}
-.sl{font-family:var(--mono);font-size:.67rem;letter-spacing:2px;text-transform:uppercase;color:var(--mt);flex:1;}
+.sl{font-family:var(--mono);font-size:.67rem;letter-spacing:2px;
+  text-transform:uppercase;color:var(--mt);flex:1;}
 .si{font-size:14px;width:18px;text-align:center;}
 .chv{font-size:9px;color:var(--mt);transition:transform .25s;}
 .sec.open .chv{transform:rotate(180deg);}
 .sbody{display:none;padding:12px 14px;background:rgba(0,0,0,.2);}
 .sec.open .sbody{display:block;}
 
-/* FORM */
+/* ── FORM ── */
 .fr{margin-bottom:11px;}
 .fr label{display:block;font-family:var(--mono);font-size:.6rem;color:var(--mt);
   letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
-.fr input,.fr select{width:100%;background:var(--bg);border:1px solid var(--bd);color:var(--tx);
-  font-family:var(--mono);font-size:.86rem;padding:8px 10px;border-radius:6px;outline:none;
-  transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none;}
+.fr input,.fr select{width:100%;background:var(--bg);border:1px solid var(--bd);
+  color:var(--tx);font-family:var(--mono);font-size:.86rem;padding:8px 10px;
+  border-radius:6px;outline:none;transition:border-color .2s,box-shadow .2s;
+  -webkit-appearance:none;appearance:none;}
 .fr input:focus,.fr select:focus{border-color:var(--ac);box-shadow:0 0 0 2px rgba(0,212,255,.15);}
 .fr input::placeholder{color:var(--mt);}
 .fr select option{background:var(--sf2);}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
 .br{display:flex;gap:7px;margin-top:3px;}
-.btn{flex:1;padding:10px;border:none;border-radius:6px;font-family:var(--mono);font-size:.73rem;
-  letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.btn{flex:1;padding:10px;border:none;border-radius:6px;font-family:var(--mono);
+  font-size:.73rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
+  transition:all .2s;-webkit-tap-highlight-color:transparent;}
 .bp{background:linear-gradient(135deg,var(--ac),#006fa8);color:#000;font-weight:700;}
 .bp:hover,.bp:active{opacity:.85;transform:translateY(-1px);}
 .bs{background:transparent;border:1px solid var(--bd);color:var(--mt);}
@@ -108,122 +120,137 @@ header small{font-size:.6rem;color:var(--mt);letter-spacing:1px;text-transform:u
 .bfw{width:100%;margin-bottom:7px;}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
 
-/* AIRCRAFT */
+/* ── AUTOCOMPLETE ── */
+.ac-wrap{position:relative;}
+.ac-drop{position:absolute;top:100%;left:0;right:0;z-index:3000;
+  background:var(--sf2);border:1px solid var(--ac);border-top:none;
+  border-radius:0 0 6px 6px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.ac-item{padding:7px 11px;cursor:pointer;display:flex;align-items:center;gap:9px;
+  transition:background .12s;}
+.ac-item:hover,.ac-item.hi{background:rgba(0,212,255,.13);}
+.ac-code{font-family:var(--mono);font-size:.8rem;font-weight:700;
+  color:var(--ac);width:38px;flex-shrink:0;}
+.ac-nm{font-size:.74rem;color:var(--tx);flex:1;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;}
+.ac-flag{font-size:.82rem;}
+
+/* ── AIRCRAFT ── */
 .ac-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
-.ac-card{background:var(--bg);border:2px solid var(--bd);border-radius:7px;padding:8px 10px;
-  cursor:pointer;transition:all .2s;text-align:center;}
+.ac-card{background:var(--bg);border:2px solid var(--bd);border-radius:7px;
+  padding:8px 10px;cursor:pointer;transition:all .2s;text-align:center;}
 .ac-card:hover{border-color:var(--mt);}
 .ac-card.sel{border-color:var(--ac);background:rgba(0,212,255,.06);}
 .ac-ico{font-size:1.3rem;margin-bottom:2px;}
-.ac-nm{font-family:var(--mono);font-size:.63rem;color:var(--tx);letter-spacing:1px;}
-.ac-tp{font-size:.58rem;color:var(--mt);}
+.ac-name{font-family:var(--mono);font-size:.63rem;color:var(--tx);letter-spacing:1px;}
+.ac-type{font-size:.58rem;color:var(--mt);}
 .perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 
-/* WAYPOINTS */
+/* ── WAYPOINTS ── */
 .wpt-list{display:flex;flex-direction:column;gap:4px;margin-top:7px;}
-.wpt{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--bd);border-radius:5px;padding:6px 9px;}
+.wpt{display:flex;align-items:center;gap:7px;background:var(--bg);
+  border:1px solid var(--bd);border-radius:5px;padding:6px 9px;}
 .wdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .wname{font-family:var(--mono);font-size:.7rem;flex:1;}
 .wdesc{font-size:.6rem;color:var(--mt);font-style:italic;}
 .wtype{font-family:var(--mono);font-size:.55rem;color:var(--mt);}
 .wdist{font-family:var(--mono);font-size:.63rem;color:var(--mt);}
 .whdg{font-family:var(--mono);font-size:.63rem;color:var(--ac);}
-.drag-hint{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.2);border-radius:5px;
-  padding:6px 10px;margin-bottom:8px;font-size:.68rem;color:var(--ac);font-family:var(--mono);}
+.drag-hint{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.2);
+  border-radius:5px;padding:6px 10px;margin-bottom:8px;font-size:.68rem;
+  color:var(--ac);font-family:var(--mono);}
 
-/* WX */
-.wxcard{background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:11px;
-  position:relative;overflow:hidden;margin-bottom:9px;}
+/* ── WEATHER ── */
+.wxcard{background:var(--bg);border:1px solid var(--bd);border-radius:7px;
+  padding:11px;position:relative;overflow:hidden;margin-bottom:9px;}
 .wxcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .wxcard.dep::before{background:var(--gn);}
 .wxcard.arr::before{background:var(--a2);}
 .wxh{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
 .icaob{font-family:var(--mono);font-size:.95rem;font-weight:700;color:var(--ac);
   background:rgba(0,212,255,.1);padding:2px 8px;border-radius:4px;letter-spacing:2px;}
-.wx-raw{font-family:var(--mono);font-size:.69rem;color:var(--tx);background:rgba(0,0,0,.4);
-  padding:6px 8px;border-radius:4px;line-height:1.5;word-break:break-all;white-space:pre-wrap;margin:4px 0;}
+.wx-raw{font-family:var(--mono);font-size:.69rem;color:var(--tx);
+  background:rgba(0,0,0,.4);padding:6px 8px;border-radius:4px;line-height:1.5;
+  word-break:break-all;white-space:pre-wrap;margin:4px 0;}
 .chips{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0;}
-.chip{display:flex;align-items:center;gap:3px;background:var(--sf2);padding:3px 6px;border-radius:4px;font-size:.7rem;}
+.chip{display:flex;align-items:center;gap:3px;background:var(--sf2);
+  padding:3px 6px;border-radius:4px;font-size:.7rem;}
 .chip .v{font-family:var(--mono);font-weight:600;}
 .c-vfr{color:var(--gn);}.c-mvfr{color:var(--yw);}.c-ifr{color:var(--rd);}
-.wx-decoded-table{width:100%;border-collapse:collapse;margin:6px 0;font-size:.69rem;}
-.wx-decoded-table td{padding:2px 6px 2px 0;vertical-align:top;}
-.wx-decoded-table td:first-child{color:var(--mt);font-family:var(--mono);font-size:.6rem;white-space:nowrap;width:40%;}
-.wx-decoded-table td:last-child{font-family:var(--mono);}
-.mtaf-wrap{margin-top:10px;border-radius:6px;overflow:hidden;background:#fff;}
+.wx-dec{width:100%;border-collapse:collapse;margin:6px 0;font-size:.69rem;}
+.wx-dec td{padding:2px 6px 2px 0;vertical-align:top;}
+.wx-dec td:first-child{color:var(--mt);font-family:var(--mono);font-size:.6rem;
+  white-space:nowrap;width:40%;}
+.wx-dec td:last-child{font-family:var(--mono);}
+.mtaf-wrap{margin-top:10px;}
+.mtaf-note{font-family:var(--mono);font-size:.56rem;color:var(--mt);
+  letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.mtaf-fallback{font-family:var(--mono);font-size:.58rem;color:var(--yw);margin-bottom:4px;}
 
-/* NOTAM */
+/* ── NOTAM ── */
 .ntm-list{display:flex;flex-direction:column;gap:6px;}
-.ntm{background:var(--bg);border:1px solid var(--bd);border-left:3px solid var(--yw);border-radius:5px;padding:8px 10px;}
+.ntm{background:var(--bg);border:1px solid var(--bd);border-left:3px solid var(--yw);
+  border-radius:5px;padding:8px 10px;}
 .ntm.crit{border-left-color:var(--rd);}
 .ntmid{font-family:var(--mono);font-size:.63rem;color:var(--yw);}
 .ntm.crit .ntmid{color:var(--rd);}
 .ntmtxt{font-size:.72rem;color:var(--tx);margin-top:2px;line-height:1.5;}
 .ntmsrc{font-size:.58rem;color:var(--mt);margin-top:3px;font-family:var(--mono);}
 
-/* ZONES */
+/* ── ZONES ── */
 .zn-list{display:flex;flex-direction:column;gap:4px;}
-.zn{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--bd);border-radius:5px;padding:6px 9px;}
+.zn{display:flex;align-items:center;gap:7px;background:var(--bg);
+  border:1px solid var(--bd);border-radius:5px;padding:6px 9px;}
 .zndot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 .znnm{font-size:.76rem;flex:1;}
 .zntp{font-family:var(--mono);font-size:.58rem;color:var(--mt);}
 .znalt{font-family:var(--mono);font-size:.6rem;color:var(--ac);text-align:right;}
 
-/* SUMMARY */
+/* ── SUMMARY ── */
 .sum-card{background:linear-gradient(135deg,rgba(0,212,255,.05),rgba(0,255,159,.05));
   border:1px solid var(--ac);border-radius:8px;padding:12px;}
-.sum-ttl{font-family:var(--mono);font-size:.63rem;color:var(--ac);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+.sum-ttl{font-family:var(--mono);font-size:.63rem;color:var(--ac);
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
 .sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .slbl{font-size:.58rem;color:var(--mt);text-transform:uppercase;letter-spacing:1px;}
 .sval{font-family:var(--mono);font-size:.86rem;font-weight:600;}
 .go{color:var(--gn)!important;}.caution{color:var(--yw)!important;}.nogo{color:var(--rd)!important;}
 
-/* LOADING */
-.ov{position:absolute;inset:0;background:rgba(10,14,23,.88);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;z-index:500;gap:11px;backdrop-filter:blur(3px);}
+/* ── LOADING ── */
+.ov{position:absolute;inset:0;background:rgba(10,14,23,.88);display:flex;
+  flex-direction:column;align-items:center;justify-content:center;
+  z-index:500;gap:11px;backdrop-filter:blur(3px);}
 .spin{width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--ac);
   border-radius:50%;animation:sp .8s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg);}}
 .ovt{font-family:var(--mono);font-size:.73rem;color:var(--ac);letter-spacing:2px;}
 .ovs{font-size:.66rem;color:var(--mt);}
 
-/* TOAST */
-.toast{position:fixed;bottom:14px;right:14px;background:var(--sf2);border:1px solid var(--bd);
-  border-radius:7px;padding:9px 13px;font-family:var(--mono);font-size:.73rem;color:var(--tx);
-  z-index:9999;transform:translateX(220%);transition:transform .3s;max-width:270px;}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:14px;right:14px;background:var(--sf2);
+  border:1px solid var(--bd);border-radius:7px;padding:9px 13px;
+  font-family:var(--mono);font-size:.73rem;color:var(--tx);z-index:9999;
+  transform:translateX(220%);transition:transform .3s;max-width:270px;}
 .toast.show{transform:translateX(0);}
 .toast.err{border-color:var(--rd);color:var(--rd);}
 .toast.ok{border-color:var(--gn);color:var(--gn);}
 .toast.warn{border-color:var(--yw);color:var(--yw);}
 
-/* MISC */
+/* ── MISC ── */
 .empty{padding:20px 12px;text-align:center;color:var(--mt);font-size:.76rem;}
 .empty .ico{font-size:1.6rem;margin-bottom:6px;opacity:.4;}
 .meta{font-family:var(--mono);font-size:.6rem;color:var(--mt);margin-bottom:7px;line-height:1.8;}
 a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
 .dvdr{height:1px;background:var(--bd);margin:9px 0;}
-.badge{display:inline-block;font-family:var(--mono);font-size:.56rem;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;}
+.badge{display:inline-block;font-family:var(--mono);font-size:.56rem;padding:2px 6px;
+  border-radius:3px;text-transform:uppercase;letter-spacing:1px;}
 .bwx{background:rgba(0,212,255,.15);color:var(--ac);border:1px solid rgba(0,212,255,.3);}
 .bdemo{background:rgba(255,214,10,.1);color:var(--yw);border:1px solid rgba(255,214,10,.3);}
 
-
-/* AUTOCOMPLETE DROPDOWN */
-.ac-wrap{position:relative;}
-.ac-dropdown{position:absolute;top:100%;left:0;right:0;z-index:2000;
-  background:var(--sf2);border:1px solid var(--ac);border-top:none;border-radius:0 0 6px 6px;
-  overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5);}
-.ac-item{padding:8px 11px;cursor:pointer;display:flex;align-items:center;gap:10px;
-  transition:background .15s;}
-.ac-item:hover,.ac-item.active{background:rgba(0,212,255,.12);}
-.ac-icao{font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--ac);
-  width:40px;flex-shrink:0;}
-.ac-name{font-size:.76rem;color:var(--tx);flex:1;}
-.ac-country{font-size:.65rem;color:var(--mt);}
-
-/* PRINT */
+/* ── PRINT ── */
 .print-only{display:none;}
 @media print{
-  html,body{overflow:visible!important;background:#fff!important;color:#000!important;font-family:Arial,sans-serif!important;height:auto!important;}
+  html,body{overflow:visible!important;background:#fff!important;color:#000!important;
+    font-family:Arial,sans-serif!important;height:auto!important;}
   header,.sidebar,.mwrap,#map,.ov,.toast,#loginOverlay,#userBar,.mtaf-wrap{display:none!important;}
   .print-only{display:block!important;}
   .app{display:block!important;}
@@ -234,65 +261,58 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
   .p-title{font-size:16pt;font-weight:bold;color:#003366!important;}
   .p-sub{font-size:8.5pt;color:#555!important;}
   .p-sec{margin-bottom:12px;}
-  .p-sec-ttl{font-size:10pt;font-weight:bold;background:#003366!important;color:#fff!important;padding:3px 8px;margin-bottom:5px;}
+  .p-sec-ttl{font-size:10pt;font-weight:bold;background:#003366!important;
+    color:#fff!important;padding:3px 8px;margin-bottom:5px;}
   .p-tbl{width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:8px;}
-  .p-tbl th{background:#dde8ff!important;color:#003366!important;padding:3px 5px;border:1px solid #003366!important;text-align:left;}
+  .p-tbl th{background:#dde8ff!important;color:#003366!important;padding:3px 5px;
+    border:1px solid #003366!important;text-align:left;}
   .p-tbl td{padding:3px 5px;border:1px solid #ccc!important;vertical-align:top;}
   .p-tbl tr:nth-child(even) td{background:#f5f8ff!important;}
   .p-go{color:#006600!important;font-weight:bold;}
   .p-caution{color:#b35a00!important;font-weight:bold;}
   .p-nogo{color:#cc0000!important;font-weight:bold;}
-  .p-status{border:2px solid #003366!important;padding:6px 14px;display:inline-block;margin-bottom:10px;}
-  .p-mono{font-family:'Courier New',monospace!important;font-size:7.5pt;background:#f5f5f5!important;padding:5px 7px;border:1px solid #ccc!important;white-space:pre-wrap;word-break:break-all;}
-  .p-warn{background:#fffbe6!important;border:1px solid #b35a00!important;padding:5px 9px;font-size:7.5pt;margin-top:8px;}
+  .p-status{border:2px solid #003366!important;padding:6px 14px;
+    display:inline-block;margin-bottom:10px;}
+  .p-mono{font-family:'Courier New',monospace!important;font-size:7.5pt;
+    background:#f5f5f5!important;padding:5px 7px;border:1px solid #ccc!important;
+    white-space:pre-wrap;word-break:break-all;}
+  .p-warn{background:#fffbe6!important;border:1px solid #b35a00!important;
+    padding:5px 9px;font-size:7.5pt;margin-top:8px;}
   .p-logrow td{height:22px;}
 }
 </style>
 </head>
 <body>
 
-<!-- LOGIN OVERLAY -->
+<!-- ══ LOGIN OVERLAY ══════════════════════════════════ -->
 <div id="loginOverlay">
-  <div class="login-box">
-    <div class="login-logo">✈️</div>
-    <div class="login-title">VFR // FlightPlan</div>
-    <div class="login-sub">PPL Flugplanung · AIP Poland<br>Bitte mit Google-Konto anmelden</div>
-
-    <!-- Single login button container: GSI renders here, fallback shown if GSI not ready -->
-    <div id="loginBtnContainer" style="display:flex;flex-direction:column;align-items:center;gap:10px;min-height:50px;">
-      <button class="g-fallback-btn" id="googleFallbackBtn" onclick="googleLoginFallback()" style="display:flex;">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;flex-shrink:0;">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-        </svg>
-        Mit Google anmelden
-      </button>
-      <!-- GSI renders official button here, replaces fallback -->
-      <div id="googleSignInBtn" style="display:none;"></div>
-    </div>
-
-    <div class="login-divider"></div>
-    <div class="login-note">
-      Anmeldung erforderlich · Keine Daten werden gespeichert
+  <div class="lbox">
+    <div class="lbox-logo">✈️</div>
+    <div class="lbox-title">VFR // FlightPlan</div>
+    <div class="lbox-sub">PPL Flugplanung · AIP Poland<br>Bitte mit Google-Konto anmelden</div>
+    <!-- Google One Tap / Sign-In Button rendered here by GSI -->
+    <div id="g_id_signin"></div>
+    <div class="lbox-note">
+      Anmeldung erforderlich · Keine Daten werden gespeichert oder weitergegeben
     </div>
   </div>
 </div>
 
-<!-- USER BAR -->
+<!-- ══ USER BAR ══════════════════════════════════════ -->
 <div id="userBar">
-  <img id="userAvatar" src="" alt="" onerror="this.style.display='none'">
-  <span class="uname" id="userName"></span>
-  <button class="logout-btn" onclick="signOut()">Abmelden</button>
+  <img id="uAvatar" src="" alt="" onerror="this.style.display='none'">
+  <span class="uname" id="uName"></span>
+  <button class="logout-btn" onclick="doSignOut()">Abmelden</button>
 </div>
 
+<!-- ══ HEADER ═════════════════════════════════════════ -->
 <header>
   <div class="logo">✈️</div>
-  <div><h1>VFR // FlightPlan</h1><small>AIP Poland · VFR Reporting Points · FIR Warszawa</small></div>
+  <div><h1>VFR // FlightPlan</h1><small>AIP Poland · VFR Reporting Points</small></div>
   <div class="spill" id="sysStatus">● BEREIT</div>
 </header>
 
+<!-- ══ MAIN APP ═══════════════════════════════════════ -->
 <div class="app">
 <div class="sidebar">
 
@@ -321,18 +341,23 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
       <div class="row2">
         <div class="fr"><label>Abflug (ICAO)</label>
           <div class="ac-wrap">
-          <input id="depI" type="text" placeholder="EPWA" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
-          <div class="ac-dropdown" id="acDropDep" style="display:none;"></div>
-        </div></div>
+            <input id="depI" type="text" placeholder="EPWA" maxlength="4"
+              autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+            <div class="ac-drop" id="dropDep" style="display:none;"></div>
+          </div>
+        </div>
         <div class="fr"><label>Ziel (ICAO)</label>
           <div class="ac-wrap">
-          <input id="arrI" type="text" placeholder="EPKK" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
-          <div class="ac-dropdown" id="acDropArr" style="display:none;"></div>
-        </div></div>
+            <input id="arrI" type="text" placeholder="EPKK" maxlength="4"
+              autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+            <div class="ac-drop" id="dropArr" style="display:none;"></div>
+          </div>
+        </div>
       </div>
       <div class="row2">
         <div class="fr"><label>Höhe (ft MSL)</label>
-          <input id="altI" type="number" value="4500" step="500" min="1000" max="14500"></div>
+          <input id="altI" type="number" value="4500" step="500" min="1000" max="14500">
+        </div>
         <div class="fr"><label>Routing</label>
           <select id="routeType">
             <option value="rpt" selected>Via Reporting Points</option>
@@ -347,12 +372,12 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
       <div style="margin-top:8px;font-size:.61rem;color:var(--mt);font-family:var(--mono);line-height:1.9;">
         🇵🇱 EPWA · EPKK · EPKT · EPGD · EPWR · EPPO<br>
         🇵🇱 EPSC · EPLL · EPRZ · EPBY · EPRA · EPMO<br>
-        🇦🇹 LOWW · LOWI · LOWS &nbsp;🇩🇪 EDDM &nbsp;🇨🇭 LSZH
+        🇦🇹 LOWW · LOWI &nbsp;🇩🇪 EDDM &nbsp;🇨🇭 LSZH &nbsp;🇨🇿 LKPR
       </div>
     </div>
   </div>
 
-  <!-- BERECHNETE ROUTE -->
+  <!-- ROUTE DETAILS -->
   <div class="sec" id="sRD">
     <div class="sh" onclick="tog('sRD')"><span class="si">📍</span><span class="sl">Berechnete Route</span><span class="chv">▼</span></div>
     <div class="sbody"><div id="rdC"><div class="empty"><div class="ico">📍</div>Noch keine Route berechnet</div></div></div>
@@ -394,7 +419,7 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
     <div class="sbody">
       <div class="fr">
         <label>CheckWX API Key <a href="https://www.checkwxapi.com" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label>
-        <input id="cwxKey" type="text" placeholder="bessere Wetterdaten" autocomplete="off" spellcheck="false">
+        <input id="cwxKey" type="text" placeholder="decoded METAR/TAF" autocomplete="off" spellcheck="false">
       </div>
       <button class="btn bs bfw" onclick="saveCwx()">💾 CheckWX speichern</button>
       <div class="fr" style="margin-top:4px;">
@@ -418,525 +443,459 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
 <div class="print-only" id="printPanel"></div>
 <div class="toast" id="toast"></div>
 
+<!-- Leaflet -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- Google Identity Services – loaded LAST so callback is defined first -->
 <script>
 'use strict';
 
-// ══════════════════════════════════════════════════
-//  GOOGLE SIGN-IN
-// ══════════════════════════════════════════════════
-var GOOGLE_CLIENT_ID = '876959021639-f3jmr77rnd600ggba6icej1pef6muo87.apps.googleusercontent.com';
-var currentUser = null;
+// ══════════════════════════════════════════════════════
+//  GOOGLE AUTH CONFIG
+// ══════════════════════════════════════════════════════
+var G_CLIENT_ID = '876959021639-f3jmr77rnd600ggba6icej1pef6muo87.apps.googleusercontent.com';
+var gUser = null;
 
-function parseJwt(token) {
+// Called by Google GSI library once it has loaded
+window.onGoogleLibraryLoad = function() {
+  // Check for saved session first
+  var saved = localStorage.getItem('vfr_session');
+  if (saved) {
+    try {
+      gUser = JSON.parse(saved);
+      showApp(gUser);
+      return;
+    } catch(e) { localStorage.removeItem('vfr_session'); }
+  }
+
+  // Initialize and render the Sign-In button
+  google.accounts.id.initialize({
+    client_id: G_CLIENT_ID,
+    callback: onGoogleToken,
+    auto_select: true,
+    cancel_on_tap_outside: false,
+    context: 'signin',
+  });
+
+  // Render the button into #g_id_signin
+  google.accounts.id.renderButton(
+    document.getElementById('g_id_signin'),
+    {
+      theme: 'outline',
+      size: 'large',
+      shape: 'rectangular',
+      width: 250,
+      text: 'signin_with',
+      locale: 'de',
+    }
+  );
+
+  // Also show One Tap prompt
+  google.accounts.id.prompt();
+};
+
+// JWT decoder
+function decodeJwt(token) {
   try {
-    var b64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    return JSON.parse(decodeURIComponent(atob(b64).split('').map(function(c){
-      return '%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2);
-    }).join('')));
+    var payload = token.split('.')[1];
+    // Pad base64 string
+    payload = payload.replace(/-/g, '+').replace(/_/g, '/');
+    while (payload.length % 4) payload += '=';
+    return JSON.parse(atob(payload));
   } catch(e) { return null; }
 }
 
-function onGoogleCallback(response) {
-  var p = parseJwt(response.credential);
-  if (!p) { toast('Login fehlgeschlagen', 'err'); return; }
-  currentUser = {name:p.name, email:p.email, picture:p.picture};
-  localStorage.setItem('vfr_user', JSON.stringify(currentUser));
-  showLoggedIn(currentUser);
+// Called when Google returns a credential
+function onGoogleToken(response) {
+  var payload = decodeJwt(response.credential);
+  if (!payload) { toast('Login fehlgeschlagen – ungültiges Token', 'err'); return; }
+  gUser = { name: payload.name, email: payload.email, picture: payload.picture || '' };
+  localStorage.setItem('vfr_session', JSON.stringify(gUser));
+  showApp(gUser);
 }
 
-function userKey(suffix) {
-  // Per-user storage key based on email
-  var email = (currentUser && currentUser.email) ? currentUser.email.replace(/[^a-zA-Z0-9]/g,'_') : 'default';
-  return 'vfr_' + email + '_' + suffix;
-}
-
-function saveUserSettings() {
-  // Save API keys linked to current Google user
-  if (!currentUser) return;
-  var s = {
-    checkwx: document.getElementById('cwxKey').value.trim(),
-    openaip: document.getElementById('aipKey').value.trim(),
-    cruise:  document.getElementById('pCruise').value,
-    fuel:    document.getElementById('pFuel').value,
-    tanks:   document.getElementById('pTanks').value,
-    reg:     document.getElementById('pReg').value,
-    acId:    selAC.id,
-  };
-  localStorage.setItem(userKey('settings'), JSON.stringify(s));
-}
-
-function loadUserSettings() {
-  if (!currentUser) return;
-  var raw = localStorage.getItem(userKey('settings'));
-  if (!raw) return;
-  try {
-    var s = JSON.parse(raw);
-    if (s.checkwx) { document.getElementById('cwxKey').value = s.checkwx; localStorage.setItem('checkwx_key', s.checkwx); }
-    if (s.openaip) { document.getElementById('aipKey').value = s.openaip; localStorage.setItem('openaip_key', s.openaip); applyAip(s.openaip); }
-    if (s.cruise)  document.getElementById('pCruise').value = s.cruise;
-    if (s.fuel)    document.getElementById('pFuel').value = s.fuel;
-    if (s.tanks)   document.getElementById('pTanks').value = s.tanks;
-    if (s.reg)     document.getElementById('pReg').value = s.reg;
-    if (s.acId)    { pickAC(s.acId); }
-    toast('Einstellungen geladen ✓', 'ok');
-  } catch(e) {}
-}
-
-function showLoggedIn(user) {
+function showApp(user) {
+  // Hide login, show app
   document.getElementById('loginOverlay').style.display = 'none';
   var bar = document.getElementById('userBar');
   bar.style.display = 'flex';
-  document.getElementById('userName').textContent = user.name || user.email;
-  var av = document.getElementById('userAvatar');
-  if (user.picture) { av.src = user.picture; } else { av.style.display = 'none'; }
-  // Load this user's saved settings
-  setTimeout(loadUserSettings, 100);
-  toast('Willkommen, ' + (user.name ? user.name.split(' ')[0] : user.email) + ' ✓', 'ok');
+  document.getElementById('uName').textContent = user.name || user.email;
+  if (user.picture) document.getElementById('uAvatar').src = user.picture;
+  // Load user-specific settings
+  loadUserSettings(user.email);
+  toast('Willkommen ' + (user.name ? user.name.split(' ')[0] : user.email) + ' ✓', 'ok');
 }
 
-function signOut() {
-  currentUser = null;
-  localStorage.removeItem('vfr_user');
+function doSignOut() {
+  saveUserSettings(); // save before logout
+  gUser = null;
+  localStorage.removeItem('vfr_session');
   document.getElementById('userBar').style.display = 'none';
   document.getElementById('loginOverlay').style.display = 'flex';
-  if (window.google && google.accounts) { google.accounts.id.disableAutoSelect(); }
+  if (window.google && google.accounts) {
+    google.accounts.id.disableAutoSelect();
+    // Re-render button for next login
+    google.accounts.id.renderButton(
+      document.getElementById('g_id_signin'),
+      { theme:'outline', size:'large', shape:'rectangular', width:250, text:'signin_with', locale:'de' }
+    );
+  }
   resetAll();
-  setTimeout(initGoogleBtn, 300);
 }
 
-function initGoogleBtn() {
-  var fallback = document.getElementById('googleFallbackBtn');
-  var gsiContainer = document.getElementById('googleSignInBtn');
-
-  if (window.google && window.google.accounts && window.google.accounts.id) {
-    try {
-      // Hide fallback BEFORE rendering GSI button – prevents double display
-      fallback.style.display = 'none';
-      gsiContainer.style.display = 'block';
-
-      google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: onGoogleCallback,
-        auto_select: false,
-        cancel_on_tap_outside: false,
-      });
-      google.accounts.id.renderButton(gsiContainer,
-        {theme:'outline', size:'large', shape:'rectangular', width:260, text:'signin_with', locale:'de'});
-
-      // Verify render succeeded – if not, show fallback again
-      setTimeout(function() {
-        if (!gsiContainer.querySelector('iframe,div[role],div[jsname]')) {
-          gsiContainer.style.display = 'none';
-          fallback.style.display = 'flex';
-        }
-      }, 1500);
-    } catch(e) {
-      console.warn('GSI renderButton failed:', e);
-      gsiContainer.style.display = 'none';
-      fallback.style.display = 'flex';
-    }
-  } else {
-    // GSI not loaded yet – show fallback and retry
-    fallback.style.display = 'flex';
-    gsiContainer.style.display = 'none';
-    setTimeout(initGoogleBtn, 900);
-  }
+// ── Per-user settings (linked to Google email) ────────
+function uKey(k) {
+  var email = gUser ? gUser.email.replace(/[^a-z0-9]/gi,'_') : 'guest';
+  return 'vfr_' + email + '_' + k;
 }
-
-function googleLoginFallback() {
-  if (window.google && window.google.accounts && window.google.accounts.id) {
-    google.accounts.id.prompt();
-  } else {
-    toast('Google Auth lädt noch, bitte kurz warten...', 'warn');
-    setTimeout(initGoogleBtn, 800);
-  }
+function saveUserSettings() {
+  if (!gUser) return;
+  var s = {
+    cwx:    document.getElementById('cwxKey').value.trim(),
+    aip:    document.getElementById('aipKey').value.trim(),
+    cruise: document.getElementById('pCruise').value,
+    fuel:   document.getElementById('pFuel').value,
+    tanks:  document.getElementById('pTanks').value,
+    reg:    document.getElementById('pReg').value,
+    acid:   selAC ? selAC.id : 'at3',
+  };
+  localStorage.setItem(uKey('cfg'), JSON.stringify(s));
 }
+function loadUserSettings(email) {
+  var key = 'vfr_' + (email||'').replace(/[^a-z0-9]/gi,'_') + '_cfg';
+  var raw = localStorage.getItem(key);
+  if (!raw) return;
+  try {
+    var s = JSON.parse(raw);
+    if (s.cwx)    { document.getElementById('cwxKey').value = s.cwx; localStorage.setItem('checkwx_key', s.cwx); }
+    if (s.aip)    { document.getElementById('aipKey').value = s.aip; localStorage.setItem('openaip_key', s.aip); applyAip(s.aip); }
+    if (s.cruise) document.getElementById('pCruise').value = s.cruise;
+    if (s.fuel)   document.getElementById('pFuel').value = s.fuel;
+    if (s.tanks)  document.getElementById('pTanks').value = s.tanks;
+    if (s.reg)    document.getElementById('pReg').value = s.reg;
+    if (s.acid)   pickAC(s.acid);
+  } catch(e) {}
+}
+</script>
 
-// ══════════════════════════════════════════════════
+<!-- Load Google GSI AFTER the callback is defined above -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════
 //  MAP
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 var map = L.map('map', {center:[52.0,19.0], zoom:6});
-var osmL  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap', maxZoom:18, opacity:.9});
-var topoL = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',  {attribution:'© OpenTopoMap', maxZoom:17, opacity:.9});
+var osmL  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {attribution:'© OpenStreetMap', maxZoom:18, opacity:.9});
+var topoL = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+  {attribution:'© OpenTopoMap', maxZoom:17, opacity:.9});
 osmL.addTo(map);
 L.control.layers({'OpenStreetMap':osmL,'Topo':topoL},{},{position:'topright'}).addTo(map);
 var aipLayer = null;
-function applyAip(k) {
-  if (aipLayer) { map.removeLayer(aipLayer); aipLayer=null; }
-  if (!k) return;
-  aipLayer = L.tileLayer('https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey='+k,
-    {attribution:'© OpenAIP', maxZoom:14, opacity:.75, errorTileUrl:''}).addTo(map);
+function lsGet(k){ return localStorage.getItem(k)||''; }
+function applyAip(k){
+  if(aipLayer){map.removeLayer(aipLayer);aipLayer=null;}
+  if(!k)return;
+  aipLayer=L.tileLayer('https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey='+k,
+    {attribution:'© OpenAIP',maxZoom:14,opacity:.75,errorTileUrl:''}).addTo(map);
 }
 applyAip(lsGet('openaip_key'));
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  AIRCRAFT DB
-// ══════════════════════════════════════════════════
-var AIRCRAFT = [
-  {id:'at3', ico:'🛩️', nm:'Aero AT-3',    tp:'SP-TPF · Rotax 912S',  cruise:108, fuel:18,  tanks:65,  cat:'VLA'},
-  {id:'c172',ico:'🛩️', nm:'Cessna 172',   tp:'C172 Skyhawk',          cruise:105, fuel:28,  tanks:200, cat:'SEP'},
-  {id:'pa28',ico:'✈️',  nm:'Piper PA-28',  tp:'Cherokee / Archer',     cruise:115, fuel:30,  tanks:189, cat:'SEP'},
-  {id:'da40',ico:'🛸',  nm:'Diamond DA40', tp:'DA40 NG',                cruise:135, fuel:20,  tanks:148, cat:'SEP'},
-  {id:'cust',ico:'⚙️',  nm:'Eigenes AC',   tp:'Manuelle Eingabe',       cruise:105, fuel:25,  tanks:180, cat:'SEP'},
+// ══════════════════════════════════════════════════════
+var AIRCRAFT=[
+  {id:'at3', ico:'🛩️',nm:'Aero AT-3',   tp:'SP-TPF · Rotax 912S', cruise:108,fuel:18,tanks:65, cat:'VLA'},
+  {id:'c172',ico:'🛩️',nm:'Cessna 172',  tp:'C172 Skyhawk',         cruise:105,fuel:28,tanks:200,cat:'SEP'},
+  {id:'pa28',ico:'✈️', nm:'Piper PA-28', tp:'Cherokee / Archer',    cruise:115,fuel:30,tanks:189,cat:'SEP'},
+  {id:'da40',ico:'🛸', nm:'Diamond DA40',tp:'DA40 NG',               cruise:135,fuel:20,tanks:148,cat:'SEP'},
+  {id:'cust',ico:'⚙️', nm:'Eigenes AC',  tp:'Manuelle Eingabe',      cruise:105,fuel:25,tanks:180,cat:'SEP'},
 ];
-var selAC = AIRCRAFT[0];
+var selAC=AIRCRAFT[0];
 
-// ══════════════════════════════════════════════════
-//  AIRPORT DB  (Polish VFR Reporting Points primary)
-// ══════════════════════════════════════════════════
-var AP = {
-  EPWA:{n:'Warszawa Chopin',    lat:52.1651,lon:20.9671,elev:362, freq:'Warszawa APP 119.425',
-    rpts:{NOVEMBER:{lat:52.210,lon:21.030,desc:'Most Siekierkowski (N)'},OSCAR:{lat:52.195,lon:21.010,desc:'Czerniakowska Junction (S)'},ECHO:{lat:52.170,lon:20.960,desc:'Marynarska/S79 jct (SW)'},WHISKEY:{lat:52.155,lon:20.920,desc:'Radar Tower Okęcie (W)'},ROMEO:{lat:52.145,lon:20.870,desc:'Janki Shopping Centre (SW)'},ALFA:{lat:52.260,lon:20.950,desc:'Babice Airfield area (NW)'},TANGO:{lat:51.980,lon:20.880,desc:'Tarczyn factory (S)'},GOLF:{lat:52.020,lon:21.220,desc:'Vistula bridge Karczew (SE)'},KILO:{lat:52.070,lon:21.180,desc:'Karczew sewage plant (SE)'},}},
-  EPKK:{n:'Kraków Balice',      lat:50.0778,lon:19.7847,elev:791, freq:'Kraków APP 119.225',
-    rpts:{INDIA:{lat:50.150,lon:19.633,desc:'Krzeszowice mine (NW)'},OSCAR:{lat:50.200,lon:19.883,desc:'Smardzowice church (N)'},SIERRA:{lat:49.983,lon:19.817,desc:'Skawina (S)'},BRAVO:{lat:50.267,lon:19.433,desc:'Bukowno (NW TMA)'},MIKE:{lat:50.350,lon:20.033,desc:'Miechów (NE TMA)'},ROMEO:{lat:49.911,lon:19.413,desc:'Kalwaria Zebrzydowska (SW)'},UNIFORM:{lat:49.792,lon:19.778,desc:'Wadowice (S)'},DELTA:{lat:49.857,lon:20.142,desc:'Dobczyce reservoir (SE)'},}},
-  EPKT:{n:'Katowice Pyrzowice', lat:50.4744,lon:19.0800,elev:995, freq:'Katowice APP 120.625',
-    rpts:{BRAVO:{lat:50.267,lon:19.433,desc:'Bukowno (S)'},CHARLIE:{lat:50.617,lon:18.933,desc:'Koszęcin (N)'},GOLF:{lat:50.383,lon:19.233,desc:'Rogoźnik reservoir (SE)'},HOTEL:{lat:50.333,lon:19.100,desc:'Strzemieszyce jct (S)'},INDIA:{lat:50.150,lon:19.633,desc:'Krzeszowice mine (SW)'},JULIETT:{lat:50.617,lon:19.450,desc:'Poraj lake (E)'},NOVEMBER:{lat:50.567,lon:19.233,desc:'Zendek church (N)'},TANGO:{lat:50.367,lon:18.983,desc:'Bytom Karb jct (SW)'},WHISKEY:{lat:50.633,lon:19.100,desc:'Woźniki junction (N)'},XRAY:{lat:50.467,lon:19.167,desc:'Pyrzowice S1/913 jct (W)'},}},
-  EPGD:{n:'Gdańsk Lech Wałęsa', lat:54.3776,lon:18.4666,elev:489, freq:'Gdańsk APP 120.500',
-    rpts:{ALFA:{lat:54.450,lon:18.550,desc:'Gulf of Gdańsk N (NE)'},BRAVO:{lat:54.400,lon:18.650,desc:'Sopot (NE)'},CHARLIE:{lat:54.350,lon:18.700,desc:'Gdynia harbour (N)'},DELTA:{lat:54.300,lon:18.300,desc:'Vistula delta (W)'},ECHO:{lat:54.250,lon:18.450,desc:'Pruszcz Gdański (S)'},FOXTROT:{lat:54.450,lon:18.300,desc:'Reda (NW)'},GOLF:{lat:54.300,lon:18.600,desc:'Gdańsk city centre (E)'},}},
-  EPWR:{n:'Wrocław Strachowice', lat:51.1027,lon:16.8858,elev:404, freq:'Wrocław APP 120.300',
-    rpts:{ALFA:{lat:51.180,lon:17.050,desc:'Długołęka (NE)'},BRAVO:{lat:51.000,lon:17.050,desc:'Kobierzyce S8 jct (SE)'},CHARLIE:{lat:51.000,lon:16.700,desc:'Kąty Wrocławskie (SW)'},DELTA:{lat:51.180,lon:16.700,desc:'Brzeg Dolny (NW)'},ECHO:{lat:51.250,lon:16.900,desc:'Oborniki Śląskie (N)'},FOXTROT:{lat:51.050,lon:16.950,desc:'Siechnice power plant (E)'},}},
-  EPPO:{n:'Poznań Ławica',       lat:52.4210,lon:16.8260,elev:308, freq:'Poznań APP 121.300',
-    rpts:{ALFA:{lat:52.550,lon:16.950,desc:'Murowana Goślina (NE)'},BRAVO:{lat:52.280,lon:16.950,desc:'Mosina (SE)'},CHARLIE:{lat:52.280,lon:16.650,desc:'Śrem (SW)'},DELTA:{lat:52.550,lon:16.650,desc:'Szamotuły (NW)'},ECHO:{lat:52.500,lon:17.100,desc:'Skoki (E)'},FOXTROT:{lat:52.400,lon:16.550,desc:'Buk / A2 (W)'},}},
-  EPSC:{n:'Szczecin Goleniów',   lat:53.5847,lon:14.9022,elev:154, freq:'Szczecin APP 124.900',
-    rpts:{ALFA:{lat:53.700,lon:14.950,desc:'Goleniów town (N)'},BRAVO:{lat:53.650,lon:15.150,desc:'Stargard (E)'},CHARLIE:{lat:53.400,lon:14.800,desc:'Police (SW)'},DELTA:{lat:53.700,lon:14.600,desc:'Wolin island (NW)'},ECHO:{lat:53.450,lon:15.100,desc:'Stare Czarnowo (SE)'},}},
-  EPLL:{n:'Łódź Lublinek',       lat:51.7219,lon:19.3981,elev:604, freq:'Łódź APP 119.700',
-    rpts:{ALFA:{lat:51.820,lon:19.500,desc:'Zgierz (N)'},BRAVO:{lat:51.620,lon:19.500,desc:'Rzgów (SE)'},CHARLIE:{lat:51.620,lon:19.250,desc:'Pabianice (SW)'},DELTA:{lat:51.820,lon:19.250,desc:'Aleksandrów Łódzki (NW)'},}},
-  EPRZ:{n:'Rzeszów Jasionka',    lat:50.1100,lon:22.0189,elev:675, freq:'Rzeszów APP 120.175',
-    rpts:{ALFA:{lat:50.200,lon:22.050,desc:'Łańcut (NE)'},BRAVO:{lat:50.000,lon:22.100,desc:'Boguchwała (SE)'},CHARLIE:{lat:50.000,lon:21.900,desc:'Strzyżów road (SW)'},DELTA:{lat:50.200,lon:21.900,desc:'Głogów Małopolski (NW)'},}},
-  EPBY:{n:'Bydgoszcz',           lat:53.0968,lon:17.9777,elev:235, freq:'Bydgoszcz APP 119.725',
-    rpts:{ALFA:{lat:53.200,lon:18.050,desc:'Szubin (NE)'},BRAVO:{lat:53.000,lon:18.150,desc:'Solec Kujawski (SE)'},CHARLIE:{lat:53.000,lon:17.800,desc:'Koronowo (SW)'},DELTA:{lat:53.200,lon:17.850,desc:'Nakło n. Notecią (NW)'},}},
-  EPRA:{n:'Warszawa Radom',      lat:51.3892,lon:21.2136,elev:610, freq:'Radom APP 119.200',
-    rpts:{ALFA:{lat:51.500,lon:21.250,desc:'Kozienice (N)'},BRAVO:{lat:51.250,lon:21.400,desc:'Zwoleń (SE)'},CHARLIE:{lat:51.250,lon:21.000,desc:'Jedlińsk (SW)'},DELTA:{lat:51.500,lon:21.000,desc:'Białobrzegi (NW)'},}},
-  EPMO:{n:'Warszawa Modlin',     lat:52.4511,lon:20.6519,elev:341, freq:'Modlin INFO 121.750',
-    rpts:{ALFA:{lat:52.550,lon:20.750,desc:'Ciechanów direction (N)'},BRAVO:{lat:52.350,lon:20.750,desc:'Nowy Dwór Maz. S (SE)'},CHARLIE:{lat:52.350,lon:20.500,desc:'Sochaczew direction (SW)'},DELTA:{lat:52.550,lon:20.500,desc:'Płońsk direction (NW)'},ECHO:{lat:52.480,lon:20.950,desc:'Legionowo (E)'},}},
-  LOWW:{n:'Wien Schwechat',      lat:48.1103,lon:16.5697,elev:183, freq:'Wien APP 128.200',
-    rpts:{NOVEMBER:{lat:48.220,lon:16.400,desc:'Klosterneuburg (N)'},CHARLIE:{lat:48.080,lon:16.300,desc:'Perchtoldsdorf (SW)'},PAPA:{lat:48.200,lon:16.700,desc:'Raasdorf (NE)'},GOLF:{lat:48.000,lon:16.600,desc:'Fischamend (SE)'},SIERRA:{lat:47.980,lon:16.340,desc:'Baden (S)'},INDIA:{lat:48.140,lon:16.200,desc:'Purkersdorf (W)'},}},
-  LOWI:{n:'Innsbruck',           lat:47.2602,lon:11.3439,elev:1906,freq:'Innsbruck APP 120.100',
-    rpts:{MIKE1:{lat:47.310,lon:11.560,desc:'Inn-Tal Ost (E)'},MIKE3:{lat:47.270,lon:11.350,desc:'CTR Ost'},FOXTROT:{lat:47.220,lon:11.550,desc:'Zillertal (S)'},NOVEMBER:{lat:47.390,lon:11.380,desc:'Seefeld (N)'},WHISKEY1:{lat:47.290,lon:11.220,desc:'Inn-Tal West'},}},
-  LOWS:{n:'Salzburg',            lat:47.7933,lon:13.0043,elev:1411,freq:'Salzburg APP 123.725',rpts:{}},
-  LOGG:{n:'Graz',                lat:46.9911,lon:15.4396,elev:1115,freq:'Graz APP 121.200',rpts:{}},
-  LORK:{n:'Klagenfurt',          lat:46.6425,lon:14.3378,elev:1474,freq:'Klagenfurt APP 123.250',rpts:{}},
-  LOKL:{n:'Linz Hörsching',      lat:48.2332,lon:14.1875,elev:978, freq:'Linz APP 119.225',rpts:{}},
-  LOAN:{n:'Wr. Neustadt Ost',    lat:47.8433,lon:16.2600,elev:896, freq:'WN INFO 126.250',rpts:{}},
-  LSZH:{n:'Zürich',              lat:47.4647,lon:8.5492, elev:1416,freq:'Zürich APP 118.000',rpts:{}},
-  EDDM:{n:'München',             lat:48.3538,lon:11.7861,elev:1487,freq:'München APP 120.775',rpts:{}},
-  EDDN:{n:'Nürnberg',            lat:49.4987,lon:11.0669,elev:1046,freq:'Nürnberg APP 123.900',rpts:{}},
-  LKPR:{n:'Prag',                lat:50.1008,lon:14.2600,elev:1247,freq:'Prag APP 120.525',rpts:{}},
-  LJLJ:{n:'Ljubljana',           lat:46.2237,lon:14.4576,elev:1273,freq:'Ljubljana APP 119.150',rpts:{}},
+// ══════════════════════════════════════════════════════
+//  AIRPORT DB  (with VFR Reporting Points)
+// ══════════════════════════════════════════════════════
+var AP={
+  EPWA:{n:'Warszawa Chopin',    lat:52.1651,lon:20.9671,freq:'APP 119.425',rpts:{NOVEMBER:{lat:52.210,lon:21.030,desc:'Most Siekierkowski (N)'},OSCAR:{lat:52.195,lon:21.010,desc:'Czerniakowska Jct (S)'},ECHO:{lat:52.170,lon:20.960,desc:'Marynarska/S79 (SW)'},WHISKEY:{lat:52.155,lon:20.920,desc:'Radar Tower (W)'},ROMEO:{lat:52.145,lon:20.870,desc:'Janki Shopping Centre'},ALFA:{lat:52.260,lon:20.950,desc:'Babice area (NW)'},TANGO:{lat:51.980,lon:20.880,desc:'Tarczyn factory (S)'},GOLF:{lat:52.020,lon:21.220,desc:'Karczew bridge (SE)'},KILO:{lat:52.070,lon:21.180,desc:'Karczew sewage (SE)'},}},
+  EPKK:{n:'Kraków Balice',      lat:50.0778,lon:19.7847,freq:'APP 119.225',rpts:{INDIA:{lat:50.150,lon:19.633,desc:'Krzeszowice mine (NW)'},OSCAR:{lat:50.200,lon:19.883,desc:'Smardzowice church (N)'},SIERRA:{lat:49.983,lon:19.817,desc:'Skawina (S)'},BRAVO:{lat:50.267,lon:19.433,desc:'Bukowno (TMA NW)'},MIKE:{lat:50.350,lon:20.033,desc:'Miechów (TMA NE)'},ROMEO:{lat:49.911,lon:19.413,desc:'Kalwaria (SW)'},UNIFORM:{lat:49.792,lon:19.778,desc:'Wadowice (S)'},DELTA:{lat:49.857,lon:20.142,desc:'Dobczyce (SE)'},}},
+  EPKT:{n:'Katowice Pyrzowice', lat:50.4744,lon:19.0800,freq:'APP 120.625',rpts:{BRAVO:{lat:50.267,lon:19.433,desc:'Bukowno (S)'},CHARLIE:{lat:50.617,lon:18.933,desc:'Koszęcin (N)'},GOLF:{lat:50.383,lon:19.233,desc:'Rogoźnik (SE)'},HOTEL:{lat:50.333,lon:19.100,desc:'Strzemieszyce (S)'},INDIA:{lat:50.150,lon:19.633,desc:'Krzeszowice (SW)'},JULIETT:{lat:50.617,lon:19.450,desc:'Poraj lake (E)'},NOVEMBER:{lat:50.567,lon:19.233,desc:'Zendek (N)'},TANGO:{lat:50.367,lon:18.983,desc:'Bytom Karb (SW)'},WHISKEY:{lat:50.633,lon:19.100,desc:'Woźniki (N)'},XRAY:{lat:50.467,lon:19.167,desc:'Pyrzowice jct (W)'},}},
+  EPGD:{n:'Gdańsk Lech Wałęsa', lat:54.3776,lon:18.4666,freq:'APP 120.500',rpts:{ALFA:{lat:54.450,lon:18.550,desc:'Gulf of Gdańsk (NE)'},BRAVO:{lat:54.400,lon:18.650,desc:'Sopot'},CHARLIE:{lat:54.350,lon:18.700,desc:'Gdynia harbour'},DELTA:{lat:54.300,lon:18.300,desc:'Vistula delta (W)'},ECHO:{lat:54.250,lon:18.450,desc:'Pruszcz Gdański (S)'},FOXTROT:{lat:54.450,lon:18.300,desc:'Reda (NW)'},GOLF:{lat:54.300,lon:18.600,desc:'Gdańsk centre (E)'},}},
+  EPWR:{n:'Wrocław Strachowice', lat:51.1027,lon:16.8858,freq:'APP 120.300',rpts:{ALFA:{lat:51.180,lon:17.050,desc:'Długołęka (NE)'},BRAVO:{lat:51.000,lon:17.050,desc:'Kobierzyce (SE)'},CHARLIE:{lat:51.000,lon:16.700,desc:'Kąty Wrocławskie (SW)'},DELTA:{lat:51.180,lon:16.700,desc:'Brzeg Dolny (NW)'},ECHO:{lat:51.250,lon:16.900,desc:'Oborniki Śląskie (N)'},FOXTROT:{lat:51.050,lon:16.950,desc:'Siechnice (E)'},}},
+  EPPO:{n:'Poznań Ławica',       lat:52.4210,lon:16.8260,freq:'APP 121.300',rpts:{ALFA:{lat:52.550,lon:16.950,desc:'Murowana Goślina (NE)'},BRAVO:{lat:52.280,lon:16.950,desc:'Mosina (SE)'},CHARLIE:{lat:52.280,lon:16.650,desc:'Śrem (SW)'},DELTA:{lat:52.550,lon:16.650,desc:'Szamotuły (NW)'},ECHO:{lat:52.500,lon:17.100,desc:'Skoki (E)'},FOXTROT:{lat:52.400,lon:16.550,desc:'Buk A2 (W)'},}},
+  EPSC:{n:'Szczecin Goleniów',   lat:53.5847,lon:14.9022,freq:'APP 124.900',rpts:{ALFA:{lat:53.700,lon:14.950,desc:'Goleniów town (N)'},BRAVO:{lat:53.650,lon:15.150,desc:'Stargard (E)'},CHARLIE:{lat:53.400,lon:14.800,desc:'Police (SW)'},DELTA:{lat:53.700,lon:14.600,desc:'Wolin island (NW)'},ECHO:{lat:53.450,lon:15.100,desc:'Stare Czarnowo (SE)'},}},
+  EPLL:{n:'Łódź Lublinek',       lat:51.7219,lon:19.3981,freq:'APP 119.700',rpts:{ALFA:{lat:51.820,lon:19.500,desc:'Zgierz (N)'},BRAVO:{lat:51.620,lon:19.500,desc:'Rzgów (SE)'},CHARLIE:{lat:51.620,lon:19.250,desc:'Pabianice (SW)'},DELTA:{lat:51.820,lon:19.250,desc:'Aleksandrów (NW)'},}},
+  EPRZ:{n:'Rzeszów Jasionka',    lat:50.1100,lon:22.0189,freq:'APP 120.175',rpts:{ALFA:{lat:50.200,lon:22.050,desc:'Łańcut (NE)'},BRAVO:{lat:50.000,lon:22.100,desc:'Boguchwała (SE)'},CHARLIE:{lat:50.000,lon:21.900,desc:'Strzyżów road (SW)'},DELTA:{lat:50.200,lon:21.900,desc:'Głogów Mał. (NW)'},}},
+  EPBY:{n:'Bydgoszcz',           lat:53.0968,lon:17.9777,freq:'APP 119.725',rpts:{ALFA:{lat:53.200,lon:18.050,desc:'Szubin (NE)'},BRAVO:{lat:53.000,lon:18.150,desc:'Solec Kujawski (SE)'},CHARLIE:{lat:53.000,lon:17.800,desc:'Koronowo (SW)'},DELTA:{lat:53.200,lon:17.850,desc:'Nakło (NW)'},}},
+  EPRA:{n:'Warszawa Radom',      lat:51.3892,lon:21.2136,freq:'APP 119.200',rpts:{ALFA:{lat:51.500,lon:21.250,desc:'Kozienice (N)'},BRAVO:{lat:51.250,lon:21.400,desc:'Zwoleń (SE)'},CHARLIE:{lat:51.250,lon:21.000,desc:'Jedlińsk (SW)'},DELTA:{lat:51.500,lon:21.000,desc:'Białobrzegi (NW)'},}},
+  EPMO:{n:'Warszawa Modlin',     lat:52.4511,lon:20.6519,freq:'INFO 121.750',rpts:{ALFA:{lat:52.550,lon:20.750,desc:'Ciechanów (N)'},BRAVO:{lat:52.350,lon:20.750,desc:'Nowy Dwór S (SE)'},CHARLIE:{lat:52.350,lon:20.500,desc:'Sochaczew (SW)'},DELTA:{lat:52.550,lon:20.500,desc:'Płońsk (NW)'},ECHO:{lat:52.480,lon:20.950,desc:'Legionowo (E)'},}},
+  LOWW:{n:'Wien Schwechat',      lat:48.1103,lon:16.5697,freq:'APP 128.200',rpts:{NOVEMBER:{lat:48.220,lon:16.400,desc:'Klosterneuburg (N)'},CHARLIE:{lat:48.080,lon:16.300,desc:'Perchtoldsdorf (SW)'},PAPA:{lat:48.200,lon:16.700,desc:'Raasdorf (NE)'},GOLF:{lat:48.000,lon:16.600,desc:'Fischamend (SE)'},SIERRA:{lat:47.980,lon:16.340,desc:'Baden (S)'},INDIA:{lat:48.140,lon:16.200,desc:'Purkersdorf (W)'},}},
+  LOWI:{n:'Innsbruck',           lat:47.2602,lon:11.3439,freq:'APP 120.100',rpts:{MIKE1:{lat:47.310,lon:11.560,desc:'Inn-Tal Ost'},MIKE3:{lat:47.270,lon:11.350,desc:'CTR Ost'},FOXTROT:{lat:47.220,lon:11.550,desc:'Zillertal (S)'},NOVEMBER:{lat:47.390,lon:11.380,desc:'Seefeld (N)'},WHISKEY1:{lat:47.290,lon:11.220,desc:'Inn-Tal West'},}},
+  LOWS:{n:'Salzburg',            lat:47.7933,lon:13.0043,freq:'APP 123.725',rpts:{}},
+  LOGG:{n:'Graz',                lat:46.9911,lon:15.4396,freq:'APP 121.200',rpts:{}},
+  LORK:{n:'Klagenfurt',          lat:46.6425,lon:14.3378,freq:'APP 123.250',rpts:{}},
+  LOKL:{n:'Linz Hörsching',      lat:48.2332,lon:14.1875,freq:'APP 119.225',rpts:{}},
+  LOAN:{n:'Wr. Neustadt Ost',    lat:47.8433,lon:16.2600,freq:'INFO 126.250',rpts:{}},
+  LSZH:{n:'Zürich',              lat:47.4647,lon:8.5492, freq:'APP 118.000',rpts:{}},
+  LSZB:{n:'Bern-Belp',           lat:46.9141,lon:7.4971, freq:'APP 118.000',rpts:{}},
+  EDDM:{n:'München',             lat:48.3538,lon:11.7861,freq:'APP 120.775',rpts:{}},
+  EDDN:{n:'Nürnberg',            lat:49.4987,lon:11.0669,freq:'APP 123.900',rpts:{}},
+  EDDF:{n:'Frankfurt',           lat:50.0333,lon:8.5706, freq:'APP 120.800',rpts:{}},
+  LKPR:{n:'Prag',                lat:50.1008,lon:14.2600,freq:'APP 120.525',rpts:{}},
+  LJLJ:{n:'Ljubljana',           lat:46.2237,lon:14.4576,freq:'APP 119.150',rpts:{}},
+  LDZA:{n:'Zagreb',              lat:45.7429,lon:16.0688,freq:'APP 119.400',rpts:{}},
 };
 
-// ══════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════
-var dmk=null, amk=null, rln=null, wptMks=[], zps=[];
-var PS = {dep:null, arr:null, route:null, lastData:null};
+// ══════════════════════════════════════════════════════
+//  AUTOCOMPLETE AIRPORT DB  (~80 airports)
+// ══════════════════════════════════════════════════════
+var ACA=[
+  {i:'EPWA',n:'Warszawa Chopin',c:'Warszawa',f:'🇵🇱'},{i:'EPMO',n:'Warszawa Modlin',c:'Modlin',f:'🇵🇱'},
+  {i:'EPRA',n:'Radom Sadków',c:'Radom',f:'🇵🇱'},{i:'EPKK',n:'Kraków Balice',c:'Kraków',f:'🇵🇱'},
+  {i:'EPKT',n:'Katowice Pyrzowice',c:'Katowice',f:'🇵🇱'},{i:'EPGD',n:'Gdańsk Lech Wałęsa',c:'Gdańsk',f:'🇵🇱'},
+  {i:'EPWR',n:'Wrocław Strachowice',c:'Wrocław',f:'🇵🇱'},{i:'EPPO',n:'Poznań Ławica',c:'Poznań',f:'🇵🇱'},
+  {i:'EPSC',n:'Szczecin Goleniów',c:'Szczecin',f:'🇵🇱'},{i:'EPLL',n:'Łódź Lublinek',c:'Łódź',f:'🇵🇱'},
+  {i:'EPRZ',n:'Rzeszów Jasionka',c:'Rzeszów',f:'🇵🇱'},{i:'EPBY',n:'Bydgoszcz',c:'Bydgoszcz',f:'🇵🇱'},
+  {i:'EPBC',n:'Warszawa Babice',c:'Warszawa',f:'🇵🇱'},{i:'EPNC',n:'Nowy Czarnów',c:'Gryfino',f:'🇵🇱'},
+  {i:'EPLB',n:'Lublin',c:'Lublin',f:'🇵🇱'},{i:'EPZG',n:'Zielona Góra Babimost',c:'Zielona Góra',f:'🇵🇱'},
+  {i:'EPMM',n:'Mielec',c:'Mielec',f:'🇵🇱'},{i:'EPKS',n:'Krosno',c:'Krosno',f:'🇵🇱'},
+  {i:'EPSY',n:'Szymany Mazury',c:'Szczytno',f:'🇵🇱'},{i:'EPCN',n:'Częstochowa Rudniki',c:'Częstochowa',f:'🇵🇱'},
+  {i:'EPDE',n:'Dęblin',c:'Dęblin',f:'🇵🇱'},{i:'EPOK',n:'Ostrów Maz.',c:'Ostrów Maz.',f:'🇵🇱'},
+  {i:'EPHY',n:'Nowy Targ',c:'Nowy Targ',f:'🇵🇱'},{i:'EPLK',n:'Leszno Strzyżewice',c:'Leszno',f:'🇵🇱'},
+  {i:'EPGM',n:'Grudziądz',c:'Grudziądz',f:'🇵🇱'},{i:'EPPG',n:'Piła',c:'Piła',f:'🇵🇱'},
+  {i:'EPKN',n:'Kętrzyn Wilamowo',c:'Kętrzyn',f:'🇵🇱'},{i:'EPST',n:'Stalowa Wola',c:'Stalowa Wola',f:'🇵🇱'},
+  {i:'LOWW',n:'Wien Schwechat',c:'Wien',f:'🇦🇹'},{i:'LOWI',n:'Innsbruck',c:'Innsbruck',f:'🇦🇹'},
+  {i:'LOWS',n:'Salzburg',c:'Salzburg',f:'🇦🇹'},{i:'LOGG',n:'Graz',c:'Graz',f:'🇦🇹'},
+  {i:'LORK',n:'Klagenfurt',c:'Klagenfurt',f:'🇦🇹'},{i:'LOKL',n:'Linz Hörsching',c:'Linz',f:'🇦🇹'},
+  {i:'LOAN',n:'Wr. Neustadt Ost',c:'Wr. Neustadt',f:'🇦🇹'},{i:'LOAV',n:'Vöslau',c:'Bad Vöslau',f:'🇦🇹'},
+  {i:'LSZH',n:'Zürich',c:'Zürich',f:'🇨🇭'},{i:'LSZB',n:'Bern-Belp',c:'Bern',f:'🇨🇭'},
+  {i:'LSGG',n:'Genf Cointrin',c:'Genf',f:'🇨🇭'},{i:'LSZA',n:'Lugano',c:'Lugano',f:'🇨🇭'},
+  {i:'EDDM',n:'München Franz Josef Strauß',c:'München',f:'🇩🇪'},{i:'EDDN',n:'Nürnberg',c:'Nürnberg',f:'🇩🇪'},
+  {i:'EDDF',n:'Frankfurt Main',c:'Frankfurt',f:'🇩🇪'},{i:'EDDL',n:'Düsseldorf',c:'Düsseldorf',f:'🇩🇪'},
+  {i:'EDDB',n:'Berlin Brandenburg',c:'Berlin',f:'🇩🇪'},{i:'EDDH',n:'Hamburg',c:'Hamburg',f:'🇩🇪'},
+  {i:'EDDS',n:'Stuttgart',c:'Stuttgart',f:'🇩🇪'},{i:'EDDK',n:'Köln Bonn',c:'Köln',f:'🇩🇪'},
+  {i:'LKPR',n:'Prag Václav Havel',c:'Prag',f:'🇨🇿'},{i:'LKMT',n:'Ostrava Mošnov',c:'Ostrava',f:'🇨🇿'},
+  {i:'LKPD',n:'Pardubice',c:'Pardubice',f:'🇨🇿'},{i:'LZIB',n:'Bratislava',c:'Bratislava',f:'🇸🇰'},
+  {i:'LZKZ',n:'Košice',c:'Košice',f:'🇸🇰'},{i:'LJLJ',n:'Ljubljana',c:'Ljubljana',f:'🇸🇮'},
+  {i:'LDZA',n:'Zagreb',c:'Zagreb',f:'🇭🇷'},{i:'LDSP',n:'Split',c:'Split',f:'🇭🇷'},
+  {i:'LHBP',n:'Budapest Liszt Ferenc',c:'Budapest',f:'🇭🇺'},
+  {i:'LFLP',n:'Annecy',c:'Annecy',f:'🇫🇷'},{i:'LFMN',n:'Nizza',c:'Nizza',f:'🇫🇷'},
+  {i:'LYBE',n:'Belgrad Nikola Tesla',c:'Belgrad',f:'🇷🇸'},
+];
 
-// ══════════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════════
-function lsGet(k) { return localStorage.getItem(k)||''; }
-function tog(id) { document.getElementById(id).classList.toggle('open'); }
-function opn(id) { document.getElementById(id).classList.add('open'); }
-function showOv(t) { document.getElementById('ov').style.display='flex'; document.getElementById('ovS').textContent=t||'...'; }
-function hideOv() { document.getElementById('ov').style.display='none'; }
-function toast(msg, type) {
-  var t=document.getElementById('toast');
-  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
-  setTimeout(function(){t.classList.remove('show');}, 3800);
+// ── Autocomplete logic ──────────────────────────────
+var acIdx = -1;
+function acSearch(q){
+  q=q.toUpperCase().trim();
+  if(q.length<2) return [];
+  return ACA.filter(function(a){
+    return a.i.startsWith(q)||a.n.toUpperCase().indexOf(q)>=0||a.c.toUpperCase().indexOf(q)>=0;
+  }).slice(0,5);
 }
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function deg2rad(d) { return d*Math.PI/180; }
-function nmDist(a,b) {
-  var R=3440.065,dl=deg2rad(b.lat-a.lat),dn=deg2rad(b.lon-a.lon);
-  var x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(deg2rad(a.lat))*Math.cos(deg2rad(b.lat))*Math.sin(dn/2)*Math.sin(dn/2);
-  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
-}
-function bearing(a,b) {
-  var dl=deg2rad(b.lon-a.lon),la1=deg2rad(a.lat),la2=deg2rad(b.lat);
-  var y=Math.sin(dl)*Math.cos(la2), x=Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dl);
-  return ((Math.atan2(y,x)*180/Math.PI)+360)%360;
-}
-
-// ══════════════════════════════════════════════════
-//  AIRCRAFT UI
-// ══════════════════════════════════════════════════
-function buildAcGrid() {
-  document.getElementById('acGrid').innerHTML=AIRCRAFT.map(function(ac){
-    return '<div class="ac-card'+(ac.id===selAC.id?' sel':'')+'" onclick="pickAC(\''+ac.id+'\')">'+
-      '<div class="ac-ico">'+ac.ico+'</div><div class="ac-nm">'+ac.nm+'</div><div class="ac-tp">'+ac.tp+'</div></div>';
+function acShow(inpId,dropId){
+  var inp=document.getElementById(inpId);
+  var drop=document.getElementById(dropId);
+  var results=acSearch(inp.value);
+  if(!results.length){drop.style.display='none';return;}
+  acIdx=-1;
+  drop.innerHTML=results.map(function(a,i){
+    return '<div class="ac-item" data-icao="'+a.i+'" data-i="'+i+'"'+
+      ' onmousedown="acPick(\''+inpId+'\',\''+dropId+'\',\''+a.i+'\')"'+
+      ' onmouseover="acHi(this,\''+dropId+'\')">'+
+      '<span class="ac-code">'+a.i+'</span>'+
+      '<span class="ac-nm">'+a.n+'</span>'+
+      '<span class="ac-flag">'+a.f+'</span>'+
+      '</div>';
   }).join('');
+  drop.style.display='block';
 }
-function pickAC(id) {
-  selAC=AIRCRAFT.find(function(a){return a.id===id;})||AIRCRAFT[0];
-  buildAcGrid();
-  document.getElementById('pCruise').value=selAC.cruise;
-  document.getElementById('pFuel').value=selAC.fuel;
-  document.getElementById('pTanks').value=selAC.tanks;
-  if(selAC.id==='at3') document.getElementById('pReg').value='SP-TPF';
-  if(currentUser) setTimeout(saveUserSettings,200);
+function acHi(el,dropId){
+  document.querySelectorAll('#'+dropId+' .ac-item').forEach(function(e){e.classList.remove('hi');});
+  el.classList.add('hi');
+  acIdx=parseInt(el.dataset.i);
 }
-function getPerf() {
-  return {cruise:parseInt(document.getElementById('pCruise').value)||108,
-    fuel:parseFloat(document.getElementById('pFuel').value)||18,
-    tanks:parseInt(document.getElementById('pTanks').value)||65,
-    pax:parseInt(document.getElementById('pPax').value)||160,
-    reg:document.getElementById('pReg').value.trim()||'SP-TPF'};
+function acPick(inpId,dropId,icao){
+  document.getElementById(inpId).value=icao;
+  document.getElementById(dropId).style.display='none';
+  acIdx=-1;
 }
-
-// ══════════════════════════════════════════════════
-//  ROUTING ENGINE
-// ══════════════════════════════════════════════════
-function closestRptToward(rpts, airport, target, incoming) {
-  var keys=Object.keys(rpts); if(!keys.length) return null;
-  var tBrg=bearing(airport,target), best=null, bestS=999;
-  keys.forEach(function(k){
-    var rpt=rpts[k], rBrg=bearing(airport,rpt), diff=Math.abs(tBrg-rBrg);
-    if(diff>180) diff=360-diff;
-    if(incoming) diff=Math.abs(180-diff);
-    if(diff<bestS){bestS=diff; best={name:k,lat:rpt.lat,lon:rpt.lon,desc:rpt.desc};}
-  });
-  return best;
-}
-function closestParam(a,b,p) {
-  var dx=b.lon-a.lon,dy=b.lat-a.lat,len2=dx*dx+dy*dy;
-  if(len2===0) return 0;
-  return Math.max(0,Math.min(1,((p.lon-a.lon)*dx+(p.lat-a.lat)*dy)/len2));
-}
-function findEnrouteCTRs(dep,arr) {
-  var res=[];
-  Object.keys(AP).forEach(function(icao){
-    if(icao===dep.icao||icao===arr.icao) return;
-    var ap=AP[icao]; if(!ap.rpts||!Object.keys(ap.rpts).length) return;
-    var t=closestParam(dep,arr,ap); if(t<=0.05||t>=0.95) return;
-    var cp={lat:dep.lat+(arr.lat-dep.lat)*t,lon:dep.lon+(arr.lon-dep.lon)*t};
-    if(nmDist(cp,ap)<25) res.push(icao);
-  });
-  return res;
-}
-function computeRoute(dep,arr,rType) {
-  var base=[
-    {name:dep.icao,lat:dep.lat,lon:dep.lon,type:'apt',color:'#00ff9f',desc:dep.name||dep.icao},
-    {name:arr.icao,lat:arr.lat,lon:arr.lon,type:'apt',color:'#ff6b35',desc:arr.name||arr.icao},
-  ];
-  if(rType==='direct') return base;
-  var route=[base[0]];
-  var depR=AP[dep.icao]&&AP[dep.icao].rpts||{}, arrR=AP[arr.icao]&&AP[arr.icao].rpts||{};
-  var dExit=closestRptToward(depR,dep,arr,false);
-  if(dExit) route.push({name:dExit.name,lat:dExit.lat,lon:dExit.lon,type:'rpt',color:'#ffd60a',desc:dExit.desc,icao:dep.icao});
-  findEnrouteCTRs(dep,arr).forEach(function(ci){
-    var cAP=AP[ci]; if(!cAP||!cAP.rpts) return;
-    var en=closestRptToward(cAP.rpts,cAP,dep,true), ex=closestRptToward(cAP.rpts,cAP,arr,false);
-    if(en) route.push({name:en.name,lat:en.lat,lon:en.lon,type:'rpt',color:'#a78bfa',desc:en.desc+' ('+ci+' Entry)',icao:ci});
-    if(ex) route.push({name:ex.name,lat:ex.lat,lon:ex.lon,type:'rpt',color:'#a78bfa',desc:ex.desc+' ('+ci+' Exit)',icao:ci});
-  });
-  var aEntry=closestRptToward(arrR,arr,dep,true);
-  if(aEntry) route.push({name:aEntry.name,lat:aEntry.lat,lon:aEntry.lon,type:'rpt',color:'#ffd60a',desc:aEntry.desc,icao:arr.icao});
-  route.push(base[1]);
-  var mid=route.slice(1,route.length-1);
-  mid.sort(function(a,b){return nmDist(dep,a)-nmDist(dep,b);});
-  var seen={};
-  return [base[0]].concat(mid.filter(function(w){var k=w.lat.toFixed(3)+','+w.lon.toFixed(3);if(seen[k])return false;seen[k]=true;return true;})).concat([base[1]]);
+function acHide(dropId){setTimeout(function(){var d=document.getElementById(dropId);if(d)d.style.display='none';},200);}
+function acKeys(e,inpId,dropId){
+  var drop=document.getElementById(dropId);
+  var items=drop.querySelectorAll('.ac-item');
+  if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);items.forEach(function(el,i){el.classList.toggle('hi',i===acIdx);});}
+  else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,-1);items.forEach(function(el,i){el.classList.toggle('hi',i===acIdx);});}
+  else if(e.key==='Enter'){
+    if(acIdx>=0&&items[acIdx]){e.preventDefault();acPick(inpId,dropId,items[acIdx].dataset.icao);}
+    else{drop.style.display='none';plan();}
+  }
+  else if(e.key==='Escape'){drop.style.display='none';}
 }
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+var dmk=null,amk=null,rln=null,wptMks=[],zps=[];
+var PS={dep:null,arr:null,route:null,lastData:null};
+
+// ══════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════
+function tog(id){document.getElementById(id).classList.toggle('open');}
+function opn(id){document.getElementById(id).classList.add('open');}
+function showOv(t){document.getElementById('ov').style.display='flex';document.getElementById('ovS').textContent=t||'...';}
+function hideOv(){document.getElementById('ov').style.display='none';}
+function toast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type?' '+type:'');setTimeout(function(){t.classList.remove('show');},3800);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function d2r(d){return d*Math.PI/180;}
+function nmDist(a,b){var R=3440.065,dl=d2r(b.lat-a.lat),dn=d2r(b.lon-a.lon);var x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(d2r(a.lat))*Math.cos(d2r(b.lat))*Math.sin(dn/2)*Math.sin(dn/2);return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+function brng(a,b){var dl=d2r(b.lon-a.lon),la1=d2r(a.lat),la2=d2r(b.lat);return((Math.atan2(Math.sin(dl)*Math.cos(la2),Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dl))*180/Math.PI)+360)%360;}
+
+// ══════════════════════════════════════════════════════
+//  AIRCRAFT UI
+// ══════════════════════════════════════════════════════
+function buildAcGrid(){document.getElementById('acGrid').innerHTML=AIRCRAFT.map(function(ac){return '<div class="ac-card'+(ac.id===selAC.id?' sel':'')+'" onclick="pickAC(\''+ac.id+'\')"><div class="ac-ico">'+ac.ico+'</div><div class="ac-name">'+ac.nm+'</div><div class="ac-type">'+ac.tp+'</div></div>';}).join('');}
+function pickAC(id){selAC=AIRCRAFT.find(function(a){return a.id===id;})||AIRCRAFT[0];buildAcGrid();document.getElementById('pCruise').value=selAC.cruise;document.getElementById('pFuel').value=selAC.fuel;document.getElementById('pTanks').value=selAC.tanks;if(selAC.id==='at3')document.getElementById('pReg').value='SP-TPF';if(gUser)setTimeout(saveUserSettings,200);}
+function getPerf(){return{cruise:parseInt(document.getElementById('pCruise').value)||108,fuel:parseFloat(document.getElementById('pFuel').value)||18,tanks:parseInt(document.getElementById('pTanks').value)||65,reg:document.getElementById('pReg').value.trim()||'SP-TPF'};}
+
+// ══════════════════════════════════════════════════════
+//  ROUTING
+// ══════════════════════════════════════════════════════
+function closestRpt(rpts,airport,target,incoming){var keys=Object.keys(rpts);if(!keys.length)return null;var tb=brng(airport,target),best=null,bs=999;keys.forEach(function(k){var r=rpts[k],rb=brng(airport,r),d=Math.abs(tb-rb);if(d>180)d=360-d;if(incoming)d=Math.abs(180-d);if(d<bs){bs=d;best={name:k,lat:r.lat,lon:r.lon,desc:r.desc};}});return best;}
+function cparam(a,b,p){var dx=b.lon-a.lon,dy=b.lat-a.lat,l=dx*dx+dy*dy;if(!l)return 0;return Math.max(0,Math.min(1,((p.lon-a.lon)*dx+(p.lat-a.lat)*dy)/l));}
+function enrouteCTRs(dep,arr){var r=[];Object.keys(AP).forEach(function(ic){if(ic===dep.icao||ic===arr.icao)return;var ap=AP[ic];if(!ap.rpts||!Object.keys(ap.rpts).length)return;var t=cparam(dep,arr,ap);if(t<=0.05||t>=0.95)return;var cp={lat:dep.lat+(arr.lat-dep.lat)*t,lon:dep.lon+(arr.lon-dep.lon)*t};if(nmDist(cp,ap)<25)r.push(ic);});return r;}
+function computeRoute(dep,arr,rt){var base=[{name:dep.icao,lat:dep.lat,lon:dep.lon,type:'apt',color:'#00ff9f',desc:dep.name||dep.icao},{name:arr.icao,lat:arr.lat,lon:arr.lon,type:'apt',color:'#ff6b35',desc:arr.name||arr.icao}];if(rt==='direct')return base;var route=[base[0]];var dR=AP[dep.icao]&&AP[dep.icao].rpts||{},aR=AP[arr.icao]&&AP[arr.icao].rpts||{};var dE=closestRpt(dR,dep,arr,false);if(dE)route.push({name:dE.name,lat:dE.lat,lon:dE.lon,type:'rpt',color:'#ffd60a',desc:dE.desc,icao:dep.icao});enrouteCTRs(dep,arr).forEach(function(ci){var cAP=AP[ci];if(!cAP||!cAP.rpts)return;var en=closestRpt(cAP.rpts,cAP,dep,true),ex=closestRpt(cAP.rpts,cAP,arr,false);if(en)route.push({name:en.name,lat:en.lat,lon:en.lon,type:'rpt',color:'#a78bfa',desc:en.desc+' ('+ci+' Entry)',icao:ci});if(ex)route.push({name:ex.name,lat:ex.lat,lon:ex.lon,type:'rpt',color:'#a78bfa',desc:ex.desc+' ('+ci+' Exit)',icao:ci});});var aE=closestRpt(aR,arr,dep,true);if(aE)route.push({name:aE.name,lat:aE.lat,lon:aE.lon,type:'rpt',color:'#ffd60a',desc:aE.desc,icao:arr.icao});route.push(base[1]);var mid=route.slice(1,route.length-1);mid.sort(function(a,b){return nmDist(dep,a)-nmDist(dep,b);});var seen={};return[base[0]].concat(mid.filter(function(w){var k=w.lat.toFixed(3)+','+w.lon.toFixed(3);if(seen[k])return false;seen[k]=true;return true;})).concat([base[1]]);}
+
+// ══════════════════════════════════════════════════════
 //  WEATHER
-// ══════════════════════════════════════════════════
-async function fetchWx(icao) {
+// ══════════════════════════════════════════════════════
+// Airports without live METAR → fall back to EPWA
+var NO_METAR=['EPBC','EPNC','EPLB','EPOL','EPZG','EPKP','EPMM','EPPG','EPKS','EPCN','EPDE','EPOK','EPST','EPHY','EPGM','EPKN','EPLK'];
+function wxIcao(icao){return NO_METAR.indexOf(icao)>=0?'EPWA':icao;}
+
+async function fetchWx(icao){
+  var dispIcao=wxIcao(icao);
   var key=document.getElementById('cwxKey').value.trim()||lsGet('checkwx_key');
   if(key){
     try{
-      var rm=await fetch('https://api.checkwx.com/metar/'+icao+'/decoded',{headers:{'X-API-Key':key}});
+      var rm=await fetch('https://api.checkwx.com/metar/'+dispIcao+'/decoded',{headers:{'X-API-Key':key}});
       var dm=rm.ok?await rm.json():null;
       var metar=dm&&dm.data&&dm.data[0]?dm.data[0].raw_text:null;
       var decoded=dm&&dm.data&&dm.data[0]?dm.data[0]:null;
       var fc=decoded?decoded.flight_category:null;
       var taf=null;
-      try{var rt=await fetch('https://api.checkwx.com/taf/'+icao+'/decoded',{headers:{'X-API-Key':key}});var dt=rt.ok?await rt.json():null;taf=dt&&dt.data&&dt.data[0]?dt.data[0].raw_text:null;}catch(e){}
-      if(metar) return{metar:metar,taf:taf,decoded:decoded,flightCat:fc,icao:icao,src:'CheckWX'};
+      try{var rt=await fetch('https://api.checkwx.com/taf/'+dispIcao+'/decoded',{headers:{'X-API-Key':key}});var dt=rt.ok?await rt.json():null;taf=dt&&dt.data&&dt.data[0]?dt.data[0].raw_text:null;}catch(e){}
+      if(metar)return{metar:metar,taf:taf,decoded:decoded,flightCat:fc,icao:dispIcao,orig:icao,src:'CheckWX'};
     }catch(e){}
   }
   var metar=null,taf=null;
-  try{var r=await fetch('https://aviationweather.gov/api/data/metar?ids='+icao+'&format=raw&taf=false&hours=2');if(r.ok){var t=await r.text();var l=t.trim().split('\n').filter(function(x){return x.trim()&&!x.startsWith('#');});if(l.length)metar=l[0].trim();}}catch(e){}
-  try{var r2=await fetch('https://aviationweather.gov/api/data/taf?ids='+icao+'&format=raw');if(r2.ok){var t2=await r2.text();var l2=t2.trim().split('\n').filter(function(x){return x.trim()&&!x.startsWith('#');});if(l2.length)taf=l2.slice(0,8).join('\n').trim();}}catch(e){}
-  return{metar:metar,taf:taf,decoded:null,flightCat:null,icao:icao,src:metar?'aviationweather.gov':'–'};
-}
-function vfrCls(wx) {
-  if(wx.flightCat){var f=wx.flightCat.toLowerCase();return f==='lifr'?'ifr':f;}
-  var m=wx.metar; if(!m) return 'unknown';
-  if(/\bCAVOK\b/.test(m)) return 'vfr';
-  var vm=m.match(/\b(\d{4})\b/); var vis=vm?parseInt(vm[1]):9999;
-  if(vis<1500||/\bOVC00[0-3]\b/.test(m)) return 'ifr';
-  if(vis<5000||/\bBKN0[0-3]\d\b/.test(m)) return 'mvfr';
-  return 'vfr';
-}
-function wxChips(wx) {
-  var cls=vfrCls(wx);
-  var cn=cls==='vfr'?'c-vfr':cls==='mvfr'?'c-mvfr':'c-ifr';
-  var lb=cls==='vfr'?'✅ VFR':cls==='mvfr'?'⚠️ MVFR':'❌ IFR';
-  var r='<div class="chip"><span class="v '+cn+'">'+lb+'</span></div>';
-  if(!wx.metar) return r;
-  var m=wx.metar;
-  var w=m.match(/\b(\d{3}|VRB)(\d{2,3})(G\d{2,3})?KT\b/);
-  if(w) r+='<div class="chip">🌬️ <span class="v">'+w[1]+'°/'+w[2]+(w[3]||'')+'kt</span></div>';
-  if(/\bCAVOK\b/.test(m)) r+='<div class="chip">👁️ <span class="v c-vfr">CAVOK</span></div>';
-  else{var vi=m.match(/\b(\d{4})\b/);if(vi)r+='<div class="chip">👁️ <span class="v">'+(parseInt(vi[1])/1000).toFixed(1)+'km</span></div>';(m.match(/\b(FEW|SCT|BKN|OVC)\d{3}\b/g)||[]).forEach(function(c){r+='<div class="chip">☁️ <span class="v">'+c+'</span></div>';});}
-  var td=m.match(/\b(M?\d{2})\/(M?\d{2})\b/);if(td)r+='<div class="chip">🌡️ <span class="v">'+td[1]+'°/'+td[2]+'°</span></div>';
-  var q=m.match(/\bQ(\d{4})\b/);if(q)r+='<div class="chip">🔵 <span class="v">QNH '+q[1]+'</span></div>';
-  return r;
-}
-function buildDecodedTable(decoded) {
-  if(!decoded) return '';
-  var rows=[]; var dc=decoded;
-  if(dc.wind) rows.push(['Wind',(dc.wind.degrees||'VRB')+'° / '+(dc.wind.speed_kts||'–')+' kt'+(dc.wind.gust_kts?' G'+dc.wind.gust_kts+' kt':'')]);
-  if(dc.visibility){var vm=dc.visibility.meters_float;rows.push(['Sicht',vm>=9999?'10+ km':(vm/1000).toFixed(1)+' km']);}
-  if(dc.clouds&&dc.clouds.length) rows.push(['Wolken',dc.clouds.map(function(cl){return cl.code+' '+(cl.base_feet_agl||'–')+'ft';}).join(' · ')]);
-  if(dc.temperature) rows.push(['Temp/Tau',dc.temperature.celsius+'°C / '+(dc.dewpoint?dc.dewpoint.celsius:'–')+'°C']);
-  if(dc.barometer) rows.push(['QNH',dc.barometer.hpa+' hPa']);
-  if(!rows.length) return '';
-  return '<table class="wx-decoded-table">'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join('')+'</table>';
+  try{var r=await fetch('https://aviationweather.gov/api/data/metar?ids='+dispIcao+'&format=raw&taf=false&hours=2');if(r.ok){var t=await r.text();var l=t.trim().split('\n').filter(function(x){return x.trim()&&!x.startsWith('#');});if(l.length)metar=l[0].trim();}}catch(e){}
+  try{var r2=await fetch('https://aviationweather.gov/api/data/taf?ids='+dispIcao+'&format=raw');if(r2.ok){var t2=await r2.text();var l2=t2.trim().split('\n').filter(function(x){return x.trim()&&!x.startsWith('#');});if(l2.length)taf=l2.slice(0,8).join('\n').trim();}}catch(e){}
+  return{metar:metar,taf:taf,decoded:null,flightCat:null,icao:dispIcao,orig:icao,src:metar?'aviationweather.gov':'–'};
 }
 
-// metar-taf.com official embed – uses <a> anchor + embed-js script (as per metar-taf docs)
-// Airports with no live data fall back to EPWA
-var METAR_FALLBACK = 'EPWA';
-var MTAF_NOLIVE = ['EPBC','EPNC','EPLB','EPOL','EPZG','EPKP','EPMM','EPPG','EPKS',
-                   'EPCN','EPDE','EPOK','EPST','EPHY','EPGM','EPKN','EPLK'];
+function vfrCls(wx){if(wx.flightCat){var f=wx.flightCat.toLowerCase();return f==='lifr'?'ifr':f;}var m=wx.metar;if(!m)return 'unknown';if(/\bCAVOK\b/.test(m))return 'vfr';var vm=m.match(/\b(\d{4})\b/);var vis=vm?parseInt(vm[1]):9999;if(vis<1500||/\bOVC00[0-3]\b/.test(m))return 'ifr';if(vis<5000||/\bBKN0[0-3]\d\b/.test(m))return 'mvfr';return 'vfr';}
 
-function metarDisplayIcao(icao) {
-  return MTAF_NOLIVE.indexOf(icao) >= 0 ? METAR_FALLBACK : icao;
-}
+function wxChips(wx){var cls=vfrCls(wx);var cn=cls==='vfr'?'c-vfr':cls==='mvfr'?'c-mvfr':'c-ifr';var lb=cls==='vfr'?'✅ VFR':cls==='mvfr'?'⚠️ MVFR':'❌ IFR';var r='<div class="chip"><span class="v '+cn+'">'+lb+'</span></div>';if(!wx.metar)return r;var m=wx.metar;var w=m.match(/\b(\d{3}|VRB)(\d{2,3})(G\d{2,3})?KT\b/);if(w)r+='<div class="chip">🌬️ <span class="v">'+w[1]+'°/'+w[2]+(w[3]||'')+'kt</span></div>';if(/\bCAVOK\b/.test(m))r+='<div class="chip">👁️ <span class="v c-vfr">CAVOK</span></div>';else{var vi=m.match(/\b(\d{4})\b/);if(vi)r+='<div class="chip">👁️ <span class="v">'+(parseInt(vi[1])/1000).toFixed(1)+'km</span></div>';(m.match(/\b(FEW|SCT|BKN|OVC)\d{3}\b/g)||[]).forEach(function(c){r+='<div class="chip">☁️ <span class="v">'+c+'</span></div>';});}var td=m.match(/\b(M?\d{2})\/(M?\d{2})\b/);if(td)r+='<div class="chip">🌡️ <span class="v">'+td[1]+'°/'+td[2]+'°</span></div>';var q=m.match(/\bQ(\d{4})\b/);if(q)r+='<div class="chip">🔵 <span class="v">QNH '+q[1]+'</span></div>';return r;}
 
-// Inject metar-taf embed script for a given target anchor ID + ICAO
-function injectMtafScript(icao, targetId) {
-  // Remove old script if exists
-  var old = document.getElementById('mtaf-script-'+targetId);
-  if (old) old.remove();
-  var s = document.createElement('script');
-  s.id = 'mtaf-script-'+targetId;
-  s.async = true;
-  s.defer = true;
-  s.crossOrigin = 'anonymous';
-  s.src = 'https://metar-taf.com/de/embed-js/'+icao+'?u=80931&qnh=hPa&rh=rh&target='+targetId;
+function wxDecTable(decoded){if(!decoded)return '';var rows=[],dc=decoded;if(dc.wind)rows.push(['Wind',(dc.wind.degrees||'VRB')+'° / '+(dc.wind.speed_kts||'–')+' kt'+(dc.wind.gust_kts?' G'+dc.wind.gust_kts+'kt':'')]);if(dc.visibility){var vm=dc.visibility.meters_float;rows.push(['Sicht',vm>=9999?'10+ km':(vm/1000).toFixed(1)+' km']);}if(dc.clouds&&dc.clouds.length)rows.push(['Wolken',dc.clouds.map(function(cl){return cl.code+' '+(cl.base_feet_agl||'–')+'ft';}).join(' · ')]);if(dc.temperature)rows.push(['Temp/Tau',dc.temperature.celsius+'°C / '+(dc.dewpoint?dc.dewpoint.celsius:'–')+'°C']);if(dc.barometer)rows.push(['QNH',dc.barometer.hpa+' hPa']);if(!rows.length)return '';return '<table class="wx-dec">'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join('')+'</table>';}
+
+// metar-taf.com embed: inject <a> anchor + embed-js script
+var mtafScripts={};
+function injectMtaf(icao,tid){
+  // Remove old script for same target
+  if(mtafScripts[tid]){mtafScripts[tid].remove();delete mtafScripts[tid];}
+  var s=document.createElement('script');
+  s.async=true;s.defer=true;s.crossOrigin='anonymous';
+  s.src='https://metar-taf.com/de/embed-js/'+icao+'?u=80931&qnh=hPa&rh=rh&target='+tid;
   document.body.appendChild(s);
+  mtafScripts[tid]=s;
 }
 
-function metarWidget(icao, targetId) {
-  var displayIcao = metarDisplayIcao(icao);
-  var fallbackNote = (displayIcao !== icao) ?
-    '<div style="font-family:var(--mono);font-size:.58rem;color:var(--yw);margin-bottom:4px;">'+
-    '⚠️ Kein METAR für '+icao+' · Zeige '+displayIcao+'</div>' : '';
-  return fallbackNote +
-    '<a href="https://metar-taf.com/de/metar/'+displayIcao+'" '+
-       'id="'+targetId+'" '+
-       'style="font-size:14px;font-weight:500;color:#000;width:300px;height:435px;display:block">'+
-       'METAR '+displayIcao+
-    '</a>';
-}
-
-function renderWx(elId, icao, name, wx, type) {
+function renderWx(elId,origIcao,name,wx,type){
   var el=document.getElementById(elId);
+  var dispIcao=wx.icao||origIcao;
+  var isFallback=(dispIcao!==origIcao);
   var srcBadge=wx.src&&wx.src!=='–'?'<span class="badge bwx">'+wx.src+'</span>':'<span class="badge bdemo">No live data</span>';
   var typeCol=type==='dep'?'var(--gn)':'var(--a2)';
   var typeLbl=type==='dep'?'▲ ABFLUG':'▼ ZIEL';
-  var decoded=buildDecodedTable(wx.decoded);
-  // Unique ID for metar-taf widget target
-  var mtafId = 'mtaf-'+icao+'-'+type;
-  var widget = '<div class="mtaf-wrap"><div style="font-family:var(--mono);font-size:.56rem;'+
-    'color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">'+
-    'METAR-TAF.COM</div>'+metarWidget(icao, mtafId)+'</div>';
+  var decoded=wxDecTable(wx.decoded);
+  var tid='mtaf-'+type;
 
-  var html='<div class="wxcard '+type+'">'+
-    '<div class="wxh"><span class="icaob">'+esc(icao)+'</span>'+
+  var fallbackNote=isFallback?'<div class="mtaf-fallback">⚠️ Kein METAR für '+esc(origIcao)+' – zeige '+esc(dispIcao)+'</div>':'';
+  var mtafWidget=
+    '<div class="mtaf-wrap">'+
+    '<div class="mtaf-note">metar-taf.com widget</div>'+
+    fallbackNote+
+    '<a href="https://metar-taf.com/de/metar/'+dispIcao+'" '+
+       'id="'+tid+'" '+
+       'style="font-size:14px;font-weight:500;color:#000;width:300px;height:435px;display:block">'+
+    'METAR '+esc(dispIcao)+
+    '</a></div>';
+
+  var html=
+    '<div class="wxcard '+type+'">'+
+    '<div class="wxh"><span class="icaob">'+esc(origIcao)+'</span>'+
     '<div><div style="font-family:var(--mono);font-size:.58rem;color:'+typeCol+';">'+typeLbl+'</div>'+
-    '<div style="font-size:.72rem;color:var(--mt);">'+esc(name||icao)+'</div></div>'+srcBadge+'</div>';
+    '<div style="font-size:.72rem;color:var(--mt);">'+esc(name||origIcao)+'</div></div>'+srcBadge+'</div>';
   if(wx.metar){
     html+='<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">METAR RAW</div>'+
       '<div class="wx-raw">'+esc(wx.metar)+'</div>'+
       '<div class="chips">'+wxChips(wx)+'</div>'+decoded;
   }
-  if(wx.taf){
-    html+='<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;margin-top:6px;">TAF</div>'+
-      '<div class="wx-raw">'+esc(wx.taf)+'</div>';
-  }
-  html+=widget+'</div>';
+  if(wx.taf){html+='<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;margin-top:6px;">TAF</div><div class="wx-raw">'+esc(wx.taf)+'</div>';}
+  html+=mtafWidget+'</div>';
   el.innerHTML=html;
-  // Inject metar-taf embed script after DOM is updated
-  setTimeout(function() { injectMtafScript(metarDisplayIcao(icao), 'mtaf-'+icao+'-'+type); }, 100);
+  // Inject metar-taf script after DOM update
+  setTimeout(function(){injectMtaf(dispIcao,tid);},150);
 }
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  NOTAMs
-// ══════════════════════════════════════════════════
-async function fetchNtm(dep,arr) {
+// ══════════════════════════════════════════════════════
+async function fetchNtm(dep,arr){
   var ntms=[];
-  for(var i=0;i<2;i++){
-    var icao=i===0?dep:arr;
+  for(var i=0;i<2;i++){var icao=i===0?dep:arr;
     try{var r=await fetch('https://icaonotam.eurocontrol.int/notamSearch/search?icaos='+icao+'&briefingType=PILOT&reportFormat=HTML',{mode:'cors'});if(r.ok){var h=await r.text();var re=/\b([A-Z]\d{4}\/\d{2})\b([\s\S]*?)(?=[A-Z]\d{4}\/\d{2}|<\/pre|$)/g;var m;while((m=re.exec(h))!==null){var raw=m[2].replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();if(raw.length>15)ntms.push({id:m[1],icao:icao,src:'Eurocontrol',txt:raw.substring(0,280),crit:/\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(raw)});}}}catch(e){}
-    if(!ntms.filter(function(n){return n.icao===icao;}).length){
-      try{var r2=await fetch('https://aviationweather.gov/api/data/notam?icaos='+icao+'&format=raw');if(r2.ok){(await r2.text()).split('\n').filter(function(l){return l.trim().length>10;}).forEach(function(line,j){var im=line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);ntms.push({id:im?im[1].replace(/\s/,''):'N'+icao+j,icao:icao,src:'aviationweather.gov',txt:line.trim().substring(0,280),crit:/\b(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(line)});});}}catch(e){}
-    }
+    if(!ntms.filter(function(n){return n.icao===icao;}).length){try{var r2=await fetch('https://aviationweather.gov/api/data/notam?icaos='+icao+'&format=raw');if(r2.ok){(await r2.text()).split('\n').filter(function(l){return l.trim().length>10;}).forEach(function(line,j){var im=line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);ntms.push({id:im?im[1].replace(/\s/,''):'N'+icao+j,icao:icao,src:'aviationweather.gov',txt:line.trim().substring(0,280),crit:/\b(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(line)});});}}catch(e){}}
   }
-  if(!ntms.length) ntms=demoNtm(dep,arr);
+  if(!ntms.length){var d=new Date(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');ntms=[{id:'A'+mm+dd+'0/26',icao:dep,src:'Demo',crit:false,txt:dep+' TWY ALFA CLSD DUE MAINTENANCE'},{id:'A'+mm+dd+'1/26',icao:dep,src:'Demo',crit:false,txt:dep+' ATIS UNSERVICEABLE'},{id:'A'+mm+dd+'2/26',icao:arr,src:'Demo',crit:false,txt:arr+' BIRDS VIC AERODROME 1500FT'},{id:'B'+mm+dd+'0/26',icao:dep,src:'Demo',crit:true,txt:'DANGER AREA VIC '+dep+' FL060-FL100 0800-1600'},];}
   return ntms.slice(0,15);
 }
-function demoNtm(dep,arr){var d=new Date(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return [{id:'A'+mm+dd+'0/26',icao:dep,src:'Demo',crit:false,txt:dep+' TWY ALFA CLSD DUE MAINTENANCE'},{id:'A'+mm+dd+'1/26',icao:dep,src:'Demo',crit:false,txt:dep+' ATIS FREQ UNSERVICEABLE'},{id:'A'+mm+dd+'2/26',icao:arr,src:'Demo',crit:false,txt:arr+' BIRDS VIC AERODROME 1500FT'},{id:'B'+mm+dd+'0/26',icao:dep,src:'Demo',crit:true,txt:'DANGER AREA ACTIVE VIC '+dep+' FL060-FL100 0800-1600'},{id:'B'+mm+dd+'1/26',icao:arr,src:'Demo',crit:true,txt:'AEROBATIC DISPLAY NEAR '+arr+' 5NM SURFACE-3000FT 1200-1600'},];}
-function renderNtm(ntms){
-  var el=document.getElementById('ntC');
-  if(!ntms.length){el.innerHTML='<div class="empty"><div class="ico">✅</div>Keine NOTAMs</div>';return;}
-  var src=[...new Set(ntms.map(function(n){return n.src;}))].join('+');
-  var hdr='<div class="meta">'+ntms.length+' NOTAM(s) · <b>'+src+'</b><br><a href="https://icaonotam.eurocontrol.int" target="_blank">Eurocontrol NOTAMx ↗</a></div>';
-  el.innerHTML=hdr+'<div class="ntm-list">'+ntms.map(function(n){return '<div class="ntm '+(n.crit?'crit':'')+'"><div class="ntmid">'+esc(n.id)+' | '+esc(n.icao)+'</div><div class="ntmtxt">'+esc(n.txt)+'</div><div class="ntmsrc">'+esc(n.src)+'</div></div>';}).join('')+'</div>';
-}
+function renderNtm(ntms){var el=document.getElementById('ntC');if(!ntms.length){el.innerHTML='<div class="empty"><div class="ico">✅</div>Keine NOTAMs</div>';return;}var src=[...new Set(ntms.map(function(n){return n.src;}))].join('+');el.innerHTML='<div class="meta">'+ntms.length+' NOTAM(s) · <b>'+src+'</b><br><a href="https://icaonotam.eurocontrol.int" target="_blank">Eurocontrol ↗</a></div><div class="ntm-list">'+ntms.map(function(n){return '<div class="ntm '+(n.crit?'crit':'')+'"><div class="ntmid">'+esc(n.id)+' | '+esc(n.icao)+'</div><div class="ntmtxt">'+esc(n.txt)+'</div><div class="ntmsrc">'+esc(n.src)+'</div></div>';}).join('')+'</div>';}
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  ZONES
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function buildZones(dep,arr,alt){var ml=(dep.lat+arr.lat)/2,mn=(dep.lon+arr.lon)/2;return [{n:dep.icao+' CTR',tp:'CTR',col:'#ff6b35',from:'GND',to:'2500ft',active:true,lat:dep.lat,lon:dep.lon,r:.13},{n:arr.icao+' CTR',tp:'CTR',col:'#ff6b35',from:'GND',to:'2500ft',active:true,lat:arr.lat,lon:arr.lon,r:.13},{n:dep.icao+' TMA',tp:'TMA',col:'#ffd60a',from:'1500ft',to:'FL095',active:true,lat:dep.lat+.16,lon:dep.lon+.06,r:.28},{n:arr.icao+' TMA',tp:'TMA',col:'#ffd60a',from:'1500ft',to:'FL095',active:true,lat:arr.lat-.10,lon:arr.lon-.06,r:.26},{n:'Danger Area',tp:'DANGER',col:'#ff3b3b',from:'GND',to:'FL100',active:alt>4500,lat:ml-.08,lon:mn+.20,r:.15},{n:'Class C',tp:'CLASS C',col:'#00d4ff',from:'FL075',to:'FL195',active:alt>7500,lat:ml,lon:mn,r:.40},];}
-function renderZones(zones){var hdr='<div class="meta">Routennahe Zonen · <a href="https://www.openaip.net" target="_blank">OpenAIP ↗</a></div>';document.getElementById('znC').innerHTML=hdr+'<div class="zn-list">'+zones.map(function(z){return '<div class="zn"><div class="zndot" style="background:'+z.col+';box-shadow:0 0 4px '+z.col+'99;"></div><div style="flex:1"><div class="znnm">'+esc(z.n)+'</div><div class="zntp">'+esc(z.tp)+'</div></div><div class="znalt">'+esc(z.from)+'<br>'+esc(z.to)+'</div><div style="font-size:.6rem;font-family:var(--mono);color:'+(z.active?'var(--rd)':'var(--gn)')+';">'+(z.active?'●AKTIV':'○')+'</div></div>';}).join('')+'</div>';}
+function renderZones(zones){document.getElementById('znC').innerHTML='<div class="meta">Routennahe Zonen · <a href="https://www.openaip.net" target="_blank">OpenAIP ↗</a></div><div class="zn-list">'+zones.map(function(z){return '<div class="zn"><div class="zndot" style="background:'+z.col+';box-shadow:0 0 4px '+z.col+'99;"></div><div style="flex:1"><div class="znnm">'+esc(z.n)+'</div><div class="zntp">'+esc(z.tp)+'</div></div><div class="znalt">'+esc(z.from)+'<br>'+esc(z.to)+'</div><div style="font-size:.6rem;font-family:var(--mono);color:'+(z.active?'var(--rd)':'var(--gn)')+';">'+(z.active?'●AKTIV':'○')+'</div></div>';}).join('')+'</div>';}
 function drawZones(zones){zps.forEach(function(p){map.removeLayer(p);});zps=[];zones.forEach(function(z){var c=L.circle([z.lat,z.lon],{radius:z.r*111000,color:z.col,fillColor:z.col,fillOpacity:.06,weight:1.5,dashArray:['DANGER','CTR'].indexOf(z.tp)>=0?'5,4':undefined}).addTo(map).bindPopup('<b>'+z.n+'</b><br>'+z.tp+'<br>'+z.from+' – '+z.to);zps.push(c);});}
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  ROUTE DETAILS
-// ══════════════════════════════════════════════════
-function renderRouteDetails(route, perf) {
-  var rType=document.getElementById('routeType').value;
-  var hasRpts=route.some(function(w){return w.type==='rpt';});
-  var html=(hasRpts?'<div class="drag-hint">🖱️ Wegpunkte auf der Karte verschiebbar (Drag &amp; Drop)</div>':'')+
-    '<div class="meta">Routentyp: <b>'+(rType==='rpt'?'Via Reporting Points':'Direkt')+'</b> · '+route.filter(function(w){return w.type==='rpt';}).length+' VRP(s)</div><div class="wpt-list">';
-  var cumNm=0;
-  route.forEach(function(w,i){
-    if(i>0) cumNm+=nmDist(route[i-1],w);
-    var toNext=i<route.length-1?nmDist(w,route[i+1]):null;
-    var hdg=i<route.length-1?Math.round(bearing(w,route[i+1])):null;
-    var ete=toNext?Math.round(toNext/perf.cruise*60):null;
-    var dc=w.type==='apt'?(i===0?'#00ff9f':'#ff6b35'):w.type==='rpt'?'#ffd60a':'#a78bfa';
-    var tl=w.type==='apt'?(i===0?'DEP':'ARR'):w.type==='rpt'?'VRP':'WPT';
-    html+='<div class="wpt"><div class="wdot" style="background:'+dc+';box-shadow:0 0 4px '+dc+'80;"></div>'+
-      '<div style="flex:1"><div class="wname">'+esc(w.name)+'</div>'+(w.desc?'<div class="wdesc">'+esc(w.desc)+'</div>':'')+
-      '<div class="wtype">'+tl+(w.icao&&w.type==='rpt'?' · '+w.icao:'')+'</div></div>'+
-      '<div style="text-align:right">'+(i>0?'<div class="wdist">'+Math.round(cumNm)+' NM</div>':'<div class="wdist">START</div>')+
-      (hdg!==null?'<div class="whdg">'+hdg+'° '+ete+'min</div>':'<div class="whdg">ZIEL</div>')+'</div></div>';
-  });
-  document.getElementById('rdC').innerHTML=html+'</div>';
-}
+// ══════════════════════════════════════════════════════
+function renderRouteDetails(route,perf){var rType=document.getElementById('routeType').value;var hasRpts=route.some(function(w){return w.type==='rpt';});var html=(hasRpts?'<div class="drag-hint">🖱️ Wegpunkte auf Karte verschiebbar (Drag &amp; Drop)</div>':'')+
+'<div class="meta">Routentyp: <b>'+(rType==='rpt'?'Via Reporting Points':'Direkt')+'</b> · '+route.filter(function(w){return w.type==='rpt';}).length+' VRP(s)</div><div class="wpt-list">';
+var cumNm=0;route.forEach(function(w,i){if(i>0)cumNm+=nmDist(route[i-1],w);var toNext=i<route.length-1?nmDist(w,route[i+1]):null;var hdg=i<route.length-1?Math.round(brng(w,route[i+1])):null;var ete=toNext?Math.round(toNext/perf.cruise*60):null;var dc=w.type==='apt'?(i===0?'#00ff9f':'#ff6b35'):w.type==='rpt'?'#ffd60a':'#a78bfa';var tl=w.type==='apt'?(i===0?'DEP':'ARR'):w.type==='rpt'?'VRP':'WPT';html+='<div class="wpt"><div class="wdot" style="background:'+dc+';box-shadow:0 0 4px '+dc+'80;"></div><div style="flex:1"><div class="wname">'+esc(w.name)+'</div>'+(w.desc?'<div class="wdesc">'+esc(w.desc)+'</div>':'')+'<div class="wtype">'+tl+(w.icao&&w.type==='rpt'?' · '+w.icao:'')+'</div></div><div style="text-align:right">'+(i>0?'<div class="wdist">'+Math.round(cumNm)+' NM</div>':'<div class="wdist">START</div>')+(hdg!==null?'<div class="whdg">'+hdg+'° '+ete+'min</div>':'<div class="whdg">ZIEL</div>')+'</div></div>';});document.getElementById('rdC').innerHTML=html+'</div>';}
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  SUMMARY
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf){
   var cd=vfrCls(wD),ca=vfrCls(wA),cn=ntms.filter(function(n){return n.crit;}).length;
   var az=zones.filter(function(z){return z.active&&z.from!=='GND';}).length;
   var st='GO',ico='✅',cl='go';
   if(['ifr','lifr'].indexOf(cd)>=0||['ifr','lifr'].indexOf(ca)>=0||cn>0){st='NO-GO';ico='❌';cl='nogo';}
   else if(cd==='mvfr'||ca==='mvfr'||az>0){st='CAUTION';ico='⚠️';cl='caution';}
-  var tnm=0; for(var i=0;i<route.length-1;i++) tnm+=nmDist(route[i],route[i+1]); tnm=Math.round(tnm);
-  var ete=Math.round(tnm/perf.cruise*60), fR=Math.round(tnm/perf.cruise*perf.fuel*1.2), fOk=fR<=perf.tanks;
-  var range=Math.round(perf.tanks/perf.fuel*perf.cruise), nV=route.filter(function(w){return w.type==='rpt';}).length;
+  var tnm=0;for(var i=0;i<route.length-1;i++)tnm+=nmDist(route[i],route[i+1]);tnm=Math.round(tnm);
+  var ete=Math.round(tnm/perf.cruise*60),fR=Math.round(tnm/perf.cruise*perf.fuel*1.2),fOk=fR<=perf.tanks;
+  var range=Math.round(perf.tanks/perf.fuel*perf.cruise),nV=route.filter(function(w){return w.type==='rpt';}).length;
   function wc(c){return c==='vfr'?'go':c==='mvfr'?'caution':'nogo';}
   document.getElementById('smC').innerHTML='<div class="sum-card"><div class="sum-ttl">Flugplan Bewertung</div>'+
-    '<div style="text-align:center;margin-bottom:12px;"><div style="font-size:2rem;">'+ico+'</div>'+
-    '<div class="sval '+cl+'" style="font-size:1.4rem;">'+st+'</div></div>'+
+    '<div style="text-align:center;margin-bottom:12px;"><div style="font-size:2rem;">'+ico+'</div><div class="sval '+cl+'" style="font-size:1.4rem;">'+st+'</div></div>'+
     '<div class="sum-grid">'+
     '<div><div class="slbl">Reg / Typ</div><div class="sval">'+esc(perf.reg)+'</div></div>'+
     '<div><div class="slbl">Muster</div><div class="sval">'+esc(selAC.nm)+'</div></div>'+
@@ -949,89 +908,56 @@ function renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf){
     '<div><div class="slbl">Wx Abflug</div><div class="sval '+wc(cd)+'">'+cd.toUpperCase()+'</div></div>'+
     '<div><div class="slbl">Wx Ziel</div><div class="sval '+wc(ca)+'">'+ca.toUpperCase()+'</div></div>'+
     '<div><div class="slbl">Krit. NOTAMs</div><div class="sval '+(cn>0?'nogo':'go')+'">'+cn+'</div></div>'+
-    '<div><div class="slbl">VRPs auf Route</div><div class="sval '+(nV>0?'caution':'go')+'">'+nV+'</div></div>'+
+    '<div><div class="slbl">VRPs</div><div class="sval '+(nV>0?'caution':'go')+'">'+nV+'</div></div>'+
     '</div><div style="margin-top:12px;display:flex;gap:8px;">'+
     '<button class="btn bp" style="font-size:.72rem;" onclick="exportPDF()">🖨️ PDF EXPORT</button></div>'+
     '<div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--bd);font-family:var(--mono);font-size:.58rem;color:var(--mt);line-height:1.7;">'+
-    '⚡ Kein Ersatz für offizielle Flugvorbereitung.<br>'+
-    '<a href="https://www.austrocontrol.at" target="_blank">AustroControl</a> · '+
-    '<a href="https://icaonotam.eurocontrol.int" target="_blank">Eurocontrol NOTAMs</a> · '+
-    '<a href="https://metar-taf.com" target="_blank">metar-taf.com</a></div></div>';
+    '⚡ Kein Ersatz für offizielle Flugvorbereitung · <a href="https://metar-taf.com" target="_blank">metar-taf.com</a></div></div>';
 }
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  MAP MARKERS + DRAGGABLE WAYPOINTS
-// ══════════════════════════════════════════════════
-var mkDep=L.divIcon({html:'<div style="width:15px;height:15px;background:#00ff9f;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px #000b;"></div>',iconSize:[15,15],iconAnchor:[7,15],className:''});
-var mkArr=L.divIcon({html:'<div style="width:15px;height:15px;background:#ff6b35;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px #000b;"></div>',iconSize:[15,15],iconAnchor:[7,15],className:''});
-var mkRpt=L.divIcon({html:'<div style="width:12px;height:12px;background:#ffd60a;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px #000b;"></div>',iconSize:[12,12],iconAnchor:[6,6],className:''});
-var mkWpt=L.divIcon({html:'<div style="width:10px;height:10px;background:#a78bfa;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px #000b;"></div>',iconSize:[10,10],iconAnchor:[5,5],className:''});
+// ══════════════════════════════════════════════════════
+var mkD=L.divIcon({html:'<div style="width:15px;height:15px;background:#00ff9f;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px #000b;"></div>',iconSize:[15,15],iconAnchor:[7,15],className:''});
+var mkA=L.divIcon({html:'<div style="width:15px;height:15px;background:#ff6b35;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px #000b;"></div>',iconSize:[15,15],iconAnchor:[7,15],className:''});
+var mkR=L.divIcon({html:'<div style="width:12px;height:12px;background:#ffd60a;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px #000b;"></div>',iconSize:[12,12],iconAnchor:[6,6],className:''});
+var mkW=L.divIcon({html:'<div style="width:10px;height:10px;background:#a78bfa;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px #000b;"></div>',iconSize:[10,10],iconAnchor:[5,5],className:''});
 
-function redrawLine() {
-  if(rln){map.removeLayer(rln);rln=null;}
-  if(!PS.route||PS.route.length<2) return;
-  rln=L.polyline(PS.route.map(function(w){return[w.lat,w.lon];}),{color:'#00d4ff',weight:2.5,dashArray:'8,5',opacity:.85}).addTo(map);
-}
-function drawRoute(route) {
-  if(dmk) map.removeLayer(dmk); if(amk) map.removeLayer(amk); if(rln) map.removeLayer(rln); rln=null;
-  wptMks.forEach(function(m){map.removeLayer(m);}); wptMks=[];
+function redrawLine(){if(rln){map.removeLayer(rln);rln=null;}if(!PS.route||PS.route.length<2)return;rln=L.polyline(PS.route.map(function(w){return[w.lat,w.lon];}),{color:'#00d4ff',weight:2.5,dashArray:'8,5',opacity:.85}).addTo(map);}
+function drawRoute(route){
+  if(dmk)map.removeLayer(dmk);if(amk)map.removeLayer(amk);if(rln)map.removeLayer(rln);rln=null;
+  wptMks.forEach(function(m){map.removeLayer(m);});wptMks=[];
   PS.route=route.map(function(w){return Object.assign({},w);});
   redrawLine();
   route.forEach(function(w,i){
-    var icon=i===0?mkDep:(i===route.length-1?mkArr:(w.type==='rpt'?mkRpt:mkWpt));
-    var draggable=(i>0&&i<route.length-1);
+    var icon=i===0?mkD:(i===route.length-1?mkA:(w.type==='rpt'?mkR:mkW));
+    var draggable=i>0&&i<route.length-1;
     var mk=L.marker([w.lat,w.lon],{icon:icon,draggable:draggable}).addTo(map)
       .bindPopup('<b>'+w.name+'</b>'+(w.type==='rpt'?' <span style="color:#ffd60a">▲ VRP</span>':'')+'<br>'+(w.desc||''));
-    if(draggable){
-      (function(wi){
-        mk.on('drag',function(e){var ll=e.target.getLatLng();PS.route[wi].lat=ll.lat;PS.route[wi].lon=ll.lng;redrawLine();});
-        mk.on('dragend',function(){
-          if(PS.route[wi].name.indexOf(' *')<0) PS.route[wi].name+=(' *');
-          PS.route[wi].type='wpt';
-          var perf=getPerf(); renderRouteDetails(PS.route,perf);
-          if(PS.lastData) renderSummary(PS.dep.icao,PS.arr.icao,PS.lastData.alt,PS.lastData.wD,PS.lastData.wA,PS.lastData.ntms,PS.lastData.zones,PS.route,perf);
-          toast('Wegpunkt verschoben ✓','ok');
-        });
-      })(i);
-    }
-    if(i===0) dmk=mk; else if(i===route.length-1) amk=mk; else wptMks.push(mk);
+    if(draggable){(function(wi){mk.on('drag',function(e){var ll=e.target.getLatLng();PS.route[wi].lat=ll.lat;PS.route[wi].lon=ll.lng;redrawLine();});mk.on('dragend',function(){if(PS.route[wi].name.indexOf(' *')<0)PS.route[wi].name+=' *';PS.route[wi].type='wpt';var p=getPerf();renderRouteDetails(PS.route,p);if(PS.lastData)renderSummary(PS.dep.icao,PS.arr.icao,PS.lastData.alt,PS.lastData.wD,PS.lastData.wA,PS.lastData.ntms,PS.lastData.zones,PS.route,p);toast('Wegpunkt verschoben ✓','ok');});})(i);}
+    if(i===0)dmk=mk;else if(i===route.length-1)amk=mk;else wptMks.push(mk);
   });
   map.fitBounds(L.latLngBounds(route.map(function(w){return[w.lat,w.lon];})),{padding:[50,50]});
 }
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  GEOCODE
-// ══════════════════════════════════════════════════
-async function geo(icao) {
-  var r=await fetch('https://nominatim.openstreetmap.org/search?q='+icao+'+airport&format=json&limit=1');
-  var d=await r.json();
-  if(d&&d.length) return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon),name:d[0].display_name.split(',')[0],rpts:{}};
-  throw new Error('Flugplatz '+icao+' nicht gefunden');
-}
+// ══════════════════════════════════════════════════════
+async function geo(icao){var r=await fetch('https://nominatim.openstreetmap.org/search?q='+icao+'+airport&format=json&limit=1');var d=await r.json();if(d&&d.length)return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon),name:d[0].display_name.split(',')[0],rpts:{}};throw new Error('Flugplatz '+icao+' nicht gefunden');}
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  RESET
-// ══════════════════════════════════════════════════
-function resetAll() {
-  document.getElementById('depI').value=''; document.getElementById('arrI').value='';
-  if(dmk) map.removeLayer(dmk); if(amk) map.removeLayer(amk); if(rln) map.removeLayer(rln);
-  dmk=amk=rln=null;
-  wptMks.forEach(function(m){map.removeLayer(m);}); wptMks=[];
-  zps.forEach(function(p){map.removeLayer(p);}); zps=[];
-  ['wxD','wxA','ntC','znC','smC','rdC'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div>';});
-  ['sWD','sWA','sNT','sZN','sSM','sRD'].forEach(function(id){document.getElementById(id).classList.remove('open');});
-  PS={dep:null,arr:null,route:null,lastData:null};
-  map.setView([52.0,19.0],6);
-}
+// ══════════════════════════════════════════════════════
+function resetAll(){document.getElementById('depI').value='';document.getElementById('arrI').value='';if(dmk)map.removeLayer(dmk);if(amk)map.removeLayer(amk);if(rln)map.removeLayer(rln);dmk=amk=rln=null;wptMks.forEach(function(m){map.removeLayer(m);});wptMks=[];zps.forEach(function(p){map.removeLayer(p);});zps=[];['wxD','wxA','ntC','znC','smC','rdC'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<div class="empty"><div class="ico">📡</div>Noch keine Route geplant</div>';});['sWD','sWA','sNT','sZN','sSM','sRD'].forEach(function(id){document.getElementById(id).classList.remove('open');});PS={dep:null,arr:null,route:null,lastData:null};map.setView([52.0,19.0],6);}
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  MAIN PLAN
-// ══════════════════════════════════════════════════
-async function plan() {
+// ══════════════════════════════════════════════════════
+async function plan(){
   var dep=document.getElementById('depI').value.trim().toUpperCase();
   var arr=document.getElementById('arrI').value.trim().toUpperCase();
   var alt=parseInt(document.getElementById('altI').value)||4500;
-  var rType=document.getElementById('routeType').value;
+  var rt=document.getElementById('routeType').value;
   if(dep.length<3){toast('ICAO Abflug eingeben','err');return;}
   if(arr.length<3){toast('ICAO Ziel eingeben','err');return;}
   if(dep===arr){toast('Start ≠ Ziel','err');return;}
@@ -1042,337 +968,91 @@ async function plan() {
     var dAP=AP[dep],aAP=AP[arr];
     var dp=dAP?{lat:dAP.lat,lon:dAP.lon,name:dAP.n,rpts:dAP.rpts,freq:dAP.freq}:await geo(dep);
     var ap=aAP?{lat:aAP.lat,lon:aAP.lon,name:aAP.n,rpts:aAP.rpts,freq:aAP.freq}:await geo(arr);
-    dp.icao=dep; ap.icao=arr; PS.dep=dp; PS.arr=ap;
+    dp.icao=dep;ap.icao=arr;PS.dep=dp;PS.arr=ap;
     showOv('Berechne Route...');
-    var route=computeRoute(dp,ap,rType); var perf=getPerf();
-    drawRoute(route); renderRouteDetails(route,perf); opn('sRD');
-    showOv('Hole METAR / TAF...');
+    var route=computeRoute(dp,ap,rt);var perf=getPerf();
+    drawRoute(route);renderRouteDetails(route,perf);opn('sRD');
+    showOv('Hole METAR/TAF...');
     var wxRes=await Promise.all([fetchWx(dep),fetchWx(arr)]);
     var wD=wxRes[0],wA=wxRes[1];
-    renderWx('wxD',dep,dp.name||dep,wD,'dep'); renderWx('wxA',arr,ap.name||arr,wA,'arr');
-    if(!lsGet('checkwx_key')&&!document.getElementById('cwxKey').value) toast('Tipp: CheckWX Key in ⚙️ für decoded METAR','warn');
-    opn('sWD'); opn('sWA');
+    renderWx('wxD',dep,dp.name||dep,wD,'dep');
+    renderWx('wxA',arr,ap.name||arr,wA,'arr');
+    if(!lsGet('checkwx_key')&&!document.getElementById('cwxKey').value)toast('Tipp: CheckWX Key in ⚙️ für decoded METAR','warn');
+    opn('sWD');opn('sWA');
     showOv('Hole NOTAMs...');
-    var ntms=await fetchNtm(dep,arr); renderNtm(ntms); opn('sNT');
-    showOv('Berechne Luftraumzonen...');
-    var zones=buildZones(dp,ap,alt); renderZones(zones); drawZones(zones); opn('sZN');
+    var ntms=await fetchNtm(dep,arr);renderNtm(ntms);opn('sNT');
+    showOv('Berechne Zonen...');
+    var zones=buildZones(dp,ap,alt);renderZones(zones);drawZones(zones);opn('sZN');
     PS.lastData={alt:alt,wD:wD,wA:wA,ntms:ntms,zones:zones,perf:perf};
-    renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf); opn('sSM');
+    renderSummary(dep,arr,alt,wD,wA,ntms,zones,route,perf);opn('sSM');
     document.getElementById('sysStatus').textContent='● BEREIT';
     toast('Route berechnet · '+route.filter(function(w){return w.type==='rpt';}).length+' VRP(s) ✓','ok');
     document.querySelector('.sidebar').scrollTop=0;
   }catch(e){console.error(e);toast('Fehler: '+e.message,'err');document.getElementById('sysStatus').textContent='● FEHLER';}
-  hideOv(); document.getElementById('planBtn').disabled=false;
+  hideOv();document.getElementById('planBtn').disabled=false;
 }
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  PDF EXPORT
-// ══════════════════════════════════════════════════
-function exportPDF() {
+// ══════════════════════════════════════════════════════
+function exportPDF(){
   if(!PS.dep||!PS.arr||!PS.route||!PS.lastData){toast('Bitte zuerst Route berechnen','err');return;}
   var d=PS.lastData,route=PS.route,perf=d.perf;
-  var now=new Date();
-  var dateStr=now.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'});
-  var timeStr=now.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})+' UTC';
-  var tnm=0; for(var i=0;i<route.length-1;i++) tnm+=nmDist(route[i],route[i+1]); tnm=Math.round(tnm);
-  var ete=Math.round(tnm/perf.cruise*60), fR=Math.round(tnm/perf.cruise*perf.fuel*1.2);
+  var now=new Date(),dateStr=now.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'}),timeStr=now.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})+' UTC';
+  var tnm=0;for(var i=0;i<route.length-1;i++)tnm+=nmDist(route[i],route[i+1]);tnm=Math.round(tnm);
+  var ete=Math.round(tnm/perf.cruise*60),fR=Math.round(tnm/perf.cruise*perf.fuel*1.2);
   var cd=vfrCls(d.wD),ca=vfrCls(d.wA),cn=d.ntms.filter(function(n){return n.crit;}).length;
-  var st='GO',stC='p-go';
-  if(['ifr','lifr'].indexOf(cd)>=0||['ifr','lifr'].indexOf(ca)>=0||cn>0){st='NO-GO';stC='p-nogo';}
-  else if(cd==='mvfr'||ca==='mvfr'){st='CAUTION';stC='p-caution';}
-  var depAP=AP[PS.dep.icao]||{}, arrAP=AP[PS.arr.icao]||{};
-
-  var wptRows='', cumNm=0;
-  route.forEach(function(w,i){
-    if(i>0) cumNm+=nmDist(route[i-1],w);
-    var tn=i<route.length-1?Math.round(nmDist(w,route[i+1])):null;
-    var hdg=i<route.length-1?Math.round(bearing(w,route[i+1])):null;
-    var el=tn?Math.round(tn/perf.cruise*60):null, fl=el?Math.round(el/60*perf.fuel):null;
-    var tl=w.type==='apt'?(i===0?'DEP':'ARR'):w.type==='rpt'?'VRP':'WPT';
-    wptRows+='<tr><td><b>'+esc(w.name)+'</b>'+(w.desc?'<br><span style="font-size:7pt;color:#555">'+esc(w.desc)+'</span>':'')+'</td>'+
-      '<td style="text-align:center">'+tl+'</td><td style="text-align:right">'+(i>0?Math.round(cumNm)+' NM':'–')+'</td>'+
-      '<td style="text-align:center">'+(hdg!==null?hdg+'°':'–')+'</td><td style="text-align:right">'+(tn!==null?tn+' NM':'–')+'</td>'+
-      '<td style="text-align:right">'+(el!==null?el+' min':'–')+'</td><td style="text-align:right">'+(fl!==null?fl+' L':'–')+'</td></tr>';
-  });
-
+  var st='GO',stC='p-go';if(['ifr','lifr'].indexOf(cd)>=0||['ifr','lifr'].indexOf(ca)>=0||cn>0){st='NO-GO';stC='p-nogo';}else if(cd==='mvfr'||ca==='mvfr'){st='CAUTION';stC='p-caution';}
+  var depAP=AP[PS.dep.icao]||{},arrAP=AP[PS.arr.icao]||{};
+  var wptRows='',cumNm=0;route.forEach(function(w,i){if(i>0)cumNm+=nmDist(route[i-1],w);var tn=i<route.length-1?Math.round(nmDist(w,route[i+1])):null;var hdg=i<route.length-1?Math.round(brng(w,route[i+1])):null;var el=tn?Math.round(tn/perf.cruise*60):null,fl=el?Math.round(el/60*perf.fuel):null;var tl=w.type==='apt'?(i===0?'DEP':'ARR'):w.type==='rpt'?'VRP':'WPT';wptRows+='<tr><td><b>'+esc(w.name)+'</b>'+(w.desc?'<br><span style="font-size:7pt;color:#555">'+esc(w.desc)+'</span>':'')+'</td><td style="text-align:center">'+tl+'</td><td style="text-align:right">'+(i>0?Math.round(cumNm)+' NM':'–')+'</td><td style="text-align:center">'+(hdg!==null?hdg+'°':'–')+'</td><td style="text-align:right">'+(tn!==null?tn+' NM':'–')+'</td><td style="text-align:right">'+(el!==null?el+' min':'–')+'</td><td style="text-align:right">'+(fl!==null?fl+' L':'–')+'</td></tr>';});
   var ntmRows=d.ntms.slice(0,8).map(function(n){return '<tr><td>'+esc(n.icao)+'</td><td style="color:'+(n.crit?'#cc0000':'#000')+'">'+esc(n.id)+'</td><td style="font-family:Courier New,monospace;font-size:7.5pt">'+esc(n.txt.substring(0,120))+'</td></tr>';}).join('');
-
-  function wxRows(wx){
-    var rows='<tr><td colspan="2"><div class="p-mono">'+esc(wx.metar||'Keine Daten')+'</div></td></tr>';
-    var cls=vfrCls(wx)==='vfr'?'p-go':vfrCls(wx)==='mvfr'?'p-caution':'p-nogo';
-    rows+='<tr><td style="width:35%">VFR Status</td><td><b class="'+cls+'">'+vfrCls(wx).toUpperCase()+'</b></td></tr>';
-    if(wx.decoded){var dc=wx.decoded;
-      if(dc.wind) rows+='<tr><td>Wind</td><td>'+(dc.wind.degrees||'VRB')+'° / '+(dc.wind.speed_kts||'–')+' kt'+(dc.wind.gust_kts?' G'+dc.wind.gust_kts+' kt':'')+'</td></tr>';
-      if(dc.visibility){var vm=dc.visibility.meters_float;rows+='<tr><td>Sicht</td><td>'+(vm>=9999?'10+ km':(vm/1000).toFixed(1)+' km')+'</td></tr>';}
-      if(dc.clouds&&dc.clouds.length) rows+='<tr><td>Wolken</td><td>'+dc.clouds.map(function(cl){return cl.code+' '+(cl.base_feet_agl||'–')+'ft';}).join(', ')+'</td></tr>';
-      if(dc.temperature) rows+='<tr><td>Temp/Tau</td><td>'+dc.temperature.celsius+'°C / '+(dc.dewpoint?dc.dewpoint.celsius:'–')+'°C</td></tr>';
-      if(dc.barometer) rows+='<tr><td>QNH</td><td>'+dc.barometer.hpa+' hPa</td></tr>';
-    }
-    rows+='<tr><td>Quelle</td><td>'+(wx.src||'–')+'</td></tr>';
-    return rows;
-  }
-
+  function wxRows(wx){var rows='<tr><td colspan="2"><div class="p-mono">'+esc(wx.metar||'Keine Daten')+'</div></td></tr>';var cls=vfrCls(wx)==='vfr'?'p-go':vfrCls(wx)==='mvfr'?'p-caution':'p-nogo';rows+='<tr><td style="width:35%">VFR Status</td><td><b class="'+cls+'">'+vfrCls(wx).toUpperCase()+'</b></td></tr>';if(wx.decoded){var dc=wx.decoded;if(dc.wind)rows+='<tr><td>Wind</td><td>'+(dc.wind.degrees||'VRB')+'° / '+(dc.wind.speed_kts||'–')+' kt'+(dc.wind.gust_kts?' G'+dc.wind.gust_kts+'kt':'')+'</td></tr>';if(dc.visibility){var vm=dc.visibility.meters_float;rows+='<tr><td>Sicht</td><td>'+(vm>=9999?'10+ km':(vm/1000).toFixed(1)+' km')+'</td></tr>';}if(dc.clouds&&dc.clouds.length)rows+='<tr><td>Wolken</td><td>'+dc.clouds.map(function(cl){return cl.code+' '+(cl.base_feet_agl||'–')+'ft';}).join(', ')+'</td></tr>';if(dc.temperature)rows+='<tr><td>Temp/Tau</td><td>'+dc.temperature.celsius+'°C / '+(dc.dewpoint?dc.dewpoint.celsius:'–')+'°C</td></tr>';if(dc.barometer)rows+='<tr><td>QNH</td><td>'+dc.barometer.hpa+' hPa</td></tr>';}rows+='<tr><td>Quelle</td><td>'+(wx.src||'–')+'</td></tr>';return rows;}
   document.getElementById('printPanel').innerHTML=
-    '<div class="p-page">'+
-    '<div class="p-hdr"><div class="p-title">✈ VFR FLUGPLAN</div><div class="p-sub">Erstellt: '+dateStr+' · '+timeStr+' &nbsp;|&nbsp; Dieses Dokument ersetzt NICHT die offizielle ATC Flugplanaufgabe</div></div>'+
+    '<div class="p-page"><div class="p-hdr"><div class="p-title">✈ VFR FLUGPLAN</div><div class="p-sub">'+dateStr+' · '+timeStr+' &nbsp;|&nbsp; Planungshilfe – kein Ersatz für ATC FPL</div></div>'+
     '<div class="p-sec"><div class="p-sec-ttl">ÜBERSICHT</div><div class="p-status"><span class="'+stC+'" style="font-size:14pt;font-weight:bold;">'+st+'</span> &nbsp;·&nbsp; '+esc(PS.dep.icao)+' → '+esc(PS.arr.icao)+' &nbsp;·&nbsp; '+dateStr+'</div>'+
-    '<table class="p-tbl"><tr><th>Kennzeichen</th><th>Muster</th><th>Abflug</th><th>Ziel</th><th>Höhe</th><th>Cruise</th></tr>'+
-    '<tr><td><b>'+esc(perf.reg)+'</b></td><td>'+esc(selAC.nm)+' ('+selAC.cat+')</td><td><b>'+esc(PS.dep.icao)+'</b> '+esc(PS.dep.name||'')+'</td><td><b>'+esc(PS.arr.icao)+'</b> '+esc(PS.arr.name||'')+'</td><td>'+d.alt+' ft</td><td>'+perf.cruise+' kt</td></tr></table>'+
-    '<table class="p-tbl"><tr><th>Distanz</th><th>ETE</th><th>Fuel (+20%)</th><th>Tanks</th><th>Reserve</th><th>Reichweite</th></tr>'+
-    '<tr><td><b>'+tnm+' NM</b></td><td><b>'+ete+' min</b></td><td class="'+(fR>perf.tanks?'p-nogo':'p-go')+'"><b>'+fR+' L</b></td><td>'+perf.tanks+' L</td><td>'+Math.round(perf.tanks-fR)+' L</td><td>'+Math.round(perf.tanks/perf.fuel*perf.cruise)+' NM</td></tr></table></div>'+
-    '<div class="p-sec"><div class="p-sec-ttl">ROUTE &amp; WEGPUNKTE</div>'+
-    '<table class="p-tbl"><tr><th>Wegpunkt</th><th style="text-align:center">Typ</th><th style="text-align:right">Kum.</th><th style="text-align:center">HDG</th><th style="text-align:right">Leg NM</th><th style="text-align:right">ETE</th><th style="text-align:right">Fuel</th></tr>'+wptRows+'</table></div>'+
-    '<div class="p-sec"><div class="p-sec-ttl">FREQUENZEN</div>'+
-    '<table class="p-tbl"><tr><th>Flugplatz</th><th>APP / INFO</th><th>TWR</th><th>ATIS</th></tr>'+
-    '<tr><td><b>'+esc(PS.dep.icao)+'</b> '+esc(PS.dep.name||'')+'</td><td>'+esc(depAP.freq||PS.dep.freq||'–')+'</td><td>–</td><td>–</td></tr>'+
-    '<tr><td><b>'+esc(PS.arr.icao)+'</b> '+esc(PS.arr.name||'')+'</td><td>'+esc(arrAP.freq||PS.arr.freq||'–')+'</td><td>–</td><td>–</td></tr></table></div></div>'+
-    '<div class="p-page">'+
-    '<div class="p-hdr"><div class="p-title">✈ VFR FLUGPLAN – Seite 2</div><div class="p-sub">'+esc(PS.dep.icao)+' → '+esc(PS.arr.icao)+' &nbsp;·&nbsp; '+dateStr+'</div></div>'+
-    '<div class="p-sec"><div class="p-sec-ttl">WETTERDATEN</div>'+
-    '<table class="p-tbl"><tr><th colspan="2">▲ ABFLUG: '+esc(PS.dep.icao)+'</th></tr>'+wxRows(d.wD)+'</table>'+
-    '<table class="p-tbl" style="margin-top:6px"><tr><th colspan="2">▼ ZIEL: '+esc(PS.arr.icao)+'</th></tr>'+wxRows(d.wA)+'</table>'+
-    '<div style="font-size:7pt;color:#555;">Quelle: CheckWX / aviationweather.gov · '+dateStr+' '+timeStr+'</div></div>'+
-    '<div class="p-sec"><div class="p-sec-ttl">NOTAMs ('+d.ntms.length+' gesamt, '+cn+' kritisch)</div>'+
-    (d.ntms.length?'<table class="p-tbl"><tr><th>ICAO</th><th>ID</th><th>Text</th></tr>'+ntmRows+'</table>':'<div style="padding:6px;color:#006600;">✅ Keine NOTAMs</div>')+
-    '</div><div class="p-sec"><div class="p-sec-ttl">LOGBUCH / NOTIZEN</div>'+
-    '<table class="p-tbl"><tr><th>Block ab</th><th>Block an</th><th>Air time</th><th>Ldg</th><th>Fuel getankt</th><th>Unterschrift PIC</th></tr>'+
-    '<tr class="p-logrow"><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></table></div>'+
-    '<div class="p-warn">⚡ <b>WICHTIG:</b> Planungshilfe – keine ATC Flugplanaufgabe. NOTAMs via AustroControl/PANSA AIS prüfen. VFR-Mindestbedingungen gemäß SERA/EASA beachten.</div></div>';
+    '<table class="p-tbl"><tr><th>Kennzeichen</th><th>Muster</th><th>Abflug</th><th>Ziel</th><th>Höhe</th><th>Cruise</th></tr><tr><td><b>'+esc(perf.reg)+'</b></td><td>'+esc(selAC.nm)+'</td><td><b>'+esc(PS.dep.icao)+'</b> '+esc(PS.dep.name||'')+'</td><td><b>'+esc(PS.arr.icao)+'</b> '+esc(PS.arr.name||'')+'</td><td>'+d.alt+' ft</td><td>'+perf.cruise+' kt</td></tr></table>'+
+    '<table class="p-tbl"><tr><th>Distanz</th><th>ETE</th><th>Fuel (+20%)</th><th>Tanks</th><th>Reserve</th><th>Reichweite</th></tr><tr><td><b>'+tnm+' NM</b></td><td><b>'+ete+' min</b></td><td class="'+(fR>perf.tanks?'p-nogo':'p-go')+'"><b>'+fR+' L</b></td><td>'+perf.tanks+' L</td><td>'+Math.round(perf.tanks-fR)+' L</td><td>'+Math.round(perf.tanks/perf.fuel*perf.cruise)+' NM</td></tr></table></div>'+
+    '<div class="p-sec"><div class="p-sec-ttl">ROUTE &amp; WAYPOINTS</div><table class="p-tbl"><tr><th>Wegpunkt</th><th style="text-align:center">Typ</th><th style="text-align:right">Kum.</th><th style="text-align:center">HDG</th><th style="text-align:right">Leg NM</th><th style="text-align:right">ETE</th><th style="text-align:right">Fuel</th></tr>'+wptRows+'</table></div>'+
+    '<div class="p-sec"><div class="p-sec-ttl">FREQUENZEN</div><table class="p-tbl"><tr><th>Flugplatz</th><th>APP / INFO</th></tr><tr><td><b>'+esc(PS.dep.icao)+'</b> '+esc(PS.dep.name||'')+'</td><td>'+esc(depAP.freq||PS.dep.freq||'–')+'</td></tr><tr><td><b>'+esc(PS.arr.icao)+'</b> '+esc(PS.arr.name||'')+'</td><td>'+esc(arrAP.freq||PS.arr.freq||'–')+'</td></tr></table></div></div>'+
+    '<div class="p-page"><div class="p-hdr"><div class="p-title">✈ VFR FLUGPLAN – Seite 2</div><div class="p-sub">'+esc(PS.dep.icao)+' → '+esc(PS.arr.icao)+' · '+dateStr+'</div></div>'+
+    '<div class="p-sec"><div class="p-sec-ttl">WETTERDATEN</div><table class="p-tbl"><tr><th colspan="2">▲ ABFLUG: '+esc(PS.dep.icao)+'</th></tr>'+wxRows(d.wD)+'</table><table class="p-tbl" style="margin-top:6px"><tr><th colspan="2">▼ ZIEL: '+esc(PS.arr.icao)+'</th></tr>'+wxRows(d.wA)+'</table></div>'+
+    '<div class="p-sec"><div class="p-sec-ttl">NOTAMs ('+d.ntms.length+', kritisch: '+cn+')</div>'+(d.ntms.length?'<table class="p-tbl"><tr><th>ICAO</th><th>ID</th><th>Text</th></tr>'+ntmRows+'</table>':'<div style="padding:6px;color:#006600">✅ Keine NOTAMs</div>')+'</div>'+
+    '<div class="p-sec"><div class="p-sec-ttl">LOGBUCH</div><table class="p-tbl"><tr><th>Block ab</th><th>Block an</th><th>Air time</th><th>Ldg</th><th>Fuel</th><th>Unterschrift PIC</th></tr><tr class="p-logrow"><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></table></div>'+
+    '<div class="p-warn">⚡ <b>WICHTIG:</b> Planungshilfe – NOTAMs via PANSA AIS/AustroControl prüfen. VFR-Mindestbedingungen gemäß SERA/EASA.</div></div>';
   setTimeout(function(){window.print();},200);
 }
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  SETTINGS
-// ══════════════════════════════════════════════════
-function saveCwx(){var k=document.getElementById('cwxKey').value.trim();localStorage.setItem('checkwx_key',k);saveUserSettings();toast(k?'CheckWX Key gespeichert ✓':'CheckWX Key entfernt',k?'ok':'');}
+// ══════════════════════════════════════════════════════
+function saveCwx(){var k=document.getElementById('cwxKey').value.trim();localStorage.setItem('checkwx_key',k);saveUserSettings();toast(k?'CheckWX gespeichert ✓':'CheckWX entfernt',k?'ok':'');}
 function saveAip(){var k=document.getElementById('aipKey').value.trim();localStorage.setItem('openaip_key',k);applyAip(k);saveUserSettings();toast(k?'OpenAIP aktiviert ✓':'OpenAIP deaktiviert',k?'ok':'');}
 
-
-// ══════════════════════════════════════════════════
-//  EXTENDED AIRPORT DB FOR AUTOCOMPLETE (~80 airports)
-// ══════════════════════════════════════════════════
-var AC_AIRPORTS = [
-  // Poland
-  {icao:'EPWA',name:'Warszawa Chopin',city:'Warszawa',country:'🇵🇱'},
-  {icao:'EPMO',name:'Warszawa Modlin',city:'Modlin',country:'🇵🇱'},
-  {icao:'EPRA',name:'Radom Sadków',city:'Radom',country:'🇵🇱'},
-  {icao:'EPKK',name:'Kraków Balice',city:'Kraków',country:'🇵🇱'},
-  {icao:'EPKT',name:'Katowice Pyrzowice',city:'Katowice',country:'🇵🇱'},
-  {icao:'EPGD',name:'Gdańsk Lech Wałęsa',city:'Gdańsk',country:'🇵🇱'},
-  {icao:'EPWR',name:'Wrocław Strachowice',city:'Wrocław',country:'🇵🇱'},
-  {icao:'EPPO',name:'Poznań Ławica',city:'Poznań',country:'🇵🇱'},
-  {icao:'EPSC',name:'Szczecin Goleniów',city:'Szczecin',country:'🇵🇱'},
-  {icao:'EPLL',name:'Łódź Lublinek',city:'Łódź',country:'🇵🇱'},
-  {icao:'EPRZ',name:'Rzeszów Jasionka',city:'Rzeszów',country:'🇵🇱'},
-  {icao:'EPBY',name:'Bydgoszcz',city:'Bydgoszcz',country:'🇵🇱'},
-  {icao:'EPBC',name:'Warszawa Babice',city:'Warszawa',country:'🇵🇱'},
-  {icao:'EPNC',name:'Nowy Czarnów',city:'Gryfino',country:'🇵🇱'},
-  {icao:'EPLB',name:'Lublin',city:'Lublin',country:'🇵🇱'},
-  {icao:'EPOL',name:'Oleśnica',city:'Oleśnica',country:'🇵🇱'},
-  {icao:'EPZG',name:'Zielona Góra Babimost',city:'Zielona Góra',country:'🇵🇱'},
-  {icao:'EPKP',name:'Kępno-Kierzno',city:'Kępno',country:'🇵🇱'},
-  {icao:'EPMM',name:'Mielec',city:'Mielec',country:'🇵🇱'},
-  {icao:'EPPG',name:'Piła',city:'Piła',country:'🇵🇱'},
-  {icao:'EPKS',name:'Krosno',city:'Krosno',country:'🇵🇱'},
-  {icao:'EPSY',name:'Szymany Mazury',city:'Szczytno',country:'🇵🇱'},
-  {icao:'EPCN',name:'Częstochowa Rudniki',city:'Częstochowa',country:'🇵🇱'},
-  {icao:'EPDE',name:'Dęblin',city:'Dęblin',country:'🇵🇱'},
-  {icao:'EPOK',name:'Ostrów Mazowiecka',city:'Ostrów Maz.',country:'🇵🇱'},
-  {icao:'EPST',name:'Stalowa Wola Turbia',city:'Stalowa Wola',country:'🇵🇱'},
-  {icao:'EPHY',name:'Nowy Targ',city:'Nowy Targ',country:'🇵🇱'},
-  {icao:'EPGM',name:'Grudziądz',city:'Grudziądz',country:'🇵🇱'},
-  {icao:'EPKN',name:'Kętrzyn Wilamowo',city:'Kętrzyn',country:'🇵🇱'},
-  {icao:'EPLK',name:'Leszno Strzyżewice',city:'Leszno',country:'🇵🇱'},
-  // Austria
-  {icao:'LOWW',name:'Wien Schwechat',city:'Wien',country:'🇦🇹'},
-  {icao:'LOWI',name:'Innsbruck',city:'Innsbruck',country:'🇦🇹'},
-  {icao:'LOWS',name:'Salzburg',city:'Salzburg',country:'🇦🇹'},
-  {icao:'LOGG',name:'Graz',city:'Graz',country:'🇦🇹'},
-  {icao:'LORK',name:'Klagenfurt',city:'Klagenfurt',country:'🇦🇹'},
-  {icao:'LOKL',name:'Linz Hörsching',city:'Linz',country:'🇦🇹'},
-  {icao:'LOAN',name:'Wr. Neustadt Ost',city:'Wr. Neustadt',country:'🇦🇹'},
-  {icao:'LOAV',name:'Vöslau',city:'Bad Vöslau',country:'🇦🇹'},
-  {icao:'LOXZ',name:'Zeltweg',city:'Zeltweg',country:'🇦🇹'},
-  {icao:'LOGP',name:'Kapfenberg',city:'Kapfenberg',country:'🇦🇹'},
-  {icao:'LOLF',name:'St. Pölten',city:'St. Pölten',country:'🇦🇹'},
-  {icao:'LOKU',name:'Krems',city:'Krems',country:'🇦🇹'},
-  // Germany
-  {icao:'EDDM',name:'München Franz Josef Strauß',city:'München',country:'🇩🇪'},
-  {icao:'EDDN',name:'Nürnberg',city:'Nürnberg',country:'🇩🇪'},
-  {icao:'EDDF',name:'Frankfurt Main',city:'Frankfurt',country:'🇩🇪'},
-  {icao:'EDDL',name:'Düsseldorf',city:'Düsseldorf',country:'🇩🇪'},
-  {icao:'EDDB',name:'Berlin Brandenburg',city:'Berlin',country:'🇩🇪'},
-  {icao:'EDDH',name:'Hamburg',city:'Hamburg',country:'🇩🇪'},
-  {icao:'EDDS',name:'Stuttgart',city:'Stuttgart',country:'🇩🇪'},
-  {icao:'EDDK',name:'Köln Bonn',city:'Köln',country:'🇩🇪'},
-  // Switzerland
-  {icao:'LSZH',name:'Zürich Kloten',city:'Zürich',country:'🇨🇭'},
-  {icao:'LSZB',name:'Bern-Belp',city:'Bern',country:'🇨🇭'},
-  {icao:'LSGG',name:'Genf Cointrin',city:'Genf',country:'🇨🇭'},
-  {icao:'LSZA',name:'Lugano',city:'Lugano',country:'🇨🇭'},
-  {icao:'LSGS',name:'Sion',city:'Sion',country:'🇨🇭'},
-  // Czech Republic
-  {icao:'LKPR',name:'Prag Václav Havel',city:'Prag',country:'🇨🇿'},
-  {icao:'LKMT',name:'Ostrava Mošnov',city:'Ostrava',country:'🇨🇿'},
-  {icao:'LKPD',name:'Pardubice',city:'Pardubice',country:'🇨🇿'},
-  {icao:'LKLN',name:'Plzeň Líně',city:'Plzeň',country:'🇨🇿'},
-  {icao:'LKCV',name:'Čáslav',city:'Čáslav',country:'🇨🇿'},
-  // Slovakia
-  {icao:'LZIB',name:'Bratislava',city:'Bratislava',country:'🇸🇰'},
-  {icao:'LZKZ',name:'Košice',city:'Košice',country:'🇸🇰'},
-  {icao:'LZPP',name:'Piešťany',city:'Piešťany',country:'🇸🇰'},
-  // Slovenia/Croatia
-  {icao:'LJLJ',name:'Ljubljana Jože Pučnik',city:'Ljubljana',country:'🇸🇮'},
-  {icao:'LDZA',name:'Zagreb Franjo Tuđman',city:'Zagreb',country:'🇭🇷'},
-  {icao:'LDSP',name:'Split',city:'Split',country:'🇭🇷'},
-  // France
-  {icao:'LFLP',name:'Annecy Haute-Savoie',city:'Annecy',country:'🇫🇷'},
-  {icao:'LFMN',name:'Nizza Côte d'Azur',city:'Nizza',country:'🇫🇷'},
-  {icao:'LFPG',name:'Paris Charles de Gaulle',city:'Paris',country:'🇫🇷'},
-  // Hungary
-  {icao:'LHBP',name:'Budapest Liszt Ferenc',city:'Budapest',country:'🇭🇺'},
-  // Other
-  {icao:'LYBE',name:'Belgrad Nikola Tesla',city:'Belgrad',country:'🇷🇸'},
-  {icao:'LBSF',name:'Sofia',city:'Sofia',country:'🇧🇬'},
-  {icao:'EPKK',name:'Kraków Balice',city:'Kraków',country:'🇵🇱'},
-];
-// Remove duplicates
-AC_AIRPORTS = AC_AIRPORTS.filter(function(a,i,arr){return arr.findIndex(function(b){return b.icao===a.icao;})===i;});
-
-var acActiveField = null;
-var acActiveIdx = -1;
-
-function searchAirports(q) {
-  q = q.toUpperCase().trim();
-  if (q.length < 2) return [];
-  return AC_AIRPORTS.filter(function(a) {
-    return a.icao.startsWith(q) ||
-           a.name.toUpperCase().indexOf(q) >= 0 ||
-           a.city.toUpperCase().indexOf(q) >= 0;
-  }).slice(0, 5);
-}
-
-function showAcDropdown(inputId, dropId) {
-  var inp = document.getElementById(inputId);
-  var drop = document.getElementById(dropId);
-  var q = inp.value;
-  var results = searchAirports(q);
-  if (!results.length || q.length < 2) {
-    drop.style.display = 'none';
-    return;
-  }
-  acActiveIdx = -1;
-  acActiveField = {inputId: inputId, dropId: dropId};
-  drop.innerHTML = results.map(function(a, i) {
-    return '<div class="ac-item" data-icao="'+a.icao+'" data-idx="'+i+'"'+
-      ' onmousedown="selectAcItem(''+inputId+'',''+dropId+'',''+a.icao+'')" '+
-      ' onmouseover="setAcActive('+i+',''+dropId+'')">'+
-      '<span class="ac-icao">'+a.icao+'</span>'+
-      '<span class="ac-name">'+a.name+'</span>'+
-      '<span class="ac-country">'+a.country+'</span>'+
-      '</div>';
-  }).join('');
-  drop.style.display = 'block';
-}
-
-function selectAcItem(inputId, dropId, icao) {
-  document.getElementById(inputId).value = icao;
-  document.getElementById(dropId).style.display = 'none';
-  acActiveIdx = -1;
-}
-
-function setAcActive(idx, dropId) {
-  acActiveIdx = idx;
-  var items = document.querySelectorAll('#'+dropId+' .ac-item');
-  items.forEach(function(el, i) {
-    el.classList.toggle('active', i === idx);
-  });
-}
-
-function hideDropdown(dropId) {
-  setTimeout(function() {
-    var d = document.getElementById(dropId);
-    if (d) d.style.display = 'none';
-  }, 180);
-}
-
-function initAutocomplete() {
-  [['depI','acDropDep'],['arrI','acDropArr']].forEach(function(pair) {
-    var inputId = pair[0], dropId = pair[1];
-    var inp = document.getElementById(inputId);
-    if (!inp) return;
-
-    inp.addEventListener('input', function() {
-      var p = this.selectionStart;
-      this.value = this.value.toUpperCase();
-      this.setSelectionRange(p, p);
-      showAcDropdown(inputId, dropId);
-    });
-
-    inp.addEventListener('keydown', function(e) {
-      var drop = document.getElementById(dropId);
-      var items = drop.querySelectorAll('.ac-item');
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        acActiveIdx = Math.min(acActiveIdx + 1, items.length - 1);
-        setAcActive(acActiveIdx, dropId);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        acActiveIdx = Math.max(acActiveIdx - 1, -1);
-        setAcActive(acActiveIdx, dropId);
-      } else if (e.key === 'Enter') {
-        if (acActiveIdx >= 0 && items[acActiveIdx]) {
-          e.preventDefault();
-          selectAcItem(inputId, dropId, items[acActiveIdx].dataset.icao);
-        } else {
-          drop.style.display = 'none';
-          plan();
-        }
-      } else if (e.key === 'Escape') {
-        drop.style.display = 'none';
-        acActiveIdx = -1;
-      }
-    });
-
-    inp.addEventListener('blur', function() { hideDropdown(dropId); });
-    inp.addEventListener('focus', function() {
-      if (this.value.length >= 2) showAcDropdown(inputId, dropId);
-    });
-  });
-}
-
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  INIT
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
-  // Restore saved keys
+  // Restore global API keys (before user login)
   document.getElementById('cwxKey').value = lsGet('checkwx_key');
   document.getElementById('aipKey').value = lsGet('openaip_key');
-
-  // Init ICAO autocomplete
-  initAutocomplete();
 
   // Build aircraft grid
   buildAcGrid();
   pickAC('at3');
 
-  // ICAO input events handled by initAutocomplete()
+  // Autocomplete for ICAO inputs
+  ['depI','arrI'].forEach(function(pair,pi){
+    var inpId=pair,dropId=pi===0?'dropDep':'dropArr';
+    var el=document.getElementById(inpId);
+    el.addEventListener('input',function(){var p=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(p,p);acShow(inpId,dropId);});
+    el.addEventListener('keydown',function(e){acKeys(e,inpId,dropId);});
+    el.addEventListener('blur',function(){acHide(dropId);});
+    el.addEventListener('focus',function(){if(this.value.length>=2)acShow(inpId,dropId);});
+  });
+
   document.getElementById('altI').addEventListener('keydown',function(e){if(e.key==='Enter')plan();});
   document.getElementById('pReg').addEventListener('input',function(){var p=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(p,p);});
-
-  // Check saved Google session
-  var saved = localStorage.getItem('vfr_user');
-  if (saved) {
-    try { currentUser=JSON.parse(saved); showLoggedIn(currentUser); return; }
-    catch(e) { localStorage.removeItem('vfr_user'); }
-  }
-
-  // Init Google Sign-In button (with fallback always visible first)
-  initGoogleBtn();
 });
-
-// Also try when GSI library finishes loading
-window.onGoogleLibraryLoad = function() { initGoogleBtn(); };
 </script>
 </body>
 </html>
