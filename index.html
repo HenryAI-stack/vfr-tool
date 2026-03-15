@@ -375,7 +375,7 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
         </div>
       </div>
       <div class="row2">
-        <div class="fr"><label>Höhe (ft MSL)</label><input id="altI" type="number" value="4500" step="500" min="1000" max="14500"></div>
+        <div class="fr"><label>Höhe (ft MSL)</label><input id="altI" type="number" value="2000" step="500" min="500" max="14500"></div>
         <div class="fr"><label>Routing</label>
           <select id="routeType"><option value="rpt" selected>Via Reporting Points</option><option value="direct">Direkt</option></select>
         </div>
@@ -445,6 +445,11 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
       <button class="btn bs bfw" onclick="saveCwx()">💾 CheckWX speichern</button>
       <div class="fr" style="margin-top:4px;"><label>OpenAIP Key <a href="https://www.openaip.net" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label><input id="aipKey" type="text" placeholder="echte Lufträume auf Karte" autocomplete="off" spellcheck="false"></div>
       <button class="btn bs bfw" onclick="saveAip()">💾 OpenAIP aktivieren</button>
+      <div class="fr" style="margin-top:4px;">
+        <label>Notamify API Key <a href="https://notamify.com" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label>
+        <input id="ntmKey" type="text" placeholder="aktuelle NOTAMs via Notamify" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn bs bfw" onclick="saveNtm()">💾 Notamify speichern</button>
       <div class="dvdr"></div>
       <div style="font-family:var(--mono);font-size:.6rem;color:var(--mt);line-height:1.8;">
         ☁️ <b style="color:var(--ac)">Google Drive Sync</b><br>
@@ -486,10 +491,12 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
     <div style="font-family:var(--mono);font-size:.62rem;color:var(--mt);margin-bottom:12px;">Nach: <span id="addAfterLabel" style="color:var(--ac)"></span></div>
     <div class="fr"><label>Name</label><input id="addWptName" type="text" placeholder="z.B. NOVEMBER" spellcheck="false"></div>
     <div class="row2">
-      <div class="fr"><label>Latitude</label><input id="addWptLat" type="number" placeholder="52.1651" step="0.0001"></div>
-      <div class="fr"><label>Longitude</label><input id="addWptLon" type="number" placeholder="20.9671" step="0.0001"></div>
+      <div class="fr"><label>Latitude</label><input id="addWptLat" type="number" placeholder="–" step="0.0001"></div>
+      <div class="fr"><label>Longitude</label><input id="addWptLon" type="number" placeholder="–" step="0.0001"></div>
     </div>
-    <div style="font-size:.62rem;color:var(--mt);font-family:var(--mono);margin-bottom:10px;">💡 Auf Karte klicken → Koordinaten übernehmen</div>
+    <div id="addWptMapHint" style="font-size:.62rem;color:var(--ac);font-family:var(--mono);margin-bottom:10px;padding:5px 8px;background:rgba(0,212,255,.07);border-radius:4px;border:1px solid rgba(0,212,255,.2);">
+      💡 Auf Karte tippen/klicken → Koordinaten automatisch übernehmen
+    </div>
     <div class="modal-btns">
       <button class="btn bp" onclick="confirmAddWpt()" style="font-size:.72rem;">➕ Hinzufügen</button>
       <button class="btn bs" onclick="closeAddWptModal()" style="font-size:.72rem;">Abbrechen</button>
@@ -555,13 +562,14 @@ function doSignOut(){
 function uKey(k){var e=gUser?gUser.email.replace(/[^a-z0-9]/gi,'_'):'guest';return 'vfr_'+e+'_'+k;}
 function saveUserSettings(){
   if(!gUser)return;
-  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
+  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),ntm:document.getElementById('ntmKey').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
 }
 function loadUserSettings(email){
   var raw=localStorage.getItem('vfr_'+email.replace(/[^a-z0-9]/gi,'_')+'_cfg');
   if(!raw)return;
   try{var s=JSON.parse(raw);
     if(s.cwx){document.getElementById('cwxKey').value=s.cwx;localStorage.setItem('checkwx_key',s.cwx);}
+    if(s.ntm){document.getElementById('ntmKey').value=s.ntm;localStorage.setItem('notamify_key',s.ntm);}
     if(s.aip){document.getElementById('aipKey').value=s.aip;localStorage.setItem('openaip_key',s.aip);applyAip(s.aip);}
     if(s.cruise)document.getElementById('pCruise').value=s.cruise;
     if(s.fuel)document.getElementById('pFuel').value=s.fuel;
@@ -832,15 +840,82 @@ function renderWx(elId,origIcao,name,wx,type){
 }
 
 // NOTAMs
-async function fetchNtm(dep,arr){
-  var ntms=[];
-  for(var i=0;i<2;i++){
-    var icao=i===0?dep:arr;
-    try{var r=await fetch('https://icaonotam.eurocontrol.int/notamSearch/search?icaos='+icao+'&briefingType=PILOT&reportFormat=HTML',{mode:'cors'});if(r.ok){var h=await r.text();var re=/\b([A-Z]\d{4}\/\d{2})\b([\s\S]*?)(?=[A-Z]\d{4}\/\d{2}|<\/pre|$)/g;var m;while((m=re.exec(h))!==null){var raw=m[2].replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();if(raw.length>15)ntms.push({id:m[1],icao:icao,src:'Eurocontrol',txt:raw.substring(0,280),crit:/\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(raw)});}}}catch(e){}
-    if(!ntms.filter(function(n){return n.icao===icao;}).length){try{var r2=await fetch('https://aviationweather.gov/api/data/notam?icaos='+icao+'&format=raw');if(r2.ok){(await r2.text()).split('\n').filter(function(l){return l.trim().length>10;}).forEach(function(line,j){var im=line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);ntms.push({id:im?im[1].replace(/\s/,''):'N'+icao+j,icao:icao,src:'aviationweather.gov',txt:line.trim().substring(0,280),crit:/\b(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(line)});});}}catch(e){}}
+async function fetchNtmForIcao(icao, ntmKey) {
+  var results = [];
+
+  // ── 1. Notamify API (primary if key available) ─────────────────────────
+  // Endpoint: GET https://api.notamify.com/api/v1/notams?locations=ICAO
+  // Auth: Bearer token in Authorization header
+  // Response: { notams: [ { id, icao_code, icao_message, effective_start, effective_end } ] }
+  if (ntmKey) {
+    try {
+      var now = new Date();
+      var end = new Date(now.getTime() + 24*60*60*1000); // next 24h
+      var fmt = function(d){return d.toISOString().slice(0,19)+'Z';};
+      var url = 'https://api.notamify.com/api/v1/notams?locations='+icao+
+                '&starts_at='+encodeURIComponent(fmt(now))+
+                '&ends_at='+encodeURIComponent(fmt(end))+'&page=1';
+      var r = await fetch(url, {
+        headers: {'Authorization': 'Bearer '+ntmKey, 'Accept': 'application/json'}
+      });
+      if (r.ok) {
+        var d = await r.json();
+        var list = d.notams || d.data || [];
+        list.forEach(function(n) {
+          var raw = n.icao_message || n.raw || n.text || '';
+          // Extract NOTAM ID from raw text (e.g. A1234/26)
+          var idMatch = raw.match(/\b([A-Z]\d{4}\/\d{2})\b/);
+          var ntmId = idMatch ? idMatch[1] : (n.id ? n.id.substring(0,12) : 'NTM');
+          var txt = raw.replace(/\s+/g,' ').trim().substring(0, 300);
+          var crit = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED|RWY|TWY CLSD)\b/.test(raw);
+          if (txt.length > 10) results.push({id:ntmId, icao:icao, src:'Notamify', txt:txt, crit:crit});
+        });
+        if (results.length) return results;
+      }
+    } catch(e) { console.warn('Notamify error:', e); }
   }
-  if(!ntms.length){var d=new Date(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');ntms=[{id:'A'+mm+dd+'0/26',icao:dep,src:'Demo',crit:false,txt:dep+' TWY ALFA CLSD'},{id:'A'+mm+dd+'1/26',icao:dep,src:'Demo',crit:false,txt:dep+' ATIS UNSERVICEABLE'},{id:'A'+mm+dd+'2/26',icao:arr,src:'Demo',crit:false,txt:arr+' BIRDS VIC AERODROME 1500FT'},{id:'B'+mm+dd+'0/26',icao:dep,src:'Demo',crit:true,txt:'DANGER AREA VIC '+dep+' FL060-FL100'}];}
-  return ntms.slice(0,15);
+
+  // ── 2. aviationweather.gov (free fallback, no key needed) ───────────────
+  // Endpoint: GET https://aviationweather.gov/api/data/notam?icaos=ICAO&format=raw
+  try {
+    var r2 = await fetch('https://aviationweather.gov/api/data/notam?icaos='+icao+'&format=raw');
+    if (r2.ok) {
+      var txt2 = await r2.text();
+      txt2.split('\n').filter(function(l){return l.trim().length>10;}).forEach(function(line,j){
+        var im = line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);
+        var ntmId = im ? im[1].replace(/\s/,'') : 'N'+icao+j;
+        var crit = /\b(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(line);
+        results.push({id:ntmId, icao:icao, src:'aviationweather.gov', txt:line.trim().substring(0,280), crit:crit});
+      });
+      if (results.length) return results;
+    }
+  } catch(e) {}
+
+  return results;
+}
+
+async function fetchNtm(dep, arr) {
+  var ntmKey = document.getElementById('ntmKey').value.trim() || lsGet('notamify_key');
+  var results = [];
+
+  // Fetch both airports in parallel
+  var both = await Promise.all([fetchNtmForIcao(dep, ntmKey), fetchNtmForIcao(arr, ntmKey)]);
+  both.forEach(function(list){ results = results.concat(list); });
+
+  // Demo fallback if nothing returned
+  if (!results.length) {
+    var d=new Date(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+    results=[
+      {id:'A'+mm+dd+'0/26',icao:dep,src:'Demo',crit:false,txt:dep+' TWY ALFA CLSD DUE MAINTENANCE'},
+      {id:'A'+mm+dd+'1/26',icao:dep,src:'Demo',crit:false,txt:dep+' ATIS UNSERVICEABLE'},
+      {id:'A'+mm+dd+'2/26',icao:arr,src:'Demo',crit:false,txt:arr+' BIRDS VIC AERODROME 1500FT'},
+      {id:'B'+mm+dd+'0/26',icao:dep,src:'Demo',crit:true, txt:'DANGER AREA VIC '+dep+' FL060-FL100 0800-1600'},
+    ];
+    if (!ntmKey) results.push({id:'INFO',icao:dep,src:'Info',crit:false,
+      txt:'Notamify Key in ⚙️ Einstellungen für echte NOTAMs eintragen (kostenlos auf notamify.com)'});
+  }
+
+  return results.slice(0, 20);
 }
 function renderNtm(ntms){var el=document.getElementById('ntC');if(!ntms.length){el.innerHTML='<div class="empty"><div class="ico">✅</div>Keine NOTAMs</div>';return;}var src=[...new Set(ntms.map(function(n){return n.src;}))].join('+');el.innerHTML='<div class="meta">'+ntms.length+' NOTAM(s) · <b>'+src+'</b><br><a href="https://icaonotam.eurocontrol.int" target="_blank">Eurocontrol ↗</a></div><div class="ntm-list">'+ntms.map(function(n){return '<div class="ntm '+(n.crit?'crit':'')+'"><div class="ntmid">'+esc(n.id)+' | '+esc(n.icao)+'</div><div class="ntmtxt">'+esc(n.txt)+'</div><div class="ntmsrc">'+esc(n.src)+'</div></div>';}).join('')+'</div>';}
 
@@ -950,7 +1025,35 @@ function deleteWaypoint(idx){
   toast('Wegpunkt gelöscht ✓','ok');
 }
 var addAfterIdx=-1;
-function openAddWptModal(afterIdx){addAfterIdx=afterIdx;document.getElementById('addAfterLabel').textContent=PS.route[afterIdx]?PS.route[afterIdx].name:'Start';document.getElementById('addWptName').value='';document.getElementById('addWptLat').value='';document.getElementById('addWptLon').value='';document.getElementById('addWptModal').classList.add('open');map.once('click',function(e){document.getElementById('addWptLat').value=e.latlng.lat.toFixed(5);document.getElementById('addWptLon').value=e.latlng.lng.toFixed(5);if(!document.getElementById('addWptName').value)document.getElementById('addWptName').value='WPT-'+(addAfterIdx+1);toast('Koordinaten übernommen ✓','ok');});}
+function openAddWptModal(afterIdx){
+  addAfterIdx=afterIdx;
+  var afterWpt=PS.route[afterIdx];
+  var beforeWpt=PS.route[afterIdx+1];
+  document.getElementById('addAfterLabel').textContent=afterWpt?afterWpt.name:'Start';
+  document.getElementById('addWptName').value='';
+  // Pre-fill with midpoint between the two surrounding waypoints
+  if(afterWpt&&beforeWpt){
+    var midLat=((afterWpt.lat+beforeWpt.lat)/2);
+    var midLon=((afterWpt.lon+beforeWpt.lon)/2);
+    document.getElementById('addWptLat').value=midLat.toFixed(5);
+    document.getElementById('addWptLon').value=midLon.toFixed(5);
+    // Suggest name based on position
+    document.getElementById('addWptName').value='WPT-'+(afterIdx+1);
+  } else {
+    document.getElementById('addWptLat').value='';
+    document.getElementById('addWptLon').value='';
+  }
+  document.getElementById('addWptModal').classList.add('open');
+  // Map click overrides the pre-filled coords
+  map.once('click',function(e){
+    document.getElementById('addWptLat').value=e.latlng.lat.toFixed(5);
+    document.getElementById('addWptLon').value=e.latlng.lng.toFixed(5);
+    if(document.getElementById('addWptName').value.startsWith('WPT-')){
+      document.getElementById('addWptName').value='WPT-'+(addAfterIdx+1);
+    }
+    toast('Koordinaten von Karte übernommen ✓','ok');
+  });
+}
 function closeAddWptModal(){document.getElementById('addWptModal').classList.remove('open');addAfterIdx=-1;map.off('click');}
 function confirmAddWpt(){var name=document.getElementById('addWptName').value.trim();var lat=parseFloat(document.getElementById('addWptLat').value);var lon=parseFloat(document.getElementById('addWptLon').value);if(!name){toast('Name eingeben','err');return;}if(isNaN(lat)||isNaN(lon)){toast('Gültige Koordinaten eingeben','err');return;}PS.route.splice(addAfterIdx+1,0,{name:name.toUpperCase(),lat:lat,lon:lon,type:'wpt',color:'#a78bfa',desc:'Manuell'});closeAddWptModal();drawRoute(PS.route);var p=getPerf();renderRouteDetails(PS.route,p);if(PS.lastData){PS.lastData.perf=p;renderSummary(PS.dep.icao,PS.arr.icao,PS.lastData.alt,PS.lastData.wD,PS.lastData.wA,PS.lastData.ntms,PS.lastData.zones,PS.route,p);}toast(name+' hinzugefügt ✓','ok');}
 
@@ -982,7 +1085,7 @@ async function loadRoute(id){
   var r=routes.find(function(rt){return rt.id===id;});
   if(!r){toast('Route nicht gefunden','err');return;}
   document.getElementById('depI').value=r.dep;document.getElementById('arrI').value=r.arr;
-  document.getElementById('altI').value=r.alt||4500;document.getElementById('routeType').value=r.rType||'rpt';
+  document.getElementById('altI').value=r.alt||2000;document.getElementById('routeType').value=r.rType||'rpt';
   document.getElementById('pCruise').value=r.cruise||108;document.getElementById('pFuel').value=r.fuel||18;
   document.getElementById('pTanks').value=r.tanks||65;document.getElementById('pReg').value=r.reg||'SP-TPF';
   if(r.acid)pickAC(r.acid);
@@ -1053,7 +1156,7 @@ function resetAll(){
 async function plan(){
   var dep=document.getElementById('depI').value.trim().toUpperCase();
   var arr=document.getElementById('arrI').value.trim().toUpperCase();
-  var alt=parseInt(document.getElementById('altI').value)||4500;
+  var alt=parseInt(document.getElementById('altI').value)||2000;
   var rt=document.getElementById('routeType').value;
   if(dep.length<3){toast('ICAO Abflug eingeben','err');return;}
   if(arr.length<3){toast('ICAO Ziel eingeben','err');return;}
@@ -1114,6 +1217,7 @@ function exportPDF(){
 
 // SETTINGS
 function saveCwx(){var k=document.getElementById('cwxKey').value.trim();localStorage.setItem('checkwx_key',k);saveUserSettings();toast(k?'CheckWX gespeichert ✓':'CheckWX entfernt',k?'ok':'');}
+function saveNtm(){var k=document.getElementById('ntmKey').value.trim();localStorage.setItem('notamify_key',k);saveUserSettings();toast(k?'Notamify Key gespeichert ✓':'Notamify Key entfernt',k?'ok':'');}
 function saveAip(){var k=document.getElementById('aipKey').value.trim();localStorage.setItem('openaip_key',k);applyAip(k);saveUserSettings();toast(k?'OpenAIP aktiviert ✓':'OpenAIP deaktiviert',k?'ok':'');}
 
 // CLOSE MODALS ON BG CLICK
@@ -1125,6 +1229,7 @@ document.addEventListener('click',function(e){
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('cwxKey').value=lsGet('checkwx_key');
   document.getElementById('aipKey').value=lsGet('openaip_key');
+  document.getElementById('ntmKey').value=lsGet('notamify_key');
   buildAcGrid();pickAC('at3');
   // Autocomplete
   [['depI','dropDep'],['arrI','dropArr']].forEach(function(pair){
