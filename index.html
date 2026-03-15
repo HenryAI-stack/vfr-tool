@@ -853,6 +853,8 @@ async function corsPost(targetUrl, body, headers){
   if(!proxy) return {ok:false,error:'no proxy configured'};
   try{
     var r=await fetch(proxy+'?url='+encodeURIComponent(targetUrl),{method:'POST',headers:headers,body:body});
+    // 404 from target = no data available (not an error worth logging)
+    if(r.status===404) return {ok:false,error:'404'};
     return r.ok?{ok:true,text:await r.text()}:{ok:false,error:'HTTP '+r.status};
   }catch(e){return {ok:false,error:e.message};}
 }
@@ -863,6 +865,8 @@ async function corsGet(targetUrl, extraHeaders){
   try{
     var opts=extraHeaders?{headers:extraHeaders}:{};
     var r=await fetch(proxy+'?url='+encodeURIComponent(targetUrl),opts);
+    // 404 from target = no data available (not an error worth logging)
+    if(r.status===404) return {ok:false,error:'404'};
     return r.ok?{ok:true,text:await r.text()}:{ok:false,error:'HTTP '+r.status};
   }catch(e){return {ok:false,error:e.message};}
 }
@@ -1036,7 +1040,8 @@ async function fetchNtmForIcao(icao, user, pass) {
         }
         console.log('FNS-NDS: 0 NOTAMs for ' + icao + ' (European airports not in FAA system)');
       } else {
-        console.warn('FNS-NDS proxy error:', res.error);
+        // Silently skip – 404 = airport not in FAA system (normal for non-US airports)
+        if(res.error !== '404') console.warn('FNS-NDS error:', res.error);
       }
     } catch(e) { console.warn('FNS-NDS error:', e.message); }
   }
@@ -1058,7 +1063,7 @@ async function fetchNtmForIcao(icao, user, pass) {
         return results;
       }
     }
-  } catch(e) { console.warn('aviationweather NOTAM error:', e.message); }
+  } catch(e) { if(e.message!=='404') console.warn('aviationweather NOTAM error:', e.message); }
 
   return results;
 }
