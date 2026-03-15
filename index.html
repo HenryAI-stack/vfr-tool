@@ -826,10 +826,43 @@ function wxIcao(icao){return NO_METAR.indexOf(icao)>=0?'EPWA':icao;}
 async function fetchWx(icao){
   var dispIcao=wxIcao(icao);
   var key=document.getElementById('cwxKey').value.trim()||lsGet('checkwx_key');
-  if(key){try{var rm=await fetch('https://api.checkwx.com/metar/'+dispIcao+'/decoded',{headers:{'X-API-Key':key}});var dm=rm.ok?await rm.json():null;var metar=dm&&dm.data&&dm.data[0]?dm.data[0].raw_text:null;var decoded=dm&&dm.data&&dm.data[0]?dm.data[0]:null;var fc=decoded?decoded.flight_category:null;var taf=null;try{var rt=await fetch('https://api.checkwx.com/taf/'+dispIcao+'/decoded',{headers:{'X-API-Key':key}});var dt=rt.ok?await rt.json():null;taf=dt&&dt.data&&dt.data[0]?dt.data[0].raw_text:null;}catch(e){}if(metar)return{metar:metar,taf:taf,decoded:decoded,flightCat:fc,icao:dispIcao,orig:icao,src:'CheckWX'};}catch(e){}}
+
+  // CheckWX supports CORS natively – fetch directly with API key
+  if(key){
+    try{
+      var rm=await fetch('https://api.checkwx.com/metar/'+dispIcao+'/decoded',{headers:{'X-API-Key':key}});
+      var dm=rm.ok?await rm.json():null;
+      var metar=dm&&dm.data&&dm.data[0]?dm.data[0].raw_text:null;
+      var decoded=dm&&dm.data&&dm.data[0]?dm.data[0]:null;
+      var fc=decoded?decoded.flight_category:null;
+      var taf=null;
+      try{
+        var rt=await fetch('https://api.checkwx.com/taf/'+dispIcao+'/decoded',{headers:{'X-API-Key':key}});
+        var dt=rt.ok?await rt.json():null;
+        taf=dt&&dt.data&&dt.data[0]?dt.data[0].raw_text:null;
+      }catch(e){}
+      if(metar)return{metar:metar,taf:taf,decoded:decoded,flightCat:fc,icao:dispIcao,orig:icao,src:'CheckWX'};
+    }catch(e){}
+  }
+
+  // aviationweather.gov – needs CORS proxy (no CORS headers on their side)
   var metar=null,taf=null;
-  try{var r=await fetch('https://aviationweather.gov/api/data/metar?ids='+dispIcao+'&format=raw&taf=false&hours=2');if(r.ok){var t=await r.text();var l=t.trim().split('\n').filter(function(x){return x.trim()&&!x.startsWith('#');});if(l.length)metar=l[0].trim();}}catch(e){}
-  try{var r2=await fetch('https://aviationweather.gov/api/data/taf?ids='+dispIcao+'&format=raw');if(r2.ok){var t2=await r2.text();var l2=t2.trim().split('\n').filter(function(x){return x.trim()&&!x.startsWith('#');});if(l2.length)taf=l2.slice(0,8).join('\n').trim();}}catch(e){}
+  var metarUrl='https://aviationweather.gov/api/data/metar?ids='+dispIcao+'&format=raw&taf=false&hours=2';
+  var tafUrl='https://aviationweather.gov/api/data/taf?ids='+dispIcao+'&format=raw';
+  try{
+    var res=await corsGet(metarUrl);
+    if(res.ok&&res.text){
+      var NL='\n';var l=res.text.trim().split(NL).filter(function(x){return x.trim()&&!x.startsWith('#');});
+      if(l.length)metar=l[0].trim();
+    }
+  }catch(e){}
+  try{
+    var res2=await corsGet(tafUrl);
+    if(res2.ok&&res2.text){
+      var l2=res2.text.trim().split(NL).filter(function(x){return x.trim()&&!x.startsWith('#');});
+      if(l2.length)taf=l2.slice(0,8).join(NL).trim();
+    }
+  }catch(e){}
   return{metar:metar,taf:taf,decoded:null,flightCat:null,icao:dispIcao,orig:icao,src:metar?'aviationweather.gov':'–'};
 }
 function vfrCls(wx){if(wx.flightCat){var f=wx.flightCat.toLowerCase();return f==='lifr'?'ifr':f;}var m=wx.metar;if(!m)return 'unknown';if(/\bCAVOK\b/.test(m))return 'vfr';var vm=m.match(/\b(\d{4})\b/);var vis=vm?parseInt(vm[1]):9999;if(vis<1500||/\bOVC00[0-3]\b/.test(m))return 'ifr';if(vis<5000||/\bBKN0[0-3]\d\b/.test(m))return 'mvfr';return 'vfr';}
