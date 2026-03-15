@@ -206,6 +206,20 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
 .bwx{background:rgba(0,212,255,.15);color:var(--ac);border:1px solid rgba(0,212,255,.3);}
 .bdemo{background:rgba(255,214,10,.1);color:var(--yw);border:1px solid rgba(255,214,10,.3);}
 
+
+/* AUTOCOMPLETE DROPDOWN */
+.ac-wrap{position:relative;}
+.ac-dropdown{position:absolute;top:100%;left:0;right:0;z-index:2000;
+  background:var(--sf2);border:1px solid var(--ac);border-top:none;border-radius:0 0 6px 6px;
+  overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.ac-item{padding:8px 11px;cursor:pointer;display:flex;align-items:center;gap:10px;
+  transition:background .15s;}
+.ac-item:hover,.ac-item.active{background:rgba(0,212,255,.12);}
+.ac-icao{font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--ac);
+  width:40px;flex-shrink:0;}
+.ac-name{font-size:.76rem;color:var(--tx);flex:1;}
+.ac-country{font-size:.65rem;color:var(--mt);}
+
 /* PRINT */
 .print-only{display:none;}
 @media print{
@@ -306,9 +320,15 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
     <div class="sbody">
       <div class="row2">
         <div class="fr"><label>Abflug (ICAO)</label>
-          <input id="depI" type="text" placeholder="EPWA" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"></div>
+          <div class="ac-wrap">
+          <input id="depI" type="text" placeholder="EPWA" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+          <div class="ac-dropdown" id="acDropDep" style="display:none;"></div>
+        </div></div>
         <div class="fr"><label>Ziel (ICAO)</label>
-          <input id="arrI" type="text" placeholder="EPKK" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"></div>
+          <div class="ac-wrap">
+          <input id="arrI" type="text" placeholder="EPKK" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+          <div class="ac-dropdown" id="acDropArr" style="display:none;"></div>
+        </div></div>
       </div>
       <div class="row2">
         <div class="fr"><label>Höhe (ft MSL)</label>
@@ -777,22 +797,41 @@ function buildDecodedTable(decoded) {
   return '<table class="wx-decoded-table">'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join('')+'</table>';
 }
 
-// metar-taf.com iframe embed – simple and always works
-function metarIframe(icao) {
-  return '<div class="mtaf-wrap">'+
-    '<div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);letter-spacing:1px;'+
-    'text-transform:uppercase;margin-bottom:4px;">METAR-TAF.COM WIDGET</div>'+
-    '<iframe '+
-      'src="https://metar-taf.com/de/metar/'+icao+'" '+
-      'width="100%" '+
-      'height="435" '+
-      'frameborder="0" '+
-      'scrolling="no" '+
-      'loading="lazy" '+
-      'style="border-radius:6px;display:block;background:#fff;max-width:300px;" '+
-      'title="METAR '+icao+'">'+
-    '</iframe>'+
-    '</div>';
+// metar-taf.com official embed – uses <a> anchor + embed-js script (as per metar-taf docs)
+// Airports with no live data fall back to EPWA
+var METAR_FALLBACK = 'EPWA';
+var MTAF_NOLIVE = ['EPBC','EPNC','EPLB','EPOL','EPZG','EPKP','EPMM','EPPG','EPKS',
+                   'EPCN','EPDE','EPOK','EPST','EPHY','EPGM','EPKN','EPLK'];
+
+function metarDisplayIcao(icao) {
+  return MTAF_NOLIVE.indexOf(icao) >= 0 ? METAR_FALLBACK : icao;
+}
+
+// Inject metar-taf embed script for a given target anchor ID + ICAO
+function injectMtafScript(icao, targetId) {
+  // Remove old script if exists
+  var old = document.getElementById('mtaf-script-'+targetId);
+  if (old) old.remove();
+  var s = document.createElement('script');
+  s.id = 'mtaf-script-'+targetId;
+  s.async = true;
+  s.defer = true;
+  s.crossOrigin = 'anonymous';
+  s.src = 'https://metar-taf.com/de/embed-js/'+icao+'?u=80931&qnh=hPa&rh=rh&target='+targetId;
+  document.body.appendChild(s);
+}
+
+function metarWidget(icao, targetId) {
+  var displayIcao = metarDisplayIcao(icao);
+  var fallbackNote = (displayIcao !== icao) ?
+    '<div style="font-family:var(--mono);font-size:.58rem;color:var(--yw);margin-bottom:4px;">'+
+    '⚠️ Kein METAR für '+icao+' · Zeige '+displayIcao+'</div>' : '';
+  return fallbackNote +
+    '<a href="https://metar-taf.com/de/metar/'+displayIcao+'" '+
+       'id="'+targetId+'" '+
+       'style="font-size:14px;font-weight:500;color:#000;width:300px;height:435px;display:block">'+
+       'METAR '+displayIcao+
+    '</a>';
 }
 
 function renderWx(elId, icao, name, wx, type) {
@@ -802,7 +841,10 @@ function renderWx(elId, icao, name, wx, type) {
   var typeLbl=type==='dep'?'▲ ABFLUG':'▼ ZIEL';
   var decoded=buildDecodedTable(wx.decoded);
   // Unique ID for metar-taf widget target
-  var widget=metarIframe(icao);
+  var mtafId = 'mtaf-'+icao+'-'+type;
+  var widget = '<div class="mtaf-wrap"><div style="font-family:var(--mono);font-size:.56rem;'+
+    'color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">'+
+    'METAR-TAF.COM</div>'+metarWidget(icao, mtafId)+'</div>';
 
   var html='<div class="wxcard '+type+'">'+
     '<div class="wxh"><span class="icaob">'+esc(icao)+'</span>'+
@@ -819,6 +861,8 @@ function renderWx(elId, icao, name, wx, type) {
   }
   html+=widget+'</div>';
   el.innerHTML=html;
+  // Inject metar-taf embed script after DOM is updated
+  setTimeout(function() { injectMtafScript(metarDisplayIcao(icao), 'mtaf-'+icao+'-'+type); }, 100);
 }
 
 // ══════════════════════════════════════════════════
@@ -1103,6 +1147,200 @@ function exportPDF() {
 function saveCwx(){var k=document.getElementById('cwxKey').value.trim();localStorage.setItem('checkwx_key',k);saveUserSettings();toast(k?'CheckWX Key gespeichert ✓':'CheckWX Key entfernt',k?'ok':'');}
 function saveAip(){var k=document.getElementById('aipKey').value.trim();localStorage.setItem('openaip_key',k);applyAip(k);saveUserSettings();toast(k?'OpenAIP aktiviert ✓':'OpenAIP deaktiviert',k?'ok':'');}
 
+
+// ══════════════════════════════════════════════════
+//  EXTENDED AIRPORT DB FOR AUTOCOMPLETE (~80 airports)
+// ══════════════════════════════════════════════════
+var AC_AIRPORTS = [
+  // Poland
+  {icao:'EPWA',name:'Warszawa Chopin',city:'Warszawa',country:'🇵🇱'},
+  {icao:'EPMO',name:'Warszawa Modlin',city:'Modlin',country:'🇵🇱'},
+  {icao:'EPRA',name:'Radom Sadków',city:'Radom',country:'🇵🇱'},
+  {icao:'EPKK',name:'Kraków Balice',city:'Kraków',country:'🇵🇱'},
+  {icao:'EPKT',name:'Katowice Pyrzowice',city:'Katowice',country:'🇵🇱'},
+  {icao:'EPGD',name:'Gdańsk Lech Wałęsa',city:'Gdańsk',country:'🇵🇱'},
+  {icao:'EPWR',name:'Wrocław Strachowice',city:'Wrocław',country:'🇵🇱'},
+  {icao:'EPPO',name:'Poznań Ławica',city:'Poznań',country:'🇵🇱'},
+  {icao:'EPSC',name:'Szczecin Goleniów',city:'Szczecin',country:'🇵🇱'},
+  {icao:'EPLL',name:'Łódź Lublinek',city:'Łódź',country:'🇵🇱'},
+  {icao:'EPRZ',name:'Rzeszów Jasionka',city:'Rzeszów',country:'🇵🇱'},
+  {icao:'EPBY',name:'Bydgoszcz',city:'Bydgoszcz',country:'🇵🇱'},
+  {icao:'EPBC',name:'Warszawa Babice',city:'Warszawa',country:'🇵🇱'},
+  {icao:'EPNC',name:'Nowy Czarnów',city:'Gryfino',country:'🇵🇱'},
+  {icao:'EPLB',name:'Lublin',city:'Lublin',country:'🇵🇱'},
+  {icao:'EPOL',name:'Oleśnica',city:'Oleśnica',country:'🇵🇱'},
+  {icao:'EPZG',name:'Zielona Góra Babimost',city:'Zielona Góra',country:'🇵🇱'},
+  {icao:'EPKP',name:'Kępno-Kierzno',city:'Kępno',country:'🇵🇱'},
+  {icao:'EPMM',name:'Mielec',city:'Mielec',country:'🇵🇱'},
+  {icao:'EPPG',name:'Piła',city:'Piła',country:'🇵🇱'},
+  {icao:'EPKS',name:'Krosno',city:'Krosno',country:'🇵🇱'},
+  {icao:'EPSY',name:'Szymany Mazury',city:'Szczytno',country:'🇵🇱'},
+  {icao:'EPCN',name:'Częstochowa Rudniki',city:'Częstochowa',country:'🇵🇱'},
+  {icao:'EPDE',name:'Dęblin',city:'Dęblin',country:'🇵🇱'},
+  {icao:'EPOK',name:'Ostrów Mazowiecka',city:'Ostrów Maz.',country:'🇵🇱'},
+  {icao:'EPST',name:'Stalowa Wola Turbia',city:'Stalowa Wola',country:'🇵🇱'},
+  {icao:'EPHY',name:'Nowy Targ',city:'Nowy Targ',country:'🇵🇱'},
+  {icao:'EPGM',name:'Grudziądz',city:'Grudziądz',country:'🇵🇱'},
+  {icao:'EPKN',name:'Kętrzyn Wilamowo',city:'Kętrzyn',country:'🇵🇱'},
+  {icao:'EPLK',name:'Leszno Strzyżewice',city:'Leszno',country:'🇵🇱'},
+  // Austria
+  {icao:'LOWW',name:'Wien Schwechat',city:'Wien',country:'🇦🇹'},
+  {icao:'LOWI',name:'Innsbruck',city:'Innsbruck',country:'🇦🇹'},
+  {icao:'LOWS',name:'Salzburg',city:'Salzburg',country:'🇦🇹'},
+  {icao:'LOGG',name:'Graz',city:'Graz',country:'🇦🇹'},
+  {icao:'LORK',name:'Klagenfurt',city:'Klagenfurt',country:'🇦🇹'},
+  {icao:'LOKL',name:'Linz Hörsching',city:'Linz',country:'🇦🇹'},
+  {icao:'LOAN',name:'Wr. Neustadt Ost',city:'Wr. Neustadt',country:'🇦🇹'},
+  {icao:'LOAV',name:'Vöslau',city:'Bad Vöslau',country:'🇦🇹'},
+  {icao:'LOXZ',name:'Zeltweg',city:'Zeltweg',country:'🇦🇹'},
+  {icao:'LOGP',name:'Kapfenberg',city:'Kapfenberg',country:'🇦🇹'},
+  {icao:'LOLF',name:'St. Pölten',city:'St. Pölten',country:'🇦🇹'},
+  {icao:'LOKU',name:'Krems',city:'Krems',country:'🇦🇹'},
+  // Germany
+  {icao:'EDDM',name:'München Franz Josef Strauß',city:'München',country:'🇩🇪'},
+  {icao:'EDDN',name:'Nürnberg',city:'Nürnberg',country:'🇩🇪'},
+  {icao:'EDDF',name:'Frankfurt Main',city:'Frankfurt',country:'🇩🇪'},
+  {icao:'EDDL',name:'Düsseldorf',city:'Düsseldorf',country:'🇩🇪'},
+  {icao:'EDDB',name:'Berlin Brandenburg',city:'Berlin',country:'🇩🇪'},
+  {icao:'EDDH',name:'Hamburg',city:'Hamburg',country:'🇩🇪'},
+  {icao:'EDDS',name:'Stuttgart',city:'Stuttgart',country:'🇩🇪'},
+  {icao:'EDDK',name:'Köln Bonn',city:'Köln',country:'🇩🇪'},
+  // Switzerland
+  {icao:'LSZH',name:'Zürich Kloten',city:'Zürich',country:'🇨🇭'},
+  {icao:'LSZB',name:'Bern-Belp',city:'Bern',country:'🇨🇭'},
+  {icao:'LSGG',name:'Genf Cointrin',city:'Genf',country:'🇨🇭'},
+  {icao:'LSZA',name:'Lugano',city:'Lugano',country:'🇨🇭'},
+  {icao:'LSGS',name:'Sion',city:'Sion',country:'🇨🇭'},
+  // Czech Republic
+  {icao:'LKPR',name:'Prag Václav Havel',city:'Prag',country:'🇨🇿'},
+  {icao:'LKMT',name:'Ostrava Mošnov',city:'Ostrava',country:'🇨🇿'},
+  {icao:'LKPD',name:'Pardubice',city:'Pardubice',country:'🇨🇿'},
+  {icao:'LKLN',name:'Plzeň Líně',city:'Plzeň',country:'🇨🇿'},
+  {icao:'LKCV',name:'Čáslav',city:'Čáslav',country:'🇨🇿'},
+  // Slovakia
+  {icao:'LZIB',name:'Bratislava',city:'Bratislava',country:'🇸🇰'},
+  {icao:'LZKZ',name:'Košice',city:'Košice',country:'🇸🇰'},
+  {icao:'LZPP',name:'Piešťany',city:'Piešťany',country:'🇸🇰'},
+  // Slovenia/Croatia
+  {icao:'LJLJ',name:'Ljubljana Jože Pučnik',city:'Ljubljana',country:'🇸🇮'},
+  {icao:'LDZA',name:'Zagreb Franjo Tuđman',city:'Zagreb',country:'🇭🇷'},
+  {icao:'LDSP',name:'Split',city:'Split',country:'🇭🇷'},
+  // France
+  {icao:'LFLP',name:'Annecy Haute-Savoie',city:'Annecy',country:'🇫🇷'},
+  {icao:'LFMN',name:'Nizza Côte d'Azur',city:'Nizza',country:'🇫🇷'},
+  {icao:'LFPG',name:'Paris Charles de Gaulle',city:'Paris',country:'🇫🇷'},
+  // Hungary
+  {icao:'LHBP',name:'Budapest Liszt Ferenc',city:'Budapest',country:'🇭🇺'},
+  // Other
+  {icao:'LYBE',name:'Belgrad Nikola Tesla',city:'Belgrad',country:'🇷🇸'},
+  {icao:'LBSF',name:'Sofia',city:'Sofia',country:'🇧🇬'},
+  {icao:'EPKK',name:'Kraków Balice',city:'Kraków',country:'🇵🇱'},
+];
+// Remove duplicates
+AC_AIRPORTS = AC_AIRPORTS.filter(function(a,i,arr){return arr.findIndex(function(b){return b.icao===a.icao;})===i;});
+
+var acActiveField = null;
+var acActiveIdx = -1;
+
+function searchAirports(q) {
+  q = q.toUpperCase().trim();
+  if (q.length < 2) return [];
+  return AC_AIRPORTS.filter(function(a) {
+    return a.icao.startsWith(q) ||
+           a.name.toUpperCase().indexOf(q) >= 0 ||
+           a.city.toUpperCase().indexOf(q) >= 0;
+  }).slice(0, 5);
+}
+
+function showAcDropdown(inputId, dropId) {
+  var inp = document.getElementById(inputId);
+  var drop = document.getElementById(dropId);
+  var q = inp.value;
+  var results = searchAirports(q);
+  if (!results.length || q.length < 2) {
+    drop.style.display = 'none';
+    return;
+  }
+  acActiveIdx = -1;
+  acActiveField = {inputId: inputId, dropId: dropId};
+  drop.innerHTML = results.map(function(a, i) {
+    return '<div class="ac-item" data-icao="'+a.icao+'" data-idx="'+i+'"'+
+      ' onmousedown="selectAcItem(''+inputId+'',''+dropId+'',''+a.icao+'')" '+
+      ' onmouseover="setAcActive('+i+',''+dropId+'')">'+
+      '<span class="ac-icao">'+a.icao+'</span>'+
+      '<span class="ac-name">'+a.name+'</span>'+
+      '<span class="ac-country">'+a.country+'</span>'+
+      '</div>';
+  }).join('');
+  drop.style.display = 'block';
+}
+
+function selectAcItem(inputId, dropId, icao) {
+  document.getElementById(inputId).value = icao;
+  document.getElementById(dropId).style.display = 'none';
+  acActiveIdx = -1;
+}
+
+function setAcActive(idx, dropId) {
+  acActiveIdx = idx;
+  var items = document.querySelectorAll('#'+dropId+' .ac-item');
+  items.forEach(function(el, i) {
+    el.classList.toggle('active', i === idx);
+  });
+}
+
+function hideDropdown(dropId) {
+  setTimeout(function() {
+    var d = document.getElementById(dropId);
+    if (d) d.style.display = 'none';
+  }, 180);
+}
+
+function initAutocomplete() {
+  [['depI','acDropDep'],['arrI','acDropArr']].forEach(function(pair) {
+    var inputId = pair[0], dropId = pair[1];
+    var inp = document.getElementById(inputId);
+    if (!inp) return;
+
+    inp.addEventListener('input', function() {
+      var p = this.selectionStart;
+      this.value = this.value.toUpperCase();
+      this.setSelectionRange(p, p);
+      showAcDropdown(inputId, dropId);
+    });
+
+    inp.addEventListener('keydown', function(e) {
+      var drop = document.getElementById(dropId);
+      var items = drop.querySelectorAll('.ac-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        acActiveIdx = Math.min(acActiveIdx + 1, items.length - 1);
+        setAcActive(acActiveIdx, dropId);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        acActiveIdx = Math.max(acActiveIdx - 1, -1);
+        setAcActive(acActiveIdx, dropId);
+      } else if (e.key === 'Enter') {
+        if (acActiveIdx >= 0 && items[acActiveIdx]) {
+          e.preventDefault();
+          selectAcItem(inputId, dropId, items[acActiveIdx].dataset.icao);
+        } else {
+          drop.style.display = 'none';
+          plan();
+        }
+      } else if (e.key === 'Escape') {
+        drop.style.display = 'none';
+        acActiveIdx = -1;
+      }
+    });
+
+    inp.addEventListener('blur', function() { hideDropdown(dropId); });
+    inp.addEventListener('focus', function() {
+      if (this.value.length >= 2) showAcDropdown(inputId, dropId);
+    });
+  });
+}
+
 // ══════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════
@@ -1111,16 +1349,14 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('cwxKey').value = lsGet('checkwx_key');
   document.getElementById('aipKey').value = lsGet('openaip_key');
 
+  // Init ICAO autocomplete
+  initAutocomplete();
+
   // Build aircraft grid
   buildAcGrid();
   pickAC('at3');
 
-  // Auto-uppercase ICAO inputs + Enter to plan
-  ['depI','arrI'].forEach(function(id){
-    var el=document.getElementById(id);
-    el.addEventListener('input',function(){var p=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(p,p);});
-    el.addEventListener('keydown',function(e){if(e.key==='Enter')plan();});
-  });
+  // ICAO input events handled by initAutocomplete()
   document.getElementById('altI').addEventListener('keydown',function(e){if(e.key==='Enter')plan();});
   document.getElementById('pReg').addEventListener('input',function(){var p=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(p,p);});
 
