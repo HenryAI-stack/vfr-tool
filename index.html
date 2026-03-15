@@ -949,34 +949,61 @@ function renderWx(elId,origIcao,name,wx,type){
 async function fetchNtmForIcao(icao, avdKey, avdToken, user, pass) {
   var results = [];
 
-  // ── 1. AvDelphi (primary – weltweite NOTAMs, europäische Airports) ────────
+  // ── 1. AvDelphi (primary – weltweite NOTAMs) ─────────────────────────────
   // GET https://www.avdelphi.com/api/1.0/notam.svc
   //   ?api_key=KEY&api_access_token=TOKEN&cmd=latest&code_icao=ICAO
-  // Response JSON: { result: [ { icao, notam_id, text }, ... ] }
+  // Response: JSON object – inspect all keys to find NOTAM list
   if (avdKey && avdToken) {
     try {
       var avdUrl = 'https://www.avdelphi.com/api/1.0/notam.svc' +
-        '?api_key='   + encodeURIComponent(avdKey) +
+        '?api_key='          + encodeURIComponent(avdKey) +
         '&api_access_token=' + encodeURIComponent(avdToken) +
         '&cmd=latest&code_icao=' + encodeURIComponent(icao.toLowerCase());
       var res = await corsGet(avdUrl);
       if (res.ok && res.text) {
+        // Log raw response for debugging
+        console.log('AvDelphi raw response for '+icao+':', res.text.substring(0,300));
         var d = JSON.parse(res.text);
-        var list = d.result || d.results || [];
+        // Try all common list keys
+        var list = d.result || d.results || d.data || d.notams ||
+                   d.notam || d.items || d.rows ||
+                   (Array.isArray(d) ? d : null) || [];
+        // If still empty, try first array value in the object
+        if (!list.length) {
+          var keys = Object.keys(d);
+          for (var ki=0; ki<keys.length; ki++) {
+            if (Array.isArray(d[keys[ki]])) { list=d[keys[ki]]; break; }
+          }
+        }
         list.forEach(function(n) {
-          var raw   = n.text || n.icao_message || n.message || '';
-          var ntmId = n.notam_id || '';
-          var idM   = raw.match(/\b([A-Z]\d{4}\/\d{2})\b/);
+          // Try every possible text field
+          var raw = n.text || n.icao_message || n.message || n.notam_text ||
+                    n.full_text || n.raw || n.body || n.content || '';
+          // Build from sub-fields if still empty
+          if (!raw) {
+            var parts=[];
+            ['item_a','item_b','item_c','item_e','item_f','item_g',
+             'itema','itemb','itemc','iteme','itemf','itemg'].forEach(function(k){
+              if(n[k]) parts.push(k.toUpperCase().replace('ITEM','')+') '+n[k]);
+            });
+            raw = parts.join(' ');
+          }
+          var ntmId = n.notam_id || n.id || n.number || n.notam_number || '';
+          var idM   = raw.match(/([A-Z]\d{4}\/\d{2})/);
           if (idM) ntmId = idM[1];
           if (!ntmId) ntmId = 'AVD-'+icao;
           var txt  = raw.replace(/\s+/g,' ').trim().substring(0, 300);
-          var crit = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/i.test(raw);
+          var crit = /(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)/i.test(raw);
           if (txt.length > 5) results.push({id:String(ntmId), icao:icao, src:'AvDelphi', txt:txt, crit:crit});
         });
         if (results.length) {
           console.log('AvDelphi: '+results.length+' NOTAMs for '+icao);
           return results;
+        } else {
+          console.log('AvDelphi: 0 NOTAMs for '+icao+' – full response:', JSON.stringify(d).substring(0,200));
         }
+      } else {
+        console.warn('AvDelphi HTTP error:', res.error);
       }
     } catch(e) { console.warn('AvDelphi NOTAM error:', e.message); }
   }
