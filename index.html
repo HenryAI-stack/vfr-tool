@@ -446,6 +446,18 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
       <div class="fr" style="margin-top:4px;"><label>OpenAIP Key <a href="https://www.openaip.net" target="_blank" style="font-size:.58rem;">(kostenlos ↗)</a></label><input id="aipKey" type="text" placeholder="echte Lufträume auf Karte" autocomplete="off" spellcheck="false"></div>
       <button class="btn bs bfw" onclick="saveAip()">💾 OpenAIP aktivieren</button>
       <div class="dvdr" style="margin-top:4px;"></div>
+      <div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">🔗 CORS Proxy (Cloudflare Worker)</div>
+      <div class="fr">
+        <label>Proxy URL <a href="https://workers.cloudflare.com" target="_blank" style="font-size:.58rem;">(Anleitung ↗)</a></label>
+        <input id="proxyUrl" type="text" placeholder="https://vfr-proxy.name.workers.dev" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn bs bfw" onclick="saveProxy()">💾 Proxy URL speichern</button>
+      <div style="font-family:var(--mono);font-size:.58rem;color:var(--mt);margin-bottom:8px;line-height:1.7;">
+        Kostenloser Cloudflare Worker nötig.<br>
+        Worker-Code: Datei <b style="color:var(--ac)">cloudflare-worker.js</b><br>
+        → workers.cloudflare.com → Create Worker → Code einfügen → Deploy
+      </div>
+      <div class="dvdr"></div>
       <div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">⚠️ FAA FNS-NDS NOTAMs</div>
       <div class="fr">
         <label>FAA FNS-NDS Benutzername <a href="https://aa.data.faa.gov" target="_blank" style="font-size:.58rem;">(aa.data.faa.gov ↗)</a></label>
@@ -568,7 +580,7 @@ function doSignOut(){
 function uKey(k){var e=gUser?gUser.email.replace(/[^a-z0-9]/gi,'_'):'guest';return 'vfr_'+e+'_'+k;}
 function saveUserSettings(){
   if(!gUser)return;
-  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),ntmUser:document.getElementById('ntmUser').value.trim(),ntmPass:document.getElementById('ntmPass').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
+  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),ntmUser:document.getElementById('ntmUser').value.trim(),ntmPass:document.getElementById('ntmPass').value.trim(),proxy:document.getElementById('proxyUrl').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
 }
 function loadUserSettings(email){
   var raw=localStorage.getItem('vfr_'+email.replace(/[^a-z0-9]/gi,'_')+'_cfg');
@@ -577,6 +589,7 @@ function loadUserSettings(email){
     if(s.cwx){document.getElementById('cwxKey').value=s.cwx;localStorage.setItem('checkwx_key',s.cwx);}
     if(s.ntmUser){document.getElementById('ntmUser').value=s.ntmUser;localStorage.setItem('fns_user',s.ntmUser);}
     if(s.ntmPass){document.getElementById('ntmPass').value=s.ntmPass;localStorage.setItem('fns_pass',s.ntmPass);}
+    if(s.proxy){document.getElementById('proxyUrl').value=s.proxy;localStorage.setItem('cors_proxy_url',s.proxy);}
     if(s.aip){document.getElementById('aipKey').value=s.aip;localStorage.setItem('openaip_key',s.aip);applyAip(s.aip);}
     if(s.cruise)document.getElementById('pCruise').value=s.cruise;
     if(s.fuel)document.getElementById('pFuel').value=s.fuel;
@@ -850,40 +863,33 @@ function renderWx(elId,origIcao,name,wx,type){
 // ── FAA FNS-NDS SOAP helper ───────────────────────────────────────────────
 // FNS-NDS endpoint: https://notams.aim.faa.gov/fnsnds/FnsNds  (SOAP 1.1)
 // Auth: WS-Security UsernameToken
-// CORS is blocked by FAA → requests are routed through a CORS proxy.
-// Strategy: try corsproxy.io first, then allorigins.win as fallback.
+// CORS is blocked by FAA → requests are routed through user's Cloudflare Worker proxy.
 
-var CORS_PROXIES = [
-  function(url){ return 'https://corsproxy.io/?url='+encodeURIComponent(url); },
-  function(url){ return 'https://api.allorigins.win/raw?url='+encodeURIComponent(url); },
-];
+// CORS proxy URL – configurable via ⚙️ settings (Cloudflare Worker)
+function getCorsProxyUrl() {
+  return document.getElementById('proxyUrl').value.trim() || lsGet('cors_proxy_url');
+}
 
 async function corsPost(targetUrl, body, headers) {
-  var lastErr = null;
-  for (var pi = 0; pi < CORS_PROXIES.length; pi++) {
-    try {
-      var proxyUrl = CORS_PROXIES[pi](targetUrl);
-      var r = await fetch(proxyUrl, {
-        method: 'POST',
-        headers: headers,
-        body: body,
-      });
-      if (r.ok) { return {ok:true, text: await r.text(), proxy: pi}; }
-    } catch(e) { lastErr = e; }
-  }
-  return {ok:false, error: lastErr};
+  var proxy = getCorsProxyUrl();
+  if (!proxy) return {ok:false, error:'no proxy configured'};
+  try {
+    var r = await fetch(proxy+'?url='+encodeURIComponent(targetUrl), {
+      method: 'POST',
+      headers: headers,
+      body: body,
+    });
+    return r.ok ? {ok:true, text: await r.text()} : {ok:false, error:'HTTP '+r.status};
+  } catch(e) { return {ok:false, error:e.message}; }
 }
 
 async function corsGet(targetUrl) {
-  var lastErr = null;
-  for (var pi = 0; pi < CORS_PROXIES.length; pi++) {
-    try {
-      var proxyUrl = CORS_PROXIES[pi](targetUrl);
-      var r = await fetch(proxyUrl);
-      if (r.ok) { return {ok:true, text: await r.text(), proxy: pi}; }
-    } catch(e) { lastErr = e; }
-  }
-  return {ok:false, error: lastErr};
+  var proxy = getCorsProxyUrl();
+  if (!proxy) return {ok:false, error:'no proxy configured'};
+  try {
+    var r = await fetch(proxy+'?url='+encodeURIComponent(targetUrl));
+    return r.ok ? {ok:true, text: await r.text()} : {ok:false, error:'HTTP '+r.status};
+  } catch(e) { return {ok:false, error:e.message}; }
 }
 
 function fnsSOAPBody(user, pass, icao) {
@@ -1004,7 +1010,7 @@ async function fetchNtm(dep, arr) {
       {id:'B'+mm+dd+'0/26',icao:dep,src:'Demo',crit:true, txt:'DANGER AREA VIC '+dep+' FL060-FL100 0800-1600'},
     ];
     if (!user) results.push({id:'INFO',icao:dep,src:'Info',crit:false,
-      txt:'FAA FNS-NDS Zugangsdaten in ⚙️ Einstellungen eintragen · NOTAMs via corsproxy.io geroutet'});
+      txt:'Bitte CORS Proxy URL + FAA FNS-NDS Zugangsdaten in ⚙️ Einstellungen eintragen'});
   }
 
   return results.slice(0, 20);
@@ -1317,6 +1323,12 @@ function saveNtm(){
   saveUserSettings();
   toast(u?'FAA FNS-NDS Zugangsdaten gespeichert ✓':'FNS-NDS Zugangsdaten entfernt',u?'ok':'');
 }
+function saveProxy(){
+  var v=document.getElementById('proxyUrl').value.trim();
+  localStorage.setItem('cors_proxy_url',v);
+  saveUserSettings();
+  toast(v?'Proxy URL gespeichert ✓':'Proxy URL entfernt',v?'ok':'');
+}
 function saveAip(){var k=document.getElementById('aipKey').value.trim();localStorage.setItem('openaip_key',k);applyAip(k);saveUserSettings();toast(k?'OpenAIP aktiviert ✓':'OpenAIP deaktiviert',k?'ok':'');}
 
 // CLOSE MODALS ON BG CLICK
@@ -1330,6 +1342,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('aipKey').value=lsGet('openaip_key');
   document.getElementById('ntmUser').value=lsGet('fns_user');
   document.getElementById('ntmPass').value=lsGet('fns_pass');
+  document.getElementById('proxyUrl').value=lsGet('cors_proxy_url');
   buildAcGrid();pickAC('at3');
   // Autocomplete
   [['depI','dropDep'],['arrI','dropArr']].forEach(function(pair){
