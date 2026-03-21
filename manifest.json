@@ -12,16 +12,28 @@
   "categories": ["navigation", "utilities"],
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%230a0e17'/%3E%3Cpath d='M30 108 L90 60 L108 66 L132 54 L138 66 L108 78 L114 102 L132 96 L135 105 L108 114 L102 132 L90 132 L96 114 Z' fill='%2300d4ff'/%3E%3Ccircle cx='144' cy='54' r='12' fill='%2300ff9f' opacity='.8'/%3E%3C/svg%3E",
+      "src": "src/favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "src/icon-192.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230a0e17'/%3E%3Cpath d='M80 288 L240 160 L288 176 L352 144 L368 176 L288 208 L304 272 L352 256 L360 280 L288 304 L272 352 L240 352 L256 304 Z' fill='%2300d4ff'/%3E%3Ccircle cx='384' cy='144' r='32' fill='%2300ff9f' opacity='.8'/%3E%3C/svg%3E",
+      "src": "src/icon-512.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    },
+    {
+      "src": "src/apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "shortcuts": [
@@ -30,7 +42,7 @@
       "short_name": "Planen",
       "description": "Neue VFR Route planen",
       "url": "/vfr-tool/",
-      "icons": [{"src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Ctext y='.9em' font-size='90'%3E✈️%3C/text%3E%3C/svg%3E", "sizes": "96x96"}]
+      "icons": [{"src": "src/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml"}]
     }
   ]
 }
