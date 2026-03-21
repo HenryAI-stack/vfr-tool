@@ -1655,7 +1655,7 @@ function renderFlightData(data) {
 
   // Export function – builds CSV
   window._exportFlightData = function() {
-    var rows = [['Datum','Kennzeichen','Abflug','Ziel','Motor AN','Takeoff','Motor AUS','Motorzeit (h)','Notiz']];
+    var rows = [['Datum','Kennzeichen','Abflug','Ziel','Engine ON','Takeoff','Engine OFF','Motorzeit (h)','Notiz']];
     parsed.forEach(function(p) {
       rows.push([
         p.dateStr, p.aircraft, p.dep, p.arr,
@@ -1694,9 +1694,9 @@ function renderFlightData(data) {
   parsed.forEach(function(p) {
     var tags = '';
     if (p.hours)     tags += '<span class="route-tag hi">' + esc(p.hours) + ' h</span>';
-    if (p.tsStart)   tags += '<span class="route-tag">AN&nbsp;' + esc(p.tsStart) + '</span>';
+    if (p.tsStart)   tags += '<span class="route-tag" style="color:var(--gn);">ON&nbsp;' + esc(p.tsStart) + '</span>';
     if (p.tsTakeoff) tags += '<span class="route-tag" style="color:var(--yw);">TO&nbsp;' + esc(p.tsTakeoff) + '</span>';
-    if (p.tsStop)    tags += '<span class="route-tag">AUS&nbsp;' + esc(p.tsStop) + '</span>';
+    if (p.tsStop)    tags += '<span class="route-tag" style="color:var(--rd);">OFF&nbsp;' + esc(p.tsStop) + '</span>';
 
     html +=
       '<div class="route-item">' +
