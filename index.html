@@ -1153,162 +1153,74 @@ function renderWx(elId,origIcao,name,wx,type){
 //
 // CORS proxy (Cloudflare Worker) leitet alle Requests durch.
 
-async function fetchNtmForIcao(icao, user, pass) {
-  var results = [];
-  if (!icao || icao.length < 3 || icao.length > 4) return results;
+// ── NOTAM fetch via notam-worker (Eurocontrol EAD via autorouter.aero) ──
+// POST https://notam-worker.henry-ai-server.workers.dev/notams
+//   body: { icao: ["EPWA", "EPKK"] }
+// Response: { meta: { totalNotamCount, source }, notams: [{ icao, notamNumber,
+//             type, message, rawText, startDate, endDate }] }
+// Supports CORS, no API key needed, cached on server side.
 
-  var isUS = /^[KCP]/.test(icao);
-
-  // ── 1. FAA OpenAPI REST (api.faa.gov/notams) ─────────────────────────────
-  // Free, no API key, worldwide NOTAMs (US + international via ICAO)
-  // GET https://api.faa.gov/notams/v1/notams?icaoLocation=ICAO&pageSize=50
-  //   &sortOrder=Desc&notamType=N&expand=true&responseFormat=JSON
-  // Requires Client ID in header: client_id = "YOUR_CLIENT_ID" (free from api.faa.gov)
-  try {
-    var faaClientId = document.getElementById('faaClientId').value.trim() || lsGet('faa_client_id');
-    if (faaClientId) {
-      var faaUrl = 'https://api.faa.gov/notams/v1/notams' +
-        '?icaoLocation=' + encodeURIComponent(icao) +
-        '&pageSize=50&pageNum=0&sortBy=&sortOrder=Desc' +
-        '&notamType=N&expand=true&responseFormat=JSON';
-      var faaHeaders = {
-        'Accept': 'application/json',
-        'client_id': faaClientId,
-      };
-      var res = await corsGet(faaUrl, faaHeaders);
-      if (res.ok && res.text) {
-        var d = JSON.parse(res.text);
-        // Response: { items: [ { coreNOTAMData: { notam: { id, number, type, ... },
-        //   notamTranslation: [{ type:'ICAO', simpleText:'...' }] } } ] }
-        var items = d.items || d.notams || d.data || [];
-        items.forEach(function(item) {
-          var core  = item.coreNOTAMData || item;
-          var notam = core.notam || core;
-          // Get NOTAM text - prefer ICAO translation, fall back to plain
-          var raw = '';
-          var trans = core.notamTranslation || [];
-          for (var ti = 0; ti < trans.length; ti++) {
-            if (trans[ti].type === 'ICAO' || trans[ti].type === 'LOCAL_FORMAT') {
-              raw = trans[ti].simpleText || trans[ti].formattedText || '';
-              if (raw) break;
-            }
-          }
-          if (!raw) raw = notam.icaoMessage || notam.traditionalMessage ||
-                          notam.text || notam.number || '';
-          var ntmId = notam.number || notam.notamNumber || notam.id || 'FAA';
-          var txt   = raw.replace(/\s+/g,' ').trim().substring(0, 300);
-          var crit  = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/i.test(raw);
-          if (txt.length > 5) results.push({
-            id: String(ntmId), icao: icao, src: 'FAA OpenAPI', txt: txt, crit: crit
-          });
-        });
-        if (results.length) {
-          console.log('FAA OpenAPI: ' + results.length + ' NOTAMs for ' + icao);
-          return results;
-        }
-        if (d.items !== undefined) {
-          // Valid response but 0 NOTAMs – airport has no active NOTAMs
-          console.log('FAA OpenAPI: 0 active NOTAMs for ' + icao);
-          return results;
-        }
-      }
-    }
-  } catch(e) { console.warn('FAA OpenAPI error:', e.message); }
-
-  // ── 2. FAA FNS-NDS SOAP (only for US airports with credentials) ─────────
-  if (isUS && user && pass) {
-    try {
-      var soapBody =
-        '<?xml version="1.0" encoding="UTF-8"?>' +
-        '<soapenv:Envelope' +
-        ' xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"' +
-        ' xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"' +
-        ' xmlns:fn="http://fnsnds.faa.gov/">' +
-        '<soapenv:Header><wsse:Security><wsse:UsernameToken>' +
-        '<wsse:Username>' + user + '</wsse:Username>' +
-        '<wsse:Password>' + pass + '</wsse:Password>' +
-        '</wsse:UsernameToken></wsse:Security></soapenv:Header>' +
-        '<soapenv:Body><fn:RetrieveNotams>' +
-        '<fn:icaoLocation>' + icao + '</fn:icaoLocation>' +
-        '</fn:RetrieveNotams></soapenv:Body></soapenv:Envelope>';
-      var res2 = await corsPost(
-        'https://notams.aim.faa.gov/fnsnds/FnsNds',
-        soapBody,
-        {'Content-Type':'text/xml; charset=utf-8', 'SOAPAction':'RetrieveNotams'}
-      );
-      if (res2.ok && res2.text) {
-        var doc = new DOMParser().parseFromString(res2.text, 'text/xml');
-        doc.querySelectorAll('notam, Notam, NOTAM').forEach(function(el) {
-          var numEl = el.querySelector('notamNumber, notamId, number, id');
-          var ntmId = numEl ? numEl.textContent.trim() : 'FNS';
-          var msgEl = el.querySelector('icaoMessage, traditionalMessage, message, text, notamText');
-          var raw   = msgEl ? msgEl.textContent.trim() : el.textContent.trim();
-          if (!raw || raw.length < 5) return;
-          var idM = raw.match(/\b([A-Z]\d{4}\/\d{2})\b/);
-          if (idM) ntmId = idM[1];
-          var txt  = raw.replace(/\s+/g,' ').trim().substring(0, 300);
-          var crit = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/i.test(raw);
-          if (txt.length > 5) results.push({id:ntmId, icao:icao, src:'FAA FNS-NDS', txt:txt, crit:crit});
-        });
-        if (results.length) return results;
-      }
-    } catch(e) { console.warn('FNS-NDS error:', e.message); }
-  }
-
-  // ── 3. aviationweather.gov (US airports fallback) ────────────────────────
-  if (isUS) {
-    try {
-      var awUrl = 'https://aviationweather.gov/api/data/notam?icaos=' + icao + '&format=raw';
-      var res3  = await corsGet(awUrl);
-      if (res3.ok && res3.text) {
-        var NL = '\n';
-        res3.text.split(NL).filter(function(l){return l.trim().length>10;}).forEach(function(line,j){
-          var im    = line.match(/!([A-Z]+\s[A-Z0-9\/]+)/);
-          var ntmId = im ? im[1].replace(/\s/,'') : 'N'+icao+j;
-          var crit  = /\b(CLSD|RESTRICTED|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/.test(line);
-          results.push({id:ntmId, icao:icao, src:'aviationweather.gov', txt:line.trim().substring(0,280), crit:crit});
-        });
-        if (results.length) return results;
-      }
-    } catch(e) { /* silent */ }
-  }
-
-  return results;
-}
-
+var NOTAM_WORKER = 'https://notam-worker.henry-ai-server.workers.dev/notams';
 
 async function fetchNtm(dep, arr) {
-  var user = document.getElementById('ntmUser').value.trim() || lsGet('fns_user');
-  var pass = document.getElementById('ntmPass').value.trim() || lsGet('fns_pass');
-  var results = [];
+  var icaos = [dep, arr].filter(function(ic) {
+    return ic && ic.length >= 3 && ic.length <= 4;
+  });
+  if (!icaos.length) return getDemoNotams(dep, arr);
 
-  // Nur gültige ICAO-Codes (3-4 Buchstaben/Zahlen) abfragen
-  function validIcao(code) {
-    return code && /^[A-Z]{2,4}[0-9A-Z]{0,2}$/.test(code) && code.length >= 3 && code.length <= 4;
+  try {
+    var resp = await fetch(NOTAM_WORKER, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ icao: icaos })
+    });
+
+    if (!resp.ok) {
+      console.warn('NOTAM worker HTTP', resp.status);
+      return getDemoNotams(dep, arr);
+    }
+
+    var data = await resp.json();
+    var items = data.notams || [];
+
+    // Filter out empty/invalid entries (rawText "**★" only)
+    var results = [];
+    items.forEach(function(n) {
+      var text = (n.message || n.rawText || '').replace(/\*\*★/g, '').trim();
+      if (!text || text.length < 5) return;
+      var ntmId = n.notamNumber || ('NTM-' + n.icao);
+      var crit  = /\b(CLSD|RESTRICTED|TFR|HAZARD|UNSERVICEABLE|DANGER|PROHIBITED)\b/i.test(text);
+      results.push({
+        id:   ntmId,
+        icao: n.icao || dep,
+        src:  'Eurocontrol EAD',
+        txt:  text.substring(0, 300),
+        crit: crit
+      });
+    });
+
+    console.log('NOTAM worker: ' + results.length + ' NOTAMs for ' + icaos.join(', ') +
+      (data.meta ? ' [' + data.meta.source + ']' : ''));
+
+    if (results.length) return results.slice(0, 20);
+    return getDemoNotams(dep, arr);
+
+  } catch(e) {
+    console.warn('NOTAM worker error:', e.message);
+    return getDemoNotams(dep, arr);
   }
-  var icaos = [dep, arr].filter(validIcao);
-
-  // Beide Flughäfen parallel abfragen
-  var both = await Promise.all(icaos.map(function(icao) {
-    return fetchNtmForIcao(icao, user, pass);
-  }));
-  both.forEach(function(list) { results = results.concat(list); });
-
-  // Demo-Fallback wenn nichts geliefert
-  if (!results.length) {
-    var d = new Date(), mm = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
-    results = [
-      { id:'A'+mm+dd+'0/26', icao:dep, src:'Demo', crit:false, txt:dep+' TWY ALFA CLSD DUE MAINTENANCE' },
-      { id:'A'+mm+dd+'1/26', icao:dep, src:'Demo', crit:false, txt:dep+' ATIS UNSERVICEABLE' },
-      { id:'A'+mm+dd+'2/26', icao:arr, src:'Demo', crit:false, txt:arr+' BIRDS VIC AERODROME 1500FT' },
-      { id:'B'+mm+dd+'0/26', icao:dep, src:'Demo', crit:true,  txt:'DANGER AREA VIC '+dep+' FL060-FL100 0800-1600' },
-    ];
-    if (!user) results.push({ id:'INFO', icao:dep, src:'Info', crit:false,
-      txt:'FAA OpenAPI Client ID in ⚙️ eintragen für weltweite NOTAMs (kostenlos auf api.faa.gov registrieren).' });
-  }
-
-  return results.slice(0, 20);
 }
+
+function getDemoNotams(dep, arr) {
+  var d=new Date(), mm=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+  return [
+    {id:'A'+mm+dd+'0/26',icao:dep,src:'Demo',crit:false,txt:dep+' TWY ALFA CLSD DUE MAINTENANCE'},
+    {id:'A'+mm+dd+'1/26',icao:dep,src:'Demo',crit:false,txt:dep+' ATIS UNSERVICEABLE'},
+    {id:'A'+mm+dd+'2/26',icao:arr,src:'Demo',crit:false,txt:arr+' BIRDS VIC AERODROME 1500FT'},
+    {id:'B'+mm+dd+'0/26',icao:dep,src:'Demo',crit:true, txt:'DANGER AREA VIC '+dep+' FL060-FL100 0800-1600'},
+  ];
+}
+
 
 function renderNtm(ntms){var el=document.getElementById('ntC');if(!ntms.length){el.innerHTML='<div class="empty"><div class="ico">✅</div>Keine NOTAMs</div>';return;}var src=[...new Set(ntms.map(function(n){return n.src;}))].join('+');el.innerHTML='<div class="meta">'+ntms.length+' NOTAM(s) · <b>'+src+'</b><br><a href="https://icaonotam.eurocontrol.int" target="_blank">Eurocontrol ↗</a></div><div class="ntm-list">'+ntms.map(function(n){return '<div class="ntm '+(n.crit?'crit':'')+'"><div class="ntmid">'+esc(n.id)+' | '+esc(n.icao)+'</div><div class="ntmtxt">'+esc(n.txt)+'</div><div class="ntmsrc">'+esc(n.src)+'</div></div>';}).join('')+'</div>';}
 
