@@ -330,7 +330,7 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
 <!-- LOGIN -->
 <div id="loginOverlay">
   <div class="lbox">
-    <div class="lbox-logo">✈️</div>
+    <img src="src/android-chrome-192x192.png" style="width:72px;height:72px;border-radius:16px;object-fit:cover;margin-bottom:4px;" alt="VFR Plan">
     <div class="lbox-title">VFR // FlightPlan</div>
     <div class="lbox-sub">PPL Flugplanung · AIP Poland<br>Bitte mit Google-Konto anmelden</div>
     <div id="g_id_signin"></div>
@@ -346,7 +346,7 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
 </div>
 
 <header>
-  <div class="logo">✈️</div>
+  <img src="src/android-chrome-192x192.png" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;" alt="VFR Plan">
   <div><h1>VFR // FlightPlan</h1><small>AIP Poland · VFR Reporting Points</small></div>
   <div class="spill" id="sysStatus">● BEREIT</div>
 </header>
@@ -1511,12 +1511,16 @@ document.addEventListener('DOMContentLoaded',function(){
 // enginetime stores flight data in Google Drive appDataFolder
 // Possible filenames – we try all and show whichever has data
 
+// enginetime saves files as: enginelog_YYYYMMDD_HHMM_REGISTRATION.json
 var ET_FILENAMES = [
   'enginetime-flights.json',
   'enginetime-data.json',
   'enginetime.json',
   'flights.json',
 ];
+function isEnginetimeFile(name) {
+  return /^enginelog_/.test(name) || ET_FILENAMES.indexOf(name) >= 0;
+}
 var etFlights = null;   // cached flight data
 var etFileId  = null;   // cached Drive file ID
 
@@ -1553,35 +1557,43 @@ async function loadFlightData() {
   el.innerHTML = '<div class="fd-empty"><div class="ico">⏳</div>Lade Flugdaten aus Google Drive...</div>';
 
   try {
-    // List all Drive files and find enginetime file
+    // List all Drive files and find enginetime log files
     var files = await driveListAll();
-    var etFile = null;
 
-    // Try known filenames first
-    for (var fi = 0; fi < ET_FILENAMES.length; fi++) {
-      etFile = files.find(function(f) { return f.name === ET_FILENAMES[fi]; });
-      if (etFile) break;
-    }
+    // Match all enginelog_* files and known filenames
+    var etFiles = files.filter(function(f) { return isEnginetimeFile(f.name); });
 
-    // If not found by name, show available files for debugging
-    if (!etFile) {
+    if (!etFiles.length) {
       var names = files.map(function(f) { return f.name; }).join(', ');
       el.innerHTML = '<div class="fd-empty"><div class="ico">📂</div>' +
         'Keine enginetime Flugdaten gefunden.<br>' +
         '<span style="font-size:.62rem;color:var(--mt);">Drive-Dateien: ' +
-        (names || 'keine') + '</span><br>' +
-        '<span style="font-size:.62rem;">enginetime App muss zuerst Daten gespeichert haben.</span></div>';
+        (names || 'keine') + '</span></div>';
       return;
     }
 
-    // Download file content
-    etFileId = etFile.id;
-    var r2 = await fetch(
-      'https://www.googleapis.com/drive/v3/files/' + etFileId + '?alt=media',
-      { headers: { 'Authorization': 'Bearer ' + gdToken } }
-    );
-    if (!r2.ok) throw new Error('Drive download failed: ' + r2.status);
-    etFlights = await r2.json();
+    // Download all matching files and merge into one flights array
+    el.innerHTML = '<div class="fd-empty"><div class="ico">⏳</div>Lade ' + etFiles.length + ' Fluglog(s)...</div>';
+    var allFlights = [];
+    for (var ei = 0; ei < etFiles.length; ei++) {
+      try {
+        var r2 = await fetch(
+          'https://www.googleapis.com/drive/v3/files/' + etFiles[ei].id + '?alt=media',
+          { headers: { 'Authorization': 'Bearer ' + gdToken } }
+        );
+        if (!r2.ok) continue;
+        var data = await r2.json();
+        // Each enginelog file may be a single entry object or an array
+        if (Array.isArray(data)) {
+          allFlights = allFlights.concat(data);
+        } else if (data && typeof data === 'object') {
+          // Single flight log entry – push directly
+          allFlights.push(data);
+        }
+      } catch(e) { console.warn('Error loading', etFiles[ei].name, e); }
+    }
+
+    etFlights = allFlights;
     renderFlightData(etFlights);
 
   } catch(e) {
@@ -1594,10 +1606,11 @@ function renderFlightData(data) {
   var el = document.getElementById('flugdatenContent');
   if (!el) return;
 
-  // Normalize data structure – enginetime might store as array or object with flights key
+  // Normalize data structure
+  // enginetime format: array of { date/datum, registration/kennzeichen, engineStart, takeoff, engineStop, ... }
   var flights = Array.isArray(data) ? data :
     (data.flights || data.entries || data.logs || data.records ||
-     Object.values(data).find(function(v) { return Array.isArray(v); }) || []);
+     Object.values(data).find(function(v) { return Array.isArray(v); }) || [data]);
 
   if (!flights.length) {
     el.innerHTML = '<div class="fd-empty"><div class="ico">✈️</div>Keine Flugeinträge vorhanden</div>';
@@ -1637,16 +1650,29 @@ function renderFlightData(data) {
   var html = syncStr + stats + '<div class="fd-list">';
 
   flights.forEach(function(f) {
-    // Extract common fields with multiple possible key names
-    var date     = f.date || f.datum || f.timestamp || f.created_at || f.flightDate || '–';
-    var aircraft = f.aircraft || f.flugzeug || f.registration || f.reg || f.kennzeichen || f.plane || '–';
-    var dep      = f.departure || f.from || f.dep || f.abflug || f.origin || '';
-    var arr      = f.arrival || f.to || f.arr || f.ziel || f.destination || '';
-    var hours    = f.hours || f.motorHours || f.motor_hours || f.flightTime ||
-                   f.flight_time || f.duration || f.engineTime || f.engine_time || '';
+    // Extract fields – enginetime format uses: date, registration, departure, arrival,
+    // engineStart (timestamp), takeoff (timestamp), engineStop (timestamp), notes
+    var date     = f.date || f.datum || f.flightDate || f.created_at ||
+                   (f.engineStart ? f.engineStart.split('T')[0] : '') || '–';
+    var aircraft = f.registration || f.kennzeichen || f.aircraft ||
+                   f.flugzeug || f.reg || f.plane || '–';
+    var dep      = f.departure || f.abflug || f.from || f.dep || f.origin || '';
+    var arr      = f.arrival || f.ziel || f.to || f.arr || f.destination || '';
+    // Calculate engine hours from timestamps if available
+    var hours    = f.hours || f.motorHours || f.motor_hours || f.engineHours || '';
+    if (!hours && f.engineStart && f.engineStop) {
+      try {
+        var ms = new Date(f.engineStop) - new Date(f.engineStart);
+        if (ms > 0) hours = (ms / 3600000).toFixed(2) + 'h';
+      } catch(e) {}
+    }
     var landings = f.landings || f.ldg || f.landungen || '';
     var pilot    = f.pilot || f.pic || f.commander || '';
-    var remarks  = f.remarks || f.notes || f.notizen || f.comment || '';
+    var remarks  = f.notes || f.remarks || f.notizen || f.comment || '';
+    // enginetime timestamps
+    var tsStart  = f.engineStart ? new Date(f.engineStart).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}) : '';
+    var tsTakeoff= f.takeoff     ? new Date(f.takeoff).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}) : '';
+    var tsStop   = f.engineStop  ? new Date(f.engineStop).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}) : '';
 
     // Format date
     var dateStr = date;
@@ -1669,6 +1695,9 @@ function renderFlightData(data) {
     if (hours)    html += '<div class="fd-field"><span class="fd-lbl">Motorstunden</span><span class="fd-val hi">' + esc(String(hours)) + '</span></div>';
     if (landings) html += '<div class="fd-field"><span class="fd-lbl">Landungen</span><span class="fd-val">' + esc(String(landings)) + '</span></div>';
     if (pilot)    html += '<div class="fd-field"><span class="fd-lbl">PIC</span><span class="fd-val">' + esc(pilot) + '</span></div>';
+    if (tsStart)  html += '<div class="fd-field"><span class="fd-lbl">Motor AN</span><span class="fd-val">' + esc(tsStart) + '</span></div>';
+    if (tsTakeoff)html += '<div class="fd-field"><span class="fd-lbl">Takeoff</span><span class="fd-val">' + esc(tsTakeoff) + '</span></div>';
+    if (tsStop)   html += '<div class="fd-field"><span class="fd-lbl">Motor AUS</span><span class="fd-val">' + esc(tsStop) + '</span></div>';
     if (remarks)  html += '<div class="fd-field" style="grid-column:1/-1;"><span class="fd-lbl">Notizen</span><span class="fd-val" style="color:var(--mt);">' + esc(String(remarks).substring(0,100)) + '</span></div>';
 
     // Show any remaining fields we haven't displayed yet
@@ -1698,8 +1727,14 @@ var deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', function(e) {
   e.preventDefault();
   deferredInstallPrompt = e;
-  // Show install banner after 3 seconds if not already installed
-  setTimeout(showPwaInstallBanner, 3000);
+  // Show install banner after 5 seconds – only if not dismissed before
+  if (!localStorage.getItem('pwa_dismissed')) {
+    setTimeout(showPwaInstallBanner, 5000);
+  }
+});
+window.addEventListener('appinstalled', function() {
+  deferredInstallPrompt = null;
+  localStorage.setItem('pwa_dismissed', '1');
 });
 
 function showPwaInstallBanner() {
