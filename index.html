@@ -1604,16 +1604,12 @@ function renderFlightData(data) {
   var el = document.getElementById('flugdatenContent');
   if (!el) return;
 
-  var flights = Array.isArray(data) ? data :
-    (data.flights || data.entries || [data]);
-
+  var flights = Array.isArray(data) ? data : (data.flights || data.entries || [data]);
   if (!flights.length) {
-    el.innerHTML = '<div class="fd-empty"><div class="ico">✈️</div>Keine Flugeinträge vorhanden</div>';
+    el.innerHTML = '<div class="empty"><div class="ico">✈️</div>Keine Flugeinträge vorhanden</div>';
     return;
   }
 
-  // ── enginetime v2 helpers ─────────────────────────────────────────────
-  // Event types: "motor_on", "takeoff"/"start", "motor_off"/"landing"
   function getEvt(f, types) {
     if (!f.events || !Array.isArray(f.events)) return null;
     for (var ti=0; ti<types.length; ti++) {
@@ -1624,29 +1620,19 @@ function renderFlightData(data) {
   }
 
   function parseEntry(f) {
-    var evStart   = getEvt(f, ['motor_on',  'engine_start', 'engineStart', 'start']);
-    var evTakeoff = getEvt(f, ['takeoff',   'take_off',     'airborne']);
-    var evStop    = getEvt(f, ['motor_off', 'engine_stop',  'engineStop',  'landing', 'stop']);
-
-    // Date from event lDate or savedAt
-    var dateStr = (evStart && evStart.lDate) ||
+    var evStart   = getEvt(f, ['motor_on','engine_start','engineStart','start']);
+    var evTakeoff = getEvt(f, ['takeoff','take_off','airborne']);
+    var evStop    = getEvt(f, ['motor_off','engine_stop','engineStop','landing','stop']);
+    var dateStr   = (evStart && evStart.lDate) ||
       (f.savedAt ? new Date(f.savedAt).toLocaleDateString('de-AT',
         {day:'2-digit',month:'2-digit',year:'numeric'}) : '–');
-
-    // Times – prefer local time (lTime) from event
-    var tsStart   = evStart   ? (evStart.lTime   || evStart.uTime   || '') : '';
-    var tsTakeoff = evTakeoff ? (evTakeoff.lTime  || evTakeoff.uTime || '') : '';
-    var tsStop    = evStop    ? (evStop.lTime     || evStop.uTime    || '') : '';
-
-    // Engine hours: motor_on → motor_off
     var hours = '';
     if (evStart && evStop && evStart.iso && evStop.iso) {
       try {
         var ms = new Date(evStop.iso) - new Date(evStart.iso);
-        if (ms > 0) hours = (ms / 3600000).toFixed(2);
-      } catch(e) {}
+        if (ms > 0) hours = (ms/3600000).toFixed(2);
+      } catch(e){}
     }
-
     return {
       dateStr:   dateStr,
       aircraft:  f.registration || f.kennzeichen || '–',
@@ -1654,55 +1640,64 @@ function renderFlightData(data) {
       arr:       (f.destination || f.arrival || '').toUpperCase(),
       hours:     hours,
       note:      f.note || '',
-      tsStart:   tsStart,
-      tsTakeoff: tsTakeoff,
-      tsStop:    tsStop,
-      raw:       f
+      tsStart:   evStart   ? (evStart.lTime   || '') : '',
+      tsTakeoff: evTakeoff ? (evTakeoff.lTime || '') : '',
+      tsStop:    evStop    ? (evStop.lTime    || '') : '',
+      raw: f
     };
   }
 
   var parsed = flights.map(parseEntry);
+  parsed.sort(function(a,b){ return new Date(b.raw.savedAt||0)-new Date(a.raw.savedAt||0); });
 
-  // Sort newest first by savedAt
-  parsed.sort(function(a,b){
-    return new Date(b.raw.savedAt||0) - new Date(a.raw.savedAt||0);
-  });
+  var totalHours = 0;
+  parsed.forEach(function(p){ totalHours += parseFloat(p.hours)||0; });
 
-  // Totals
-  var totalHours=0, totalLandings=0;
-  parsed.forEach(function(p){
-    totalHours += parseFloat(p.hours) || 0;
-    totalLandings += parseInt(p.raw.landings||0);
-  });
+  var syncStr = '<span style="font-family:var(--mono);font-size:.58rem;color:var(--gn);">☁️ Drive Sync aktiv</span>';
 
-  var html = '<div class="fd-sync" style="color:var(--gn);">☁️ Drive · ' +
-    parsed.length + ' Flüge geladen</div>' +
-    '<div class="fd-stats">' +
-    '<div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:2px;text-transform:uppercase;">Gesamt</div>' +
-    '<div class="fd-stats-grid">' +
-    '<div class="fd-stat"><div class="fd-stat-val">' + parsed.length + '</div><div class="fd-stat-lbl">Flüge</div></div>' +
-    '<div class="fd-stat"><div class="fd-stat-val">' + totalHours.toFixed(1) + '</div><div class="fd-stat-lbl">Motorstd.</div></div>' +
-    '<div class="fd-stat"><div class="fd-stat-val">' + totalLandings + '</div><div class="fd-stat-lbl">Ldg</div></div>' +
-    '</div></div><div class="fd-list">';
+  var html = '<div style="margin-bottom:8px;">' + syncStr + '</div>' +
+    '<div class="route-list">';
 
   parsed.forEach(function(p) {
-    var route = p.dep + (p.arr ? ' → '+p.arr : '');
-    html += '<div class="fd-item">' +
-      '<div class="fd-head">' +
-        '<span class="fd-date">' + esc(p.dateStr) + '</span>' +
-        '<span class="fd-ac">' + esc(p.aircraft) + '</span>' +
-      '</div>' +
-      '<div class="fd-grid">';
-    if (route)       html += '<div class="fd-field" style="grid-column:1/-1"><span class="fd-lbl">Route</span><span class="fd-val hi">' + esc(route) + '</span></div>';
-    if (p.tsStart)   html += '<div class="fd-field"><span class="fd-lbl">Motor AN</span><span class="fd-val">' + esc(p.tsStart) + '</span></div>';
-    if (p.tsTakeoff) html += '<div class="fd-field"><span class="fd-lbl">Takeoff</span><span class="fd-val">' + esc(p.tsTakeoff) + '</span></div>';
-    if (p.tsStop)    html += '<div class="fd-field"><span class="fd-lbl">Motor AUS</span><span class="fd-val">' + esc(p.tsStop) + '</span></div>';
-    if (p.hours)     html += '<div class="fd-field"><span class="fd-lbl">Motorzeit</span><span class="fd-val hi">' + esc(p.hours) + ' h</span></div>';
-    if (p.note)      html += '<div class="fd-field" style="grid-column:1/-1"><span class="fd-lbl">Notiz</span><span class="fd-val" style="color:var(--mt);">' + esc(p.note.substring(0,120)) + '</span></div>';
-    html += '</div></div>';
+    // Build tags
+    var tags = '';
+    if (p.hours)     tags += '<span class="route-tag hi">' + esc(p.hours) + ' h</span>';
+    if (p.tsStart)   tags += '<span class="route-tag">AN ' + esc(p.tsStart) + '</span>';
+    if (p.tsTakeoff) tags += '<span class="route-tag">TO ' + esc(p.tsTakeoff) + '</span>';
+    if (p.tsStop)    tags += '<span class="route-tag">AUS ' + esc(p.tsStop) + '</span>';
+
+    html +=
+      '<div class="route-item">' +
+        // Header: DEP → ARR  +  date
+        '<div class="route-item-head">' +
+          '<span class="route-icao">' + esc(p.dep||'–') + '</span>' +
+          '<span class="route-arrow">→</span>' +
+          '<span class="route-icao">' + esc(p.arr||'–') + '</span>' +
+          '<span class="route-date">' + esc(p.dateStr) + '</span>' +
+        '</div>' +
+        // Tags row: hours, Motor AN, Takeoff, Motor AUS
+        '<div class="route-meta">' +
+          '<span class="route-tag" style="color:var(--ac);">' + esc(p.aircraft) + '</span>' +
+          tags +
+        '</div>' +
+        // Note
+        (p.note ?
+          '<div style="font-family:var(--mono);font-size:.62rem;color:var(--mt);margin-bottom:5px;">' +
+          '📝 ' + esc(p.note.substring(0,80)) + '</div>'
+        : '') +
+      '</div>';
   });
 
-  el.innerHTML = html + '</div>';
+  // Total summary line
+  html += '</div>' +
+    '<div style="margin-top:8px;padding:7px 10px;background:var(--bg);border:1px solid var(--bd);' +
+    'border-radius:6px;display:flex;justify-content:space-between;align-items:center;">' +
+    '<span style="font-family:var(--mono);font-size:.62rem;color:var(--mt);">TOTAL ' + parsed.length + ' FLÜGE</span>' +
+    '<span style="font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--gn);">' +
+    totalHours.toFixed(2) + ' Motorstunden</span>' +
+    '</div>';
+
+  el.innerHTML = html;
 }
 
 // ── PWA Install prompt ────────────────────────────────────────────────────
