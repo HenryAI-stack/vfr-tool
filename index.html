@@ -1612,6 +1612,10 @@ function renderFlightData(data) {
 
   function getEvt(f, types) {
     if (!f.events || !Array.isArray(f.events)) return null;
+    // Log all event types once per entry for debugging
+    if (types[0]==='motor_on') {
+      console.log('Events in', f.registration, ':', f.events.map(function(e){return e.type;}).join(', '));
+    }
     for (var ti=0; ti<types.length; ti++) {
       var ev = f.events.find(function(e){ return e.type===types[ti]; });
       if (ev) return ev;
