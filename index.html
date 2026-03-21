@@ -875,7 +875,172 @@ function getPerf(){return{cruise:parseInt(document.getElementById('pCruise').val
 function closestRpt(rpts,airport,target,incoming){var keys=Object.keys(rpts);if(!keys.length)return null;var tb=brng(airport,target),best=null,bs=999;keys.forEach(function(k){var r=rpts[k],rb=brng(airport,r),d=Math.abs(tb-rb);if(d>180)d=360-d;if(incoming)d=Math.abs(180-d);if(d<bs){bs=d;best={name:k,lat:r.lat,lon:r.lon,desc:r.desc};}});return best;}
 function cparam(a,b,p){var dx=b.lon-a.lon,dy=b.lat-a.lat,l=dx*dx+dy*dy;if(!l)return 0;return Math.max(0,Math.min(1,((p.lon-a.lon)*dx+(p.lat-a.lat)*dy)/l));}
 function enrouteCTRs(dep,arr){var r=[];Object.keys(AP).forEach(function(ic){if(ic===dep.icao||ic===arr.icao)return;var ap=AP[ic];if(!ap.rpts||!Object.keys(ap.rpts).length)return;var t=cparam(dep,arr,ap);if(t<=0.05||t>=0.95)return;var cp={lat:dep.lat+(arr.lat-dep.lat)*t,lon:dep.lon+(arr.lon-dep.lon)*t};if(nmDist(cp,ap)<25)r.push(ic);});return r;}
-function computeRoute(dep,arr,rt){var base=[{name:dep.icao,lat:dep.lat,lon:dep.lon,type:'apt',color:'#00ff9f',desc:dep.name||dep.icao},{name:arr.icao,lat:arr.lat,lon:arr.lon,type:'apt',color:'#ff6b35',desc:arr.name||arr.icao}];if(rt==='direct')return base;var route=[base[0]];var dR=AP[dep.icao]&&AP[dep.icao].rpts||{},aR=AP[arr.icao]&&AP[arr.icao].rpts||{};var dE=closestRpt(dR,dep,arr,false);if(dE)route.push({name:dE.name,lat:dE.lat,lon:dE.lon,type:'rpt',color:'#ffd60a',desc:dE.desc,icao:dep.icao});enrouteCTRs(dep,arr).forEach(function(ci){var cAP=AP[ci];if(!cAP||!cAP.rpts)return;var en=closestRpt(cAP.rpts,cAP,dep,true),ex=closestRpt(cAP.rpts,cAP,arr,false);if(en)route.push({name:en.name,lat:en.lat,lon:en.lon,type:'rpt',color:'#a78bfa',desc:en.desc+' ('+ci+' Entry)',icao:ci});if(ex)route.push({name:ex.name,lat:ex.lat,lon:ex.lon,type:'rpt',color:'#a78bfa',desc:ex.desc+' ('+ci+' Exit)',icao:ci});});var aE=closestRpt(aR,arr,dep,true);if(aE)route.push({name:aE.name,lat:aE.lat,lon:aE.lon,type:'rpt',color:'#ffd60a',desc:aE.desc,icao:arr.icao});route.push(base[1]);var mid=route.slice(1,route.length-1);mid.sort(function(a,b){return nmDist(dep,a)-nmDist(dep,b);});var seen={};return[base[0]].concat(mid.filter(function(w){var k=w.lat.toFixed(3)+','+w.lon.toFixed(3);if(seen[k])return false;seen[k]=true;return true;})).concat([base[1]]);}
+// ── Class C Airspace – live from OpenAIP API ─────────────────────────────
+// Fetched on route calculation; cached for the session.
+// OpenAIP: GET https://api.core.openaip.net/api/airspaces
+//   ?icaoClass=2  (Class C = enum 2)
+//   &page=0&limit=100&geometryType=POLYGON
+//   Header: x-openaip-api-key: YOUR_KEY
+// icaoClass enum: 0=A,1=B,2=C,3=D,4=E,5=F,6=G
+// Response: { totalCount, page, items: [{ name, icaoClass, lowerLimit, upperLimit,
+//             geometry: { type:'Polygon', coordinates:[[[lon,lat],...]] } }] }
+
+var _classCCache = null; // session cache
+
+async function fetchClassCZones(bbox) {
+  var key = document.getElementById('aipKey').value.trim() || lsGet('openaip_key');
+  if (!key) {
+    console.log('OpenAIP key not set – using static Class C fallback');
+    return getStaticClassC();
+  }
+  if (_classCCache) return _classCCache;
+
+  try {
+    // Fetch Class C airspaces within bounding box (lat/lon min/max)
+    var url = 'https://api.core.openaip.net/api/airspaces' +
+      '?icaoClass=2' +
+      '&page=0&limit=100' +
+      '&bbox=' + bbox.lonMin.toFixed(2) + ',' + bbox.latMin.toFixed(2) +
+               ',' + bbox.lonMax.toFixed(2) + ',' + bbox.latMax.toFixed(2);
+    var r = await fetch(url, { headers: { 'x-openaip-api-key': key } });
+    if (!r.ok) { console.warn('OpenAIP airspace fetch failed:', r.status); return getStaticClassC(); }
+    var d = await r.json();
+    var zones = [];
+    (d.items || []).forEach(function(item) {
+      if (!item.geometry || !item.geometry.coordinates) return;
+      // Calculate bounding circle from polygon for avoidance
+      var coords = item.geometry.coordinates[0]; // outer ring
+      var latSum=0, lonSum=0, maxR=0;
+      coords.forEach(function(c){ latSum+=c[1]; lonSum+=c[0]; });
+      var cLat = latSum/coords.length, cLon = lonSum/coords.length;
+      coords.forEach(function(c){
+        var dLat=c[1]-cLat, dLon=(c[0]-cLon)*Math.cos(d2r(cLat));
+        var dist=Math.sqrt(dLat*dLat+dLon*dLon);
+        if(dist>maxR) maxR=dist;
+      });
+      // Parse lower limit FL
+      var llFL = 0;
+      if (item.lowerLimit) {
+        var v = item.lowerLimit.value || 0;
+        var u = item.lowerLimit.unit;  // 6=FL, 0=ft MSL
+        llFL = (u===6) ? v : Math.round(v/100);
+      }
+      var ulFL = 195;
+      if (item.upperLimit) {
+        var uv = item.upperLimit.value || 195;
+        var uu = item.upperLimit.unit;
+        ulFL = (uu===6) ? uv : Math.round(uv/100);
+      }
+      zones.push({
+        n:      item.name || 'Class C',
+        icao:   item.icaoClass,
+        lat:    cLat,
+        lon:    cLon,
+        rDeg:   maxR * 1.05,
+        flFrom: llFL,
+        flTo:   ulFL,
+        poly:   coords  // keep full polygon for precise checks
+      });
+    });
+    console.log('OpenAIP: ' + zones.length + ' Class C zones loaded');
+    _classCCache = zones;
+    return zones;
+  } catch(e) {
+    console.warn('OpenAIP Class C fetch error:', e.message);
+    return getStaticClassC();
+  }
+}
+
+// Static fallback (used when no OpenAIP key available)
+function getStaticClassC() {
+  return [
+    {n:'EPWA TMA C', lat:52.165,lon:20.967,rDeg:0.70,flFrom:65,flTo:195},
+    {n:'EPKK TMA C', lat:50.078,lon:19.785,rDeg:0.55,flFrom:65,flTo:195},
+    {n:'EPGD TMA C', lat:54.378,lon:18.467,rDeg:0.45,flFrom:65,flTo:195},
+    {n:'EPWR TMA C', lat:51.103,lon:16.886,rDeg:0.45,flFrom:65,flTo:195},
+    {n:'EPKT TMA C', lat:50.474,lon:19.080,rDeg:0.45,flFrom:65,flTo:195},
+    {n:'LOWW TMA C', lat:48.110,lon:16.570,rDeg:0.70,flFrom:65,flTo:195},
+    {n:'EDDM TMA C', lat:48.354,lon:11.786,rDeg:0.70,flFrom:65,flTo:195},
+    {n:'EDDF TMA C', lat:50.033,lon: 8.571,rDeg:0.75,flFrom:55,flTo:195},
+    {n:'LSZH TMA C', lat:47.465,lon: 8.549,rDeg:0.65,flFrom:65,flTo:195},
+    {n:'LKPR TMA C', lat:50.101,lon:14.260,rDeg:0.60,flFrom:65,flTo:195},
+  ];
+}
+
+// Keep CLASS_C_ZONES as alias for buildZones compatibility
+var CLASS_C_ZONES = getStaticClassC();
+
+function flToFt(fl) { return fl * 100; }
+
+function inClassC(lat, lon, altFt, zones) {
+  var zl = zones || CLASS_C_ZONES;
+  for (var zi=0; zi<zl.length; zi++) {
+    var z = zl[zi];
+    if (altFt < flToFt(z.flFrom)) continue;
+    var dLat = lat - z.lat;
+    var dLon = (lon - z.lon) * Math.cos(d2r(z.lat));
+    if (Math.sqrt(dLat*dLat + dLon*dLon) < z.rDeg) return z;
+  }
+  return null;
+}
+
+function segmentIntersectsClassC(p1, p2, altFt, zones) {
+  var zl = zones || CLASS_C_ZONES;
+  var conflicts = [];
+  for (var zi=0; zi<zl.length; zi++) {
+    var z = zl[zi];
+    if (altFt < flToFt(z.flFrom)) continue;
+    for (var t=0; t<=1; t+=0.1) {
+      var lat = p1.lat + t*(p2.lat-p1.lat);
+      var lon = p1.lon + t*(p2.lon-p1.lon);
+      var dLat = lat - z.lat;
+      var dLon = (lon - z.lon) * Math.cos(d2r(z.lat));
+      if (Math.sqrt(dLat*dLat+dLon*dLon) < z.rDeg) {
+        if (!conflicts.find(function(cf){return cf.n===z.n;})) conflicts.push(z);
+        break;
+      }
+    }
+  }
+  return conflicts;
+}
+
+function avoidanceWaypoints(p1, p2, zone) {
+  var r = zone.rDeg * 1.15;
+  var heading = brng(p1, p2);
+  function offsetPt(bearing) {
+    var rad = d2r(bearing);
+    return { lat: zone.lat + r*Math.cos(rad),
+             lon: zone.lon + r*Math.sin(rad)/Math.cos(d2r(zone.lat)) };
+  }
+  var wp1 = offsetPt((heading+90)%360);
+  var wp2 = offsetPt((heading-90+360)%360);
+  var chosen = (nmDist(p1,wp1)+nmDist(wp1,p2) <= nmDist(p1,wp2)+nmDist(wp2,p2)) ? wp1 : wp2;
+  return [{ name:'AVD-'+zone.n.split(' ')[0], lat:chosen.lat, lon:chosen.lon,
+            type:'wpt', color:'#ff9900', desc:'Class C Umgehung ('+zone.n+')' }];
+}
+
+function applyClassCAvoidance(route, altFt, zones) {
+  if (altFt < flToFt(55)) return route;
+  var zl = zones || CLASS_C_ZONES;
+  var result = [route[0]];
+  for (var i=0; i<route.length-1; i++) {
+    var conflicts = segmentIntersectsClassC(route[i], route[i+1], altFt, zl);
+    conflicts.forEach(function(z) {
+      var wps = avoidanceWaypoints(route[i], route[i+1], z);
+      wps.forEach(function(wp) {
+        if (!result.some(function(r){ return nmDist(r,wp)<5; })) result.push(wp);
+      });
+    });
+    result.push(route[i+1]);
+  }
+  return result;
+}
+
+function computeRoute(dep,arr,rt){var base=[{name:dep.icao,lat:dep.lat,lon:dep.lon,type:'apt',color:'#00ff9f',desc:dep.name||dep.icao},{name:arr.icao,lat:arr.lat,lon:arr.lon,type:'apt',color:'#ff6b35',desc:arr.name||arr.icao}];if(rt==='direct')return base;var route=[base[0]];var dR=AP[dep.icao]&&AP[dep.icao].rpts||{},aR=AP[arr.icao]&&AP[arr.icao].rpts||{};var dE=closestRpt(dR,dep,arr,false);if(dE)route.push({name:dE.name,lat:dE.lat,lon:dE.lon,type:'rpt',color:'#ffd60a',desc:dE.desc,icao:dep.icao});enrouteCTRs(dep,arr).forEach(function(ci){var cAP=AP[ci];if(!cAP||!cAP.rpts)return;var en=closestRpt(cAP.rpts,cAP,dep,true),ex=closestRpt(cAP.rpts,cAP,arr,false);if(en)route.push({name:en.name,lat:en.lat,lon:en.lon,type:'rpt',color:'#a78bfa',desc:en.desc+' ('+ci+' Entry)',icao:ci});if(ex)route.push({name:ex.name,lat:ex.lat,lon:ex.lon,type:'rpt',color:'#a78bfa',desc:ex.desc+' ('+ci+' Exit)',icao:ci});});var aE=closestRpt(aR,arr,dep,true);if(aE)route.push({name:aE.name,lat:aE.lat,lon:aE.lon,type:'rpt',color:'#ffd60a',desc:aE.desc,icao:arr.icao});route.push(base[1]);var mid=route.slice(1,route.length-1);mid.sort(function(a,b){return nmDist(dep,a)-nmDist(dep,b);});var seen={};var sorted=[base[0]].concat(mid.filter(function(w){var k=w.lat.toFixed(3)+','+w.lon.toFixed(3);if(seen[k])return false;seen[k]=true;return true;})).concat([base[1]]);
+// Apply Class C avoidance (uses _classCCache if available, else static)
+var altFt=parseInt(document.getElementById('altI').value)||2000;
+var zones=_classCCache||getStaticClassC();
+return applyClassCAvoidance(sorted,altFt,zones);}
 
 
 // ── CORS Proxy helpers (via Cloudflare Worker) ────────────────────────────
@@ -1148,13 +1313,35 @@ async function fetchNtm(dep, arr) {
 function renderNtm(ntms){var el=document.getElementById('ntC');if(!ntms.length){el.innerHTML='<div class="empty"><div class="ico">✅</div>Keine NOTAMs</div>';return;}var src=[...new Set(ntms.map(function(n){return n.src;}))].join('+');el.innerHTML='<div class="meta">'+ntms.length+' NOTAM(s) · <b>'+src+'</b><br><a href="https://icaonotam.eurocontrol.int" target="_blank">Eurocontrol ↗</a></div><div class="ntm-list">'+ntms.map(function(n){return '<div class="ntm '+(n.crit?'crit':'')+'"><div class="ntmid">'+esc(n.id)+' | '+esc(n.icao)+'</div><div class="ntmtxt">'+esc(n.txt)+'</div><div class="ntmsrc">'+esc(n.src)+'</div></div>';}).join('')+'</div>';}
 
 // ZONES
-function buildZones(dep,arr,alt){var ml=(dep.lat+arr.lat)/2,mn=(dep.lon+arr.lon)/2;return [{n:dep.icao+' CTR',tp:'CTR',col:'#ff6b35',from:'GND',to:'2500ft',active:true,lat:dep.lat,lon:dep.lon,r:.13},{n:arr.icao+' CTR',tp:'CTR',col:'#ff6b35',from:'GND',to:'2500ft',active:true,lat:arr.lat,lon:arr.lon,r:.13},{n:dep.icao+' TMA',tp:'TMA',col:'#ffd60a',from:'1500ft',to:'FL095',active:true,lat:dep.lat+.16,lon:dep.lon+.06,r:.28},{n:arr.icao+' TMA',tp:'TMA',col:'#ffd60a',from:'1500ft',to:'FL095',active:true,lat:arr.lat-.10,lon:arr.lon-.06,r:.26},{n:'Danger Area',tp:'DANGER',col:'#ff3b3b',from:'GND',to:'FL100',active:alt>4500,lat:ml-.08,lon:mn+.20,r:.15},{n:'Class C',tp:'CLASS C',col:'#00d4ff',from:'FL075',to:'FL195',active:alt>7500,lat:ml,lon:mn,r:.40}];}
+function buildZones(dep,arr,alt){
+  var zones=[
+    {n:dep.icao+' CTR',tp:'CTR',col:'#ff6b35',from:'GND',to:'2500ft',active:true,lat:dep.lat,lon:dep.lon,r:.13},
+    {n:arr.icao+' CTR',tp:'CTR',col:'#ff6b35',from:'GND',to:'2500ft',active:true,lat:arr.lat,lon:arr.lon,r:.13},
+    {n:dep.icao+' TMA',tp:'TMA',col:'#ffd60a',from:'1500ft',to:'FL095',active:true,lat:dep.lat+.16,lon:dep.lon+.06,r:.28},
+    {n:arr.icao+' TMA',tp:'TMA',col:'#ffd60a',from:'1500ft',to:'FL095',active:true,lat:arr.lat-.10,lon:arr.lon-.06,r:.26},
+  ];
+  // Add real Class C zones near route
+  var liveZns=_classCCache||CLASS_C_ZONES;
+  liveZns.forEach(function(z){
+    // Only show if within ~100NM of midpoint
+    var mid={lat:(dep.lat+arr.lat)/2,lon:(dep.lon+arr.lon)/2};
+    var dLat=z.lat-mid.lat, dLon=(z.lon-mid.lon)*Math.cos(d2r(mid.lat));
+    var distDeg=Math.sqrt(dLat*dLat+dLon*dLon);
+    if(distDeg<1.8){
+      var active=alt>=flToFt(z.flFrom);
+      zones.push({n:z.n,tp:'CLASS C',col:'#00d4ff',from:'FL'+z.flFrom,to:'FL'+z.flTo,active:active,lat:z.lat,lon:z.lon,r:z.rDeg});
+    }
+  });
+  return zones;
+}
 function renderZones(zones){document.getElementById('znC').innerHTML='<div class="meta">Routennahe Zonen · <a href="https://www.openaip.net" target="_blank">OpenAIP ↗</a></div><div class="zn-list">'+zones.map(function(z){return '<div class="zn"><div class="zndot" style="background:'+z.col+';box-shadow:0 0 4px '+z.col+'99;"></div><div style="flex:1"><div class="znnm">'+esc(z.n)+'</div><div class="zntp">'+esc(z.tp)+'</div></div><div class="znalt">'+esc(z.from)+'<br>'+esc(z.to)+'</div><div style="font-size:.6rem;font-family:var(--mono);color:'+(z.active?'var(--rd)':'var(--gn)')+'">'+(z.active?'●AKTIV':'○')+'</div></div>';}).join('')+'</div>';}
 function drawZones(zones){zps.forEach(function(p){map.removeLayer(p);});zps=[];zones.forEach(function(z){var c=L.circle([z.lat,z.lon],{radius:z.r*111000,color:z.col,fillColor:z.col,fillOpacity:.06,weight:1.5,dashArray:['DANGER','CTR'].indexOf(z.tp)>=0?'5,4':undefined}).addTo(map).bindPopup('<b>'+z.n+'</b><br>'+z.tp+'<br>'+z.from+' – '+z.to);zps.push(c);});}
 
 // ROUTE DETAILS
 function renderRouteDetails(route,perf){
   var rType=document.getElementById('routeType').value;
+  var altFtNow=parseInt(document.getElementById('altI').value)||2000;
+  var classCWarn=altFtNow>=5500?'<span style="font-family:var(--mono);font-size:.6rem;color:#ff9900;">⚠️ Klasse C Vermeidung aktiv ('+altFtNow+'ft)</span>':'';
   var hasRpts=route.some(function(w){return w.type==='rpt';});
   var html='<div class="drag-hint">'+(routeLocked?'🔒 Gesperrt':'🖱️ Drag · ✕ löschen · ➕ hinzufügen')+'</div>'+
     '<div class="meta">'+( rType==='rpt'?'Via Reporting Points':'Direkt')+' · '+route.filter(function(w){return w.type==='rpt';}).length+' VRP(s)</div><div class="wpt-list">';
@@ -1179,6 +1366,7 @@ function renderRouteDetails(route,perf){
     }
   });
   var el=document.getElementById('rdC');
+  if(classCWarn)html=classCWarn+html;
   el.innerHTML=html+'</div>';
   el.querySelectorAll('.wpt-del[data-idx]').forEach(function(btn){
     btn.addEventListener('click',function(){deleteWaypoint(parseInt(this.dataset.idx));});
@@ -1226,6 +1414,7 @@ var mkD=L.divIcon({html:'<div style="width:15px;height:15px;background:#00ff9f;b
 var mkA=L.divIcon({html:'<div style="width:15px;height:15px;background:#ff6b35;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 5px #000b;"></div>',iconSize:[15,15],iconAnchor:[7,15],className:''});
 var mkR=L.divIcon({html:'<div style="width:12px;height:12px;background:#ffd60a;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px #000b;"></div>',iconSize:[12,12],iconAnchor:[6,6],className:''});
 var mkW=L.divIcon({html:'<div style="width:10px;height:10px;background:#a78bfa;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px #000b;"></div>',iconSize:[10,10],iconAnchor:[5,5],className:''});
+var mkAVD=L.divIcon({html:'<div style="width:12px;height:12px;background:#ff9900;border:2px solid #fff;border-radius:3px;box-shadow:0 1px 4px #000b;transform:rotate(45deg);"></div>',iconSize:[12,12],iconAnchor:[6,6],className:''});
 
 function redrawLine(){if(rln){map.removeLayer(rln);rln=null;}if(!PS.route||PS.route.length<2)return;rln=L.polyline(PS.route.map(function(w){return[w.lat,w.lon];}),{color:'#00d4ff',weight:2.5,dashArray:'8,5',opacity:.85}).addTo(map);}
 function drawRoute(route){
@@ -1234,7 +1423,7 @@ function drawRoute(route){
   PS.route=route.map(function(w){return Object.assign({},w);});
   redrawLine();
   route.forEach(function(w,i){
-    var icon=i===0?mkD:(i===route.length-1?mkA:(w.type==='rpt'?mkR:mkW));
+    var icon=i===0?mkD:(i===route.length-1?mkA:(w.type==='rpt'?mkR:(w.desc&&w.desc.indexOf('Class C')>=0?mkAVD:mkW)));
     var draggable=i>0&&i<route.length-1&&!routeLocked;
     var mk=L.marker([w.lat,w.lon],{icon:icon,draggable:draggable}).addTo(map)
       .bindPopup('<b>'+w.name+'</b>'+(w.type==='rpt'?' <span style="color:#ffd60a">▲ VRP</span>':'')+'<br>'+(w.desc||''));
@@ -1326,6 +1515,9 @@ async function loadRoute(id){
     var ap=aAP?{lat:aAP.lat,lon:aAP.lon,name:aAP.n,rpts:aAP.rpts,freq:aAP.freq}:await geo(r.arr);
     dp.icao=r.dep;ap.icao=r.arr;PS.dep=dp;PS.arr=ap;
     var perf=getPerf();
+    var bbox2={latMin:Math.min(dp.lat,ap.lat)-1.5,latMax:Math.max(dp.lat,ap.lat)+1.5,
+               lonMin:Math.min(dp.lon,ap.lon)-1.5,lonMax:Math.max(dp.lon,ap.lon)+1.5};
+    CLASS_C_ZONES=await fetchClassCZones(bbox2);
     var route=r.waypoints&&r.waypoints.length>=2?r.waypoints.map(function(w){return{name:w.name,lat:w.lat,lon:w.lon,type:w.type||'wpt',color:w.color||(w.type==='apt'?(w.name===r.dep?'#00ff9f':'#ff6b35'):w.type==='rpt'?'#ffd60a':'#a78bfa'),desc:w.desc||'',icao:w.icao||''};}):computeRoute(dp,ap,r.rType||'rpt');
     drawRoute(route);renderRouteDetails(route,perf);opn('sRD');
     showOv('Hole aktuelle METAR/TAF...');
@@ -1379,7 +1571,7 @@ async function geo(icao){
 }
 
 // RESET
-function resetAll(){
+function resetAll(){_classCCache=null;
   document.getElementById('depI').value='';document.getElementById('arrI').value='';
   if(dmk)map.removeLayer(dmk);if(amk)map.removeLayer(amk);if(rln)map.removeLayer(rln);dmk=amk=rln=null;
   wptMks.forEach(function(m){map.removeLayer(m);});wptMks=[];zps.forEach(function(p){map.removeLayer(p);});zps=[];
@@ -1405,6 +1597,11 @@ async function plan(){
     var dp=dAP?{lat:dAP.lat,lon:dAP.lon,name:dAP.n,rpts:dAP.rpts,freq:dAP.freq}:await geo(dep);
     var ap=aAP?{lat:aAP.lat,lon:aAP.lon,name:aAP.n,rpts:aAP.rpts,freq:aAP.freq}:await geo(arr);
     dp.icao=dep;ap.icao=arr;PS.dep=dp;PS.arr=ap;
+    showOv('Lade Luftraumzonen (OpenAIP)...');
+    var bbox={latMin:Math.min(dp.lat,ap.lat)-1.5,latMax:Math.max(dp.lat,ap.lat)+1.5,
+              lonMin:Math.min(dp.lon,ap.lon)-1.5,lonMax:Math.max(dp.lon,ap.lon)+1.5};
+    var liveZones=await fetchClassCZones(bbox);
+    CLASS_C_ZONES=liveZones;
     showOv('Berechne Route...');var route=computeRoute(dp,ap,rt);var perf=getPerf();
     drawRoute(route);renderRouteDetails(route,perf);opn('sRD');
     showOv('Hole METAR/TAF...');
