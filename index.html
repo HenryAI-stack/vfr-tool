@@ -1653,51 +1653,71 @@ function renderFlightData(data) {
   var totalHours = 0;
   parsed.forEach(function(p){ totalHours += parseFloat(p.hours)||0; });
 
+  // Export function – builds CSV
+  window._exportFlightData = function() {
+    var rows = [['Datum','Kennzeichen','Abflug','Ziel','Motor AN','Takeoff','Motor AUS','Motorzeit (h)','Notiz']];
+    parsed.forEach(function(p) {
+      rows.push([
+        p.dateStr, p.aircraft, p.dep, p.arr,
+        p.tsStart, p.tsTakeoff, p.tsStop,
+        p.hours || '0',
+        p.note.replace(/,/g,' ')
+      ]);
+    });
+    var csv = rows.map(function(r){ return r.join(','); }).join('\n');
+    var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url;
+    a.download = 'flugdaten_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('CSV exportiert ✓','ok');
+  };
+
   var syncStr = '<span style="font-family:var(--mono);font-size:.58rem;color:var(--gn);">☁️ Drive Sync aktiv</span>';
 
-  var html = '<div style="margin-bottom:8px;">' + syncStr + '</div>' +
+  var html =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+      syncStr +
+      '<button onclick="window._exportFlightData()" ' +
+        'style="font-family:var(--mono);font-size:.62rem;background:transparent;' +
+        'border:1px solid var(--bd);color:var(--mt);padding:3px 9px;border-radius:4px;' +
+        'cursor:pointer;transition:all .2s;" ' +
+        'onmouseover="this.style.borderColor=\'var(--ac)\';this.style.color=\'var(--ac)\'" ' +
+        'onmouseout="this.style.borderColor=\'var(--bd)\';this.style.color=\'var(--mt)\'">' +
+        '↓ CSV Export' +
+      '</button>' +
+    '</div>' +
     '<div class="route-list">';
 
   parsed.forEach(function(p) {
-    // Build tags
     var tags = '';
     if (p.hours)     tags += '<span class="route-tag hi">' + esc(p.hours) + ' h</span>';
-    if (p.tsStart)   tags += '<span class="route-tag">AN ' + esc(p.tsStart) + '</span>';
-    if (p.tsTakeoff) tags += '<span class="route-tag">TO ' + esc(p.tsTakeoff) + '</span>';
-    if (p.tsStop)    tags += '<span class="route-tag">AUS ' + esc(p.tsStop) + '</span>';
+    if (p.tsStart)   tags += '<span class="route-tag">AN&nbsp;' + esc(p.tsStart) + '</span>';
+    if (p.tsTakeoff) tags += '<span class="route-tag" style="color:var(--yw);">TO&nbsp;' + esc(p.tsTakeoff) + '</span>';
+    if (p.tsStop)    tags += '<span class="route-tag">AUS&nbsp;' + esc(p.tsStop) + '</span>';
 
     html +=
       '<div class="route-item">' +
-        // Header: DEP → ARR  +  date
         '<div class="route-item-head">' +
           '<span class="route-icao">' + esc(p.dep||'–') + '</span>' +
           '<span class="route-arrow">→</span>' +
           '<span class="route-icao">' + esc(p.arr||'–') + '</span>' +
           '<span class="route-date">' + esc(p.dateStr) + '</span>' +
         '</div>' +
-        // Tags row: hours, Motor AN, Takeoff, Motor AUS
         '<div class="route-meta">' +
           '<span class="route-tag" style="color:var(--ac);">' + esc(p.aircraft) + '</span>' +
           tags +
         '</div>' +
-        // Note
         (p.note ?
-          '<div style="font-family:var(--mono);font-size:.62rem;color:var(--mt);margin-bottom:5px;">' +
+          '<div style="font-family:var(--mono);font-size:.62rem;color:var(--mt);margin-bottom:2px;">' +
           '📝 ' + esc(p.note.substring(0,80)) + '</div>'
         : '') +
       '</div>';
   });
 
-  // Total summary line
-  html += '</div>' +
-    '<div style="margin-top:8px;padding:7px 10px;background:var(--bg);border:1px solid var(--bd);' +
-    'border-radius:6px;display:flex;justify-content:space-between;align-items:center;">' +
-    '<span style="font-family:var(--mono);font-size:.62rem;color:var(--mt);">TOTAL ' + parsed.length + ' FLÜGE</span>' +
-    '<span style="font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--gn);">' +
-    totalHours.toFixed(2) + ' Motorstunden</span>' +
-    '</div>';
-
-  el.innerHTML = html;
+  el.innerHTML = html + '</div>';
 }
 
 // ── PWA Install prompt ────────────────────────────────────────────────────
