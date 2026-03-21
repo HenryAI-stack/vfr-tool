@@ -1583,7 +1583,6 @@ async function loadFlightData() {
         );
         if (!r2.ok) continue;
         var data = await r2.json();
-        console.log('Enginetime file:', etFiles[ei].name, JSON.stringify(data).substring(0,300));
         if (Array.isArray(data)) {
           allFlights = allFlights.concat(data);
         } else if (data && typeof data === 'object') {
@@ -1605,7 +1604,6 @@ function renderFlightData(data) {
   var el = document.getElementById('flugdatenContent');
   if (!el) return;
 
-  // Normalize – enginetime v2: array of single-entry objects
   var flights = Array.isArray(data) ? data :
     (data.flights || data.entries || [data]);
 
@@ -1614,119 +1612,93 @@ function renderFlightData(data) {
     return;
   }
 
-  // ── Helper: parse enginetime v2 events array ─────────────────────────
-  // events: [{type:'engineStart',timestamp:'...'}, {type:'takeoff',...}, {type:'engineStop',...}]
-  function getEvent(f, type) {
+  // ── enginetime v2 helpers ─────────────────────────────────────────────
+  // Event types: "motor_on", "takeoff"/"start", "motor_off"/"landing"
+  function getEvt(f, types) {
     if (!f.events || !Array.isArray(f.events)) return null;
-    var ev = f.events.find(function(e) { return e.type === type || e.name === type; });
-    return ev ? (ev.timestamp || ev.time || ev.ts || null) : null;
-  }
-  function parseEntry(f) {
-    var engineStart = getEvent(f,'engineStart') || f.engineStart || null;
-    var takeoff     = getEvent(f,'takeoff')     || f.takeoff     || null;
-    var engineStop  = getEvent(f,'engineStop')  || f.engineStop  || null;
-
-    // Date: prefer savedAt or engineStart
-    var dateRaw = f.savedAt || f.date || f.datum || engineStart || '';
-    var dateStr = '–';
-    try {
-      var d = new Date(dateRaw);
-      if (!isNaN(d)) dateStr = d.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit',year:'numeric'});
-    } catch(e) {}
-
-    // Aircraft registration
-    var aircraft = f.registration || f.kennzeichen || f.aircraft || f.reg || '–';
-
-    // Route from note or fields
-    var dep = f.departure || f.abflug || f.from || f.dep || '';
-    var arr = f.arrival   || f.ziel   || f.to   || f.arr || '';
-    // v2 stores route in note like "EPMO → EpRA"
-    if (!dep && f.note) {
-      var m = f.note.match(/([A-Z]{4})\s*[→\-]\s*([A-Za-z]{4})/i);
-      if (m) { dep = m[1].toUpperCase(); arr = m[2].toUpperCase(); }
+    for (var ti=0; ti<types.length; ti++) {
+      var ev = f.events.find(function(e){ return e.type===types[ti]; });
+      if (ev) return ev;
     }
+    return null;
+  }
 
-    // Engine hours from events timestamps
-    var hours = f.hours || f.motorHours || f.engineHours || '';
-    if (!hours && engineStart && engineStop) {
+  function parseEntry(f) {
+    var evStart   = getEvt(f, ['motor_on',  'engine_start', 'engineStart', 'start']);
+    var evTakeoff = getEvt(f, ['takeoff',   'take_off',     'airborne']);
+    var evStop    = getEvt(f, ['motor_off', 'engine_stop',  'engineStop',  'landing', 'stop']);
+
+    // Date from event lDate or savedAt
+    var dateStr = (evStart && evStart.lDate) ||
+      (f.savedAt ? new Date(f.savedAt).toLocaleDateString('de-AT',
+        {day:'2-digit',month:'2-digit',year:'numeric'}) : '–');
+
+    // Times – prefer local time (lTime) from event
+    var tsStart   = evStart   ? (evStart.lTime   || evStart.uTime   || '') : '';
+    var tsTakeoff = evTakeoff ? (evTakeoff.lTime  || evTakeoff.uTime || '') : '';
+    var tsStop    = evStop    ? (evStop.lTime     || evStop.uTime    || '') : '';
+
+    // Engine hours: motor_on → motor_off
+    var hours = '';
+    if (evStart && evStop && evStart.iso && evStop.iso) {
       try {
-        var ms = new Date(engineStop) - new Date(engineStart);
+        var ms = new Date(evStop.iso) - new Date(evStart.iso);
         if (ms > 0) hours = (ms / 3600000).toFixed(2);
       } catch(e) {}
     }
 
-    // Format timestamps to HH:MM
-    function fmtTime(ts) {
-      if (!ts) return '';
-      try {
-        var d = new Date(ts);
-        if (isNaN(d)) return '';
-        return d.toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});
-      } catch(e) { return ''; }
-    }
-
     return {
       dateStr:   dateStr,
-      aircraft:  aircraft,
-      dep:       dep,
-      arr:       arr,
+      aircraft:  f.registration || f.kennzeichen || '–',
+      dep:       (f.departure   || '').toUpperCase(),
+      arr:       (f.destination || f.arrival || '').toUpperCase(),
       hours:     hours,
-      landings:  f.landings || f.ldg || '',
-      note:      f.note || f.notes || f.notizen || f.remarks || '',
-      tsStart:   fmtTime(engineStart),
-      tsTakeoff: fmtTime(takeoff),
-      tsStop:    fmtTime(engineStop),
+      note:      f.note || '',
+      tsStart:   tsStart,
+      tsTakeoff: tsTakeoff,
+      tsStop:    tsStop,
       raw:       f
     };
   }
 
-  // Parse all entries
   var parsed = flights.map(parseEntry);
 
-  // Sort by date descending
-  parsed.sort(function(a,b) {
-    var da = new Date(a.raw.savedAt || a.raw.date || 0);
-    var db = new Date(b.raw.savedAt || b.raw.date || 0);
-    return db - da;
+  // Sort newest first by savedAt
+  parsed.sort(function(a,b){
+    return new Date(b.raw.savedAt||0) - new Date(a.raw.savedAt||0);
   });
 
   // Totals
   var totalHours=0, totalLandings=0;
-  parsed.forEach(function(p) {
-    totalHours    += parseFloat(p.hours)   || 0;
-    totalLandings += parseInt(p.landings)  || 0;
+  parsed.forEach(function(p){
+    totalHours += parseFloat(p.hours) || 0;
+    totalLandings += parseInt(p.raw.landings||0);
   });
 
-  var syncStr = '<div class="fd-sync" style="color:var(--gn);">☁️ Drive · ' +
-    parsed.length + ' Flüge geladen</div>';
-
-  var stats = '<div class="fd-stats">' +
+  var html = '<div class="fd-sync" style="color:var(--gn);">☁️ Drive · ' +
+    parsed.length + ' Flüge geladen</div>' +
+    '<div class="fd-stats">' +
     '<div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:2px;text-transform:uppercase;">Gesamt</div>' +
     '<div class="fd-stats-grid">' +
     '<div class="fd-stat"><div class="fd-stat-val">' + parsed.length + '</div><div class="fd-stat-lbl">Flüge</div></div>' +
     '<div class="fd-stat"><div class="fd-stat-val">' + totalHours.toFixed(1) + '</div><div class="fd-stat-lbl">Motorstd.</div></div>' +
     '<div class="fd-stat"><div class="fd-stat-val">' + totalLandings + '</div><div class="fd-stat-lbl">Ldg</div></div>' +
-    '</div></div>';
-
-  var html = syncStr + stats + '<div class="fd-list">';
+    '</div></div><div class="fd-list">';
 
   parsed.forEach(function(p) {
-    var route = (p.dep && p.arr) ? (p.dep + ' → ' + p.arr) : (p.dep || p.arr || '');
+    var route = p.dep + (p.arr ? ' → '+p.arr : '');
     html += '<div class="fd-item">' +
       '<div class="fd-head">' +
         '<span class="fd-date">' + esc(p.dateStr) + '</span>' +
         '<span class="fd-ac">' + esc(p.aircraft) + '</span>' +
       '</div>' +
       '<div class="fd-grid">';
-
     if (route)       html += '<div class="fd-field" style="grid-column:1/-1"><span class="fd-lbl">Route</span><span class="fd-val hi">' + esc(route) + '</span></div>';
-    if (p.hours)     html += '<div class="fd-field"><span class="fd-lbl">Motorstunden</span><span class="fd-val hi">' + esc(String(p.hours)) + ' h</span></div>';
-    if (p.landings)  html += '<div class="fd-field"><span class="fd-lbl">Landungen</span><span class="fd-val">' + esc(String(p.landings)) + '</span></div>';
     if (p.tsStart)   html += '<div class="fd-field"><span class="fd-lbl">Motor AN</span><span class="fd-val">' + esc(p.tsStart) + '</span></div>';
     if (p.tsTakeoff) html += '<div class="fd-field"><span class="fd-lbl">Takeoff</span><span class="fd-val">' + esc(p.tsTakeoff) + '</span></div>';
     if (p.tsStop)    html += '<div class="fd-field"><span class="fd-lbl">Motor AUS</span><span class="fd-val">' + esc(p.tsStop) + '</span></div>';
-    if (p.note)      html += '<div class="fd-field" style="grid-column:1/-1"><span class="fd-lbl">Notiz</span><span class="fd-val" style="color:var(--mt);">' + esc(String(p.note).substring(0,120)) + '</span></div>';
-
+    if (p.hours)     html += '<div class="fd-field"><span class="fd-lbl">Motorzeit</span><span class="fd-val hi">' + esc(p.hours) + ' h</span></div>';
+    if (p.note)      html += '<div class="fd-field" style="grid-column:1/-1"><span class="fd-lbl">Notiz</span><span class="fd-val" style="color:var(--mt);">' + esc(p.note.substring(0,120)) + '</span></div>';
     html += '</div></div>';
   });
 
