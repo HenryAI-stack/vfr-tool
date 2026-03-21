@@ -1583,11 +1583,10 @@ async function loadFlightData() {
         );
         if (!r2.ok) continue;
         var data = await r2.json();
-        // Each enginelog file may be a single entry object or an array
+        console.log('Enginetime file:', etFiles[ei].name, JSON.stringify(data).substring(0,300));
         if (Array.isArray(data)) {
           allFlights = allFlights.concat(data);
         } else if (data && typeof data === 'object') {
-          // Single flight log entry – push directly
           allFlights.push(data);
         }
       } catch(e) { console.warn('Error loading', etFiles[ei].name, e); }
