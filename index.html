@@ -264,6 +264,10 @@ header small{font-size:.6rem;color:var(--mt);letter-spacing:1px;text-transform:u
 .rbtn-edit:hover{background:rgba(255,214,10,.2);}
 .rbtn-del{background:rgba(255,59,59,.1);color:var(--rd);border:1px solid rgba(255,59,59,.3);}
 .rbtn-del:hover{background:rgba(255,59,59,.2);}
+.rbtn-gpx{background:rgba(0,255,159,.1);color:var(--gn);border:1px solid rgba(0,255,159,.3);}
+.rbtn-gpx:hover{background:rgba(0,255,159,.2);}
+.rbtn-kml{background:rgba(167,139,250,.1);color:#a78bfa;border:1px solid rgba(167,139,250,.3);}
+.rbtn-kml:hover{background:rgba(167,139,250,.2);}
 
 /* MODALS */
 .modal-bg{display:none;position:fixed;inset:0;z-index:8500;background:rgba(10,14,23,.85);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
@@ -1622,10 +1626,11 @@ async function renderSavedRoutes(){
       '<div class="route-meta"><span class="route-tag hi">'+esc(String(r.alt||''))+'ft</span><span class="route-tag">'+esc(String(r.cruise||''))+'kt</span><span class="route-tag">'+esc(r.reg||'')+'</span>'+(r.waypoints?'<span class="route-tag">'+r.waypoints.length+' WPTs</span>':'')+(r.notes?'<span class="route-tag" style="color:var(--yw);">'+esc(r.notes)+'</span>':'')+'</div>'+
       (r.name&&r.name!==r.dep+' → '+r.arr?'<div style="font-family:var(--mono);font-size:.62rem;color:var(--ac);margin-bottom:5px;">'+esc(r.name)+'</div>':'')+
       '<div class="route-btns"><button class="rbtn rbtn-load" data-act="load" data-id="'+r.id+'">▶ Laden</button><button class="rbtn rbtn-edit" data-act="edit" data-id="'+r.id+'">✏️ Bearb.</button><button class="rbtn rbtn-del" data-act="del" data-id="'+r.id+'">🗑️ Löschen</button></div>'+
+      '<div class="route-btns" style="margin-top:5px;"><button class="rbtn rbtn-gpx" data-act="gpx" data-id="'+r.id+'">↓ GPX</button><button class="rbtn rbtn-kml" data-act="kml" data-id="'+r.id+'">↓ KML</button></div>'+
       '</div>';
   });
   el.innerHTML=html+'</div>';
-  el.querySelectorAll('.rbtn[data-act]').forEach(function(btn){btn.addEventListener('click',function(){var act=this.dataset.act,id=this.dataset.id;if(act==='load')loadRoute(id);else if(act==='edit')openRouteModal(id);else if(act==='del')deleteRoute(id);});});
+  el.querySelectorAll('.rbtn[data-act]').forEach(function(btn){btn.addEventListener('click',function(){var act=this.dataset.act,id=this.dataset.id;if(act==='load')loadRoute(id);else if(act==='edit')openRouteModal(id);else if(act==='del')deleteRoute(id);else if(act==='gpx')exportRouteGpx(id);else if(act==='kml')exportRouteKml(id);});});
 }
 
 // GEOCODE
@@ -1641,6 +1646,106 @@ async function geo(icao){
 }
 
 // RESET
+
+// ── Route Export: GPX + KML ───────────────────────────────────────────────
+function getRouteById(id) {
+  var routes = loadRoutesSync();
+  return routes.find(function(r){ return r.id===id; }) || null;
+}
+
+function exportRouteGpx(id) {
+  var r = getRouteById(id);
+  if (!r || !r.waypoints || !r.waypoints.length) { toast('Route nicht gefunden','err'); return; }
+  var name = esc(r.name || (r.dep+' - '+r.arr));
+  var now  = new Date().toISOString();
+  var trkpts = r.waypoints.map(function(w) {
+    return '    <trkpt lat="'+w.lat.toFixed(6)+'" lon="'+w.lon.toFixed(6)+'">\n'+
+           '      <ele>'+(r.alt ? Math.round(r.alt*0.3048) : 0)+'</ele>\n'+
+           '      <name>'+esc(w.name)+'</name>\n'+
+           '      <desc>'+esc(w.desc||w.type||'')+'</desc>\n'+
+           '    </trkpt>';
+  }).join('\n');
+  var wpts = r.waypoints.map(function(w) {
+    return '  <wpt lat="'+w.lat.toFixed(6)+'" lon="'+w.lon.toFixed(6)+'">\n'+
+           '    <name>'+esc(w.name)+'</name>\n'+
+           '    <desc>'+esc(w.desc||w.type||'')+'</desc>\n'+
+           '    <sym>'+(w.type==='apt'?'Airport':'Waypoint')+'</sym>\n'+
+           '  </wpt>';
+  }).join('\n');
+  var gpx =
+    '<?xml version="1.0" encoding="UTF-8"?>\n'+
+    '<gpx version="1.1" creator="VFR FlightPlan"\n'+
+    '  xmlns="http://www.topografix.com/GPX/1/1"\n'+
+    '  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n'+
+    '  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">\n'+
+    '  <metadata>\n'+
+    '    <name>'+name+'</name>\n'+
+    '    <desc>VFR Route '+esc(r.dep)+' - '+esc(r.arr)+'  Alt: '+r.alt+'ft  Cruise: '+r.cruise+'kt</desc>\n'+
+    '    <time>'+now+'</time>\n'+
+    '  </metadata>\n'+
+    wpts+'\n'+
+    '  <trk>\n'+
+    '    <name>'+name+'</name>\n'+
+    '    <trkseg>\n'+trkpts+'\n'+
+    '    </trkseg>\n'+
+    '  </trk>\n'+
+    '</gpx>';
+  downloadFile(gpx, 'vfr_'+(r.dep+'_'+r.arr).toLowerCase()+'.gpx', 'application/gpx+xml');
+  toast('GPX exportiert ✓','ok');
+}
+
+function exportRouteKml(id) {
+  var r = getRouteById(id);
+  if (!r || !r.waypoints || !r.waypoints.length) { toast('Route nicht gefunden','err'); return; }
+  var name = esc(r.name || (r.dep+' - '+r.arr));
+  var altM = r.alt ? Math.round(r.alt * 0.3048) : 0;
+  // Placemarks for each waypoint
+  var marks = r.waypoints.map(function(w) {
+    var color = w.type==='apt' ? 'ff00ff9f' : w.type==='rpt' ? 'ff0ad4ff' : 'ff9900ff';
+    return '    <Placemark>\n'+
+           '      <name>'+esc(w.name)+'</name>\n'+
+           '      <description>'+esc(w.desc||w.type||'')+'</description>\n'+
+           '      <Style><IconStyle><color>'+color+'</color></IconStyle></Style>\n'+
+           '      <Point><coordinates>'+w.lon.toFixed(6)+','+w.lat.toFixed(6)+','+altM+'</coordinates></Point>\n'+
+           '    </Placemark>';
+  }).join('\n');
+  // LineString for the route
+  var coords = r.waypoints.map(function(w){
+    return w.lon.toFixed(6)+','+w.lat.toFixed(6)+','+altM;
+  }).join(' ');
+  var kml =
+    '<?xml version="1.0" encoding="UTF-8"?>\n'+
+    '<kml xmlns="http://www.opengis.net/kml/2.2">\n'+
+    '<Document>\n'+
+    '  <name>'+name+'</name>\n'+
+    '  <description>VFR Route '+esc(r.dep)+' → '+esc(r.arr)+'  Alt: '+r.alt+'ft  Reg: '+esc(r.reg||'')+'</description>\n'+
+    '  <Style id="routeLine">\n'+
+    '    <LineStyle><color>ff00d4ff</color><width>3</width></LineStyle>\n'+
+    '    <PolyStyle><fill>0</fill></PolyStyle>\n'+
+    '  </Style>\n'+
+    marks+'\n'+
+    '  <Placemark>\n'+
+    '    <name>Route '+esc(r.dep)+' → '+esc(r.arr)+'</name>\n'+
+    '    <styleUrl>#routeLine</styleUrl>\n'+
+    '    <LineString>\n'+
+    '      <altitudeMode>absolute</altitudeMode>\n'+
+    '      <coordinates>'+coords+'</coordinates>\n'+
+    '    </LineString>\n'+
+    '  </Placemark>\n'+
+    '</Document>\n'+
+    '</kml>';
+  downloadFile(kml, 'vfr_'+(r.dep+'_'+r.arr).toLowerCase()+'.kml', 'application/vnd.google-earth.kml+xml');
+  toast('KML exportiert ✓','ok');
+}
+
+function downloadFile(content, filename, mimeType) {
+  var blob = new Blob([content], {type: mimeType+';charset=utf-8;'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
 function resetAll(){_classCCache=null;
   document.getElementById('depI').value='';document.getElementById('arrI').value='';
   if(dmk)map.removeLayer(dmk);if(amk)map.removeLayer(amk);if(rln)map.removeLayer(rln);dmk=amk=rln=null;
