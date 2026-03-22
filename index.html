@@ -1159,7 +1159,12 @@ async function corsGet(targetUrl, extraHeaders){
 
 // WEATHER
 var NO_METAR=['EPBC','EPNC','EPLB','EPOL','EPZG','EPKP','EPMM','EPPG','EPKS','EPCN','EPDE','EPOK','EPST','EPHY','EPGM','EPKN','EPLK'];
-function wxIcao(icao){return NO_METAR.indexOf(icao)>=0?'EPWA':icao;}
+// Specific fallback mappings: if no METAR for X, use Y instead
+var WX_FALLBACK={'EPRP':'EPRA'};
+function wxIcao(icao){
+  if(WX_FALLBACK[icao]) return WX_FALLBACK[icao];
+  return NO_METAR.indexOf(icao)>=0?'EPWA':icao;
+}
 async function fetchWx(icao){
   var dispIcao=wxIcao(icao);
   var key=document.getElementById('cwxKey').value.trim()||lsGet('checkwx_key');
