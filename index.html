@@ -580,6 +580,67 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
   </div>
 </div>
 
+<div class="modal-bg" id="flightModal">
+  <div class="modal-box" style="width:420px;max-width:95vw;">
+    <div class="modal-title" id="fmTitle">Flugdetails</div>
+    <!-- Route header -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <span id="fmDep" style="font-family:var(--mono);font-size:1rem;font-weight:700;
+        color:var(--ac);background:rgba(0,212,255,.1);padding:3px 10px;border-radius:4px;letter-spacing:2px;"></span>
+      <span style="color:var(--mt);font-size:1.1rem;">→</span>
+      <span id="fmArr" style="font-family:var(--mono);font-size:1rem;font-weight:700;
+        color:var(--ac);background:rgba(0,212,255,.1);padding:3px 10px;border-radius:4px;letter-spacing:2px;"></span>
+      <span id="fmDate" style="font-family:var(--mono);font-size:.68rem;color:var(--mt);margin-left:auto;"></span>
+    </div>
+    <!-- Time grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div style="background:rgba(0,255,159,.08);border:1px solid rgba(0,255,159,.25);
+        border-radius:7px;padding:10px;text-align:center;">
+        <div style="font-family:var(--mono);font-size:.55rem;color:var(--gn);text-transform:uppercase;
+          letter-spacing:1px;margin-bottom:4px;">Engine ON</div>
+        <div id="fmOn" style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--tx);"></div>
+      </div>
+      <div style="background:rgba(255,214,10,.08);border:1px solid rgba(255,214,10,.25);
+        border-radius:7px;padding:10px;text-align:center;">
+        <div style="font-family:var(--mono);font-size:.55rem;color:var(--yw);text-transform:uppercase;
+          letter-spacing:1px;margin-bottom:4px;">Takeoff</div>
+        <div id="fmTo" style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--tx);"></div>
+      </div>
+      <div style="background:rgba(255,59,59,.08);border:1px solid rgba(255,59,59,.25);
+        border-radius:7px;padding:10px;text-align:center;">
+        <div style="font-family:var(--mono);font-size:.55rem;color:var(--rd);text-transform:uppercase;
+          letter-spacing:1px;margin-bottom:4px;">Engine OFF</div>
+        <div id="fmOff" style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--tx);"></div>
+      </div>
+    </div>
+    <!-- Engine time + aircraft -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div style="background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:10px;">
+        <div style="font-family:var(--mono);font-size:.55rem;color:var(--mt);text-transform:uppercase;
+          letter-spacing:1px;margin-bottom:4px;">Motorzeit</div>
+        <div id="fmHours" style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--gn);"></div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:10px;">
+        <div style="font-family:var(--mono);font-size:.55rem;color:var(--mt);text-transform:uppercase;
+          letter-spacing:1px;margin-bottom:4px;">Kennzeichen</div>
+        <div id="fmAc" style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--ac);"></div>
+      </div>
+    </div>
+    <!-- Note -->
+    <div id="fmNoteWrap" style="display:none;padding:8px 10px;background:rgba(0,0,0,.2);
+      border-radius:6px;border-left:3px solid var(--bd);margin-bottom:12px;">
+      <div style="font-family:var(--mono);font-size:.55rem;color:var(--mt);text-transform:uppercase;
+        letter-spacing:1px;margin-bottom:3px;">Notiz</div>
+      <div id="fmNote" style="font-size:.78rem;color:var(--tx);line-height:1.5;"></div>
+    </div>
+    <div style="font-family:var(--mono);font-size:.56rem;color:var(--mt);margin-bottom:12px;">
+      ⏰ Alle Zeiten in Lokalzeit</div>
+    <div class="modal-btns">
+      <button class="btn bs" onclick="closeFlightModal()" style="font-size:.72rem;">✕ Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div class="print-only" id="printPanel"></div>
 <div class="toast" id="toast"></div>
 
@@ -1457,7 +1518,33 @@ function openRouteModal(id){var r=loadRoutesSync().find(function(r){return r.id=
 function closeRouteModal(){document.getElementById('routeModal').classList.remove('open');editingRouteId=null;}
 
 // NOTAM detail modal
-var _ntmStore = [];
+var _ntmStore    = [];
+var _flightStore = [];
+
+function showFlightModal(idx) {
+  var p = _flightStore[idx];
+  if (!p) return;
+  document.getElementById('fmTitle').textContent  = p.aircraft + ' · ' + p.dateStr;
+  document.getElementById('fmDep').textContent    = p.dep || '–';
+  document.getElementById('fmArr').textContent    = p.arr || '–';
+  document.getElementById('fmDate').textContent   = p.dateStr;
+  document.getElementById('fmOn').textContent     = p.tsStart   || '–';
+  document.getElementById('fmTo').textContent     = p.tsTakeoff || '–';
+  document.getElementById('fmOff').textContent    = p.tsStop    || '–';
+  document.getElementById('fmHours').textContent  = p.hours ? p.hours + ' h' : '–';
+  document.getElementById('fmAc').textContent     = p.aircraft;
+  var noteWrap = document.getElementById('fmNoteWrap');
+  if (p.note) {
+    document.getElementById('fmNote').textContent = p.note;
+    noteWrap.style.display = 'block';
+  } else {
+    noteWrap.style.display = 'none';
+  }
+  document.getElementById('flightModal').classList.add('open');
+}
+function closeFlightModal() {
+  document.getElementById('flightModal').classList.remove('open');
+}
 function showNtmModal(idx) {
   var n = _ntmStore[idx];
   if (!n) return;
@@ -1653,7 +1740,7 @@ function saveAip(){var k=document.getElementById('aipKey').value.trim();localSto
 
 // CLOSE MODALS ON BG CLICK
 document.addEventListener('click',function(e){
-  ['routeModal','addWptModal','ntmModal'].forEach(function(id){var m=document.getElementById(id);if(m&&m.classList.contains('open')&&e.target===m){if(id==='routeModal')closeRouteModal();else if(id==='ntmModal')closeNtmModal();else closeAddWptModal();}});
+  ['routeModal','addWptModal','ntmModal','flightModal'].forEach(function(id){var m=document.getElementById(id);if(m&&m.classList.contains('open')&&e.target===m){if(id==='routeModal')closeRouteModal();else if(id==='ntmModal')closeNtmModal();else if(id==='flightModal')closeFlightModal();else closeAddWptModal();}});
 });
 
 // INIT
@@ -1874,12 +1961,13 @@ function renderFlightData(data) {
     if (p.tsStop)    tags += '<span class="route-tag" style="color:var(--rd);">OFF&nbsp;' + esc(p.tsStop) + '</span>';
 
     html +=
-      '<div class="route-item">' +
+      '<div class="route-item" data-flightidx="' + i + '">' +
         '<div class="route-item-head">' +
           '<span class="route-icao">' + esc(p.dep||'–') + '</span>' +
           '<span class="route-arrow">→</span>' +
           '<span class="route-icao">' + esc(p.arr||'–') + '</span>' +
           '<span class="route-date">' + esc(p.dateStr) + '</span>' +
+          '<span style="font-family:var(--mono);font-size:.55rem;color:var(--mt);">🔍</span>' +
         '</div>' +
         '<div class="route-meta">' +
           '<span class="route-tag" style="color:var(--ac);">' + esc(p.aircraft) + '</span>' +
@@ -1894,6 +1982,11 @@ function renderFlightData(data) {
   });
 
   el.innerHTML = html + '</div>';
+  el.querySelectorAll('.route-item[data-flightidx]').forEach(function(el2) {
+    el2.addEventListener('click', function() {
+      showFlightModal(parseInt(this.dataset.flightidx));
+    });
+  });
 }
 
 // ── PWA Install prompt ────────────────────────────────────────────────────
