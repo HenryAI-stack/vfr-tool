@@ -381,12 +381,19 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
   <div class="sec open" id="sRT">
     <div class="sh" onclick="tog('sRT')"><span class="si">🗺️</span><span class="sl">Route</span><span class="chv">▼</span></div>
     <div class="sbody">
-      <div class="row2">
-        <div class="fr"><label>Abflug (ICAO)</label>
-          <div class="ac-wrap"><input id="depI" type="text" placeholder="EPWA" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><div class="ac-drop" id="dropDep" style="display:none;"></div></div>
+      <div style="display:flex;align-items:flex-end;gap:5px;">
+        <div class="fr" style="flex:1;min-width:0;"><label>Abflug</label>
+          <div class="ac-wrap"><input id="depI" type="text" placeholder="EPWA" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-size:.9rem;padding:7px 8px;"><div class="ac-drop" id="dropDep" style="display:none;"></div></div>
         </div>
-        <div class="fr"><label>Ziel (ICAO)</label>
-          <div class="ac-wrap"><input id="arrI" type="text" placeholder="EPKK" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><div class="ac-drop" id="dropArr" style="display:none;"></div></div>
+        <button onclick="swapDepArr()" title="Start ⇄ Ziel tauschen"
+          style="flex-shrink:0;width:32px;height:34px;margin-bottom:11px;
+          background:var(--sf2);border:1px solid var(--bd);border-radius:6px;
+          color:var(--ac);font-size:14px;cursor:pointer;transition:all .2s;
+          display:flex;align-items:center;justify-content:center;"
+          onmouseover="this.style.borderColor='var(--ac)';this.style.background='rgba(0,212,255,.1)'"
+          onmouseout="this.style.borderColor='var(--bd)';this.style.background='var(--sf2)'">⇄</button>
+        <div class="fr" style="flex:1;min-width:0;"><label>Ziel</label>
+          <div class="ac-wrap"><input id="arrI" type="text" placeholder="EPKK" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-size:.9rem;padding:7px 8px;"><div class="ac-drop" id="dropArr" style="display:none;"></div></div>
         </div>
       </div>
       <div class="row2">
@@ -916,6 +923,15 @@ function nmDist(a,b){var R=3440.065,dl=d2r(b.lat-a.lat),dn=d2r(b.lon-a.lon);var 
 function brng(a,b){var dl=d2r(b.lon-a.lon),la1=d2r(a.lat),la2=d2r(b.lat);return((Math.atan2(Math.sin(dl)*Math.cos(la2),Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dl))*180/Math.PI)+360)%360;}
 
 // SIDEBAR TOGGLE
+function swapDepArr(){
+  var dep=document.getElementById('depI').value;
+  var arr=document.getElementById('arrI').value;
+  document.getElementById('depI').value=arr;
+  document.getElementById('arrI').value=dep;
+  // Hide both dropdowns
+  document.getElementById('dropDep').style.display='none';
+  document.getElementById('dropArr').style.display='none';
+}
 function toggleSidebar(){
   var sb=document.querySelector('.sidebar');
   var btn=document.getElementById('sbToggle');
