@@ -1222,7 +1222,7 @@ function getDemoNotams(dep, arr) {
 }
 
 
-function renderNtm(ntms){var el=document.getElementById('ntC');if(!ntms.length){el.innerHTML='<div class="empty"><div class="ico">✅</div>Keine NOTAMs</div>';return;}var src=[...new Set(ntms.map(function(n){return n.src;}))].join('+');el.innerHTML='<div class="meta">'+ntms.length+' NOTAM(s) · <b>'+src+'</b><br><a href="https://icaonotam.eurocontrol.int" target="_blank">Eurocontrol ↗</a></div><div class="ntm-list">'+ntms.map(function(n){return '<div class="ntm '+(n.crit?'crit':'')+'"><div class="ntmid">'+esc(n.id)+' | '+esc(n.icao)+'</div><div class="ntmtxt">'+esc(n.txt)+'</div><div class="ntmsrc">'+esc(n.src)+'</div></div>';}).join('')+'</div>';}
+function renderNtm(ntms){var el=document.getElementById('ntC');if(!ntms.length){el.innerHTML='<div class="empty"><div class="ico">✅</div>Keine NOTAMs</div>';return;}var src=[...new Set(ntms.map(function(n){return n.src;}))].join('+');el.innerHTML='<div class="meta">'+ntms.length+' NOTAM(s) · <b>'+src+'</b><br><a href="https://notams.aim.faa.gov/notamSearch/nsapp.html" target="_blank">FAA NOTAM Search ↗</a></div><div class="ntm-list">'+ntms.map(function(n){return '<div class="ntm '+(n.crit?'crit':'')+'"><div class="ntmid">'+esc(n.id)+' | '+esc(n.icao)+'</div><div class="ntmtxt">'+esc(n.txt)+'</div><div class="ntmsrc">'+esc(n.src)+'</div></div>';}).join('')+'</div>';}
 
 // ZONES
 function buildZones(dep,arr,alt){
