@@ -406,11 +406,7 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
         <button class="btn bp" id="planBtn" onclick="plan()">▶ PLANEN</button>
         <button class="btn bs" onclick="resetAll()">↺ RESET</button>
       </div>
-      <div style="margin-top:8px;font-size:.61rem;color:var(--mt);font-family:var(--mono);line-height:1.9;">
-        🇵🇱 EPWA · EPKK · EPKT · EPGD · EPWR · EPPO<br>
-        🇵🇱 EPSC · EPLL · EPRZ · EPBY · EPRA · EPMO<br>
-        🇦🇹 LOWW · LOWI &nbsp;🇩🇪 EDDM &nbsp;🇨🇭 LSZH &nbsp;🇨🇿 LKPR
-      </div>
+
     </div>
   </div>
 
@@ -490,18 +486,7 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
         → workers.cloudflare.com → Create Worker → Code einfügen → Deploy
       </div>
 
-      <div class="dvdr"></div>
-      <div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">✈️ FAA NOTAM API (weltweite NOTAMs)</div>
-      <div class="fr">
-        <label>FAA API Client ID <a href="https://api.faa.gov" target="_blank" style="font-size:.58rem;">(kostenlos registrieren ↗)</a></label>
-        <input id="faaClientId" type="text" placeholder="Client ID von api.faa.gov" autocomplete="off" spellcheck="false">
-      </div>
-      <button class="btn bs bfw" onclick="saveFaaClientId()">💾 FAA Client ID speichern</button>
-      <div style="font-family:var(--mono);font-size:.58rem;color:var(--mt);margin-bottom:6px;line-height:1.6;">
-        api.faa.gov → kostenlos registrieren → Client ID<br>
-        Weltweite NOTAMs inkl. Europa (EP*, LO*, LS* etc.)<br>
-        Anfragen via CORS Proxy Worker
-      </div>
+
       <div class="dvdr"></div>
       <div style="font-family:var(--mono);font-size:.6rem;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">⚠️ FAA FNS-NDS SOAP (optional, nur US)</div>
       <div class="fr">
@@ -711,14 +696,13 @@ function doSignOut(){
 function uKey(k){var e=gUser?gUser.email.replace(/[^a-z0-9]/gi,'_'):'guest';return 'vfr_'+e+'_'+k;}
 function saveUserSettings(){
   if(!gUser)return;
-  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),faaClientId:document.getElementById('faaClientId').value.trim(),ntmUser:document.getElementById('ntmUser').value.trim(),ntmPass:document.getElementById('ntmPass').value.trim(),proxy:document.getElementById('proxyUrl').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
+  localStorage.setItem(uKey('cfg'),JSON.stringify({cwx:document.getElementById('cwxKey').value.trim(),aip:document.getElementById('aipKey').value.trim(),ntmUser:document.getElementById('ntmUser').value.trim(),ntmPass:document.getElementById('ntmPass').value.trim(),proxy:document.getElementById('proxyUrl').value.trim(),cruise:document.getElementById('pCruise').value,fuel:document.getElementById('pFuel').value,tanks:document.getElementById('pTanks').value,reg:document.getElementById('pReg').value,acid:selAC?selAC.id:'at3'}));
 }
 function loadUserSettings(email){
   var raw=localStorage.getItem('vfr_'+email.replace(/[^a-z0-9]/gi,'_')+'_cfg');
   if(!raw)return;
   try{var s=JSON.parse(raw);
     if(s.cwx){document.getElementById('cwxKey').value=s.cwx;localStorage.setItem('checkwx_key',s.cwx);}
-    if(s.faaClientId){document.getElementById('faaClientId').value=s.faaClientId;localStorage.setItem('faa_client_id',s.faaClientId);}
     if(s.ntmUser){document.getElementById('ntmUser').value=s.ntmUser;localStorage.setItem('fns_user',s.ntmUser);}
     if(s.ntmPass){document.getElementById('ntmPass').value=s.ntmPass;localStorage.setItem('fns_pass',s.ntmPass);}
     if(s.proxy){document.getElementById('proxyUrl').value=s.proxy;localStorage.setItem('cors_proxy_url',s.proxy);}
@@ -1850,12 +1834,6 @@ function saveNtm(){
   saveUserSettings();
   toast(u?'FAA FNS-NDS Zugangsdaten gespeichert ✓':'FNS-NDS Zugangsdaten entfernt',u?'ok':'');
 }
-function saveFaaClientId(){
-  var k=document.getElementById('faaClientId').value.trim();
-  localStorage.setItem('faa_client_id',k);
-  saveUserSettings();
-  toast(k?'FAA Client ID gespeichert ✓':'FAA Client ID entfernt',k?'ok':'');
-}
 function saveProxy(){
   var v=document.getElementById('proxyUrl').value.trim();
   localStorage.setItem('cors_proxy_url',v);
@@ -1873,7 +1851,6 @@ document.addEventListener('click',function(e){
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('cwxKey').value=lsGet('checkwx_key');
   document.getElementById('aipKey').value=lsGet('openaip_key');
-  document.getElementById('faaClientId').value=lsGet('faa_client_id');
   document.getElementById('ntmUser').value=lsGet('fns_user');
   document.getElementById('ntmPass').value=lsGet('fns_pass');
   document.getElementById('proxyUrl').value=lsGet('cors_proxy_url');
