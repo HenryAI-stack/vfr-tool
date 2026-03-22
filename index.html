@@ -222,7 +222,7 @@ header small{font-size:.6rem;color:var(--mt);letter-spacing:1px;text-transform:u
 
 /* NOTAM */
 .ntm-list{display:flex;flex-direction:column;gap:6px;}
-.ntm{background:var(--bg);border:1px solid var(--bd);border-left:3px solid var(--yw);border-radius:5px;padding:8px 10px;}
+.ntm{background:var(--bg);border:1px solid var(--bd);border-left:3px solid var(--yw);border-radius:5px;padding:8px 10px;}.ntm-clickable{cursor:pointer;transition:background .15s;}.ntm-clickable:hover{background:rgba(0,212,255,.06)!important;}
 .ntm.crit{border-left-color:var(--rd);}
 .ntmid{font-family:var(--mono);font-size:.63rem;color:var(--yw);}
 .ntm.crit .ntmid{color:var(--rd);}
@@ -552,6 +552,30 @@ a{color:var(--ac);text-decoration:none;}a:hover{text-decoration:underline;}
     <div class="modal-btns">
       <button class="btn bp" onclick="confirmAddWpt()" style="font-size:.72rem;">➕ Hinzufügen</button>
       <button class="btn bs" onclick="closeAddWptModal()" style="font-size:.72rem;">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="ntmModal">
+  <div class="modal-box" style="width:480px;max-width:95vw;max-height:85vh;overflow-y:auto;">
+    <div class="modal-title" id="ntmModalTitle">NOTAM Detail</div>
+    <div style="margin-bottom:10px;">
+      <span id="ntmModalIcao" style="font-family:var(--mono);font-size:.8rem;background:rgba(0,212,255,.1);
+        color:var(--ac);padding:2px 8px;border-radius:4px;letter-spacing:2px;"></span>
+      &nbsp;
+      <span id="ntmModalCrit" style="font-family:var(--mono);font-size:.65rem;"></span>
+    </div>
+    <div style="font-family:var(--mono);font-size:.6rem;color:var(--mt);letter-spacing:1px;
+      text-transform:uppercase;margin-bottom:4px;">Zusammenfassung</div>
+    <div id="ntmModalMsg" style="font-size:.78rem;color:var(--tx);line-height:1.6;
+      margin-bottom:14px;padding:8px 10px;background:rgba(0,0,0,.2);border-radius:5px;"></div>
+    <div style="font-family:var(--mono);font-size:.6rem;color:var(--mt);letter-spacing:1px;
+      text-transform:uppercase;margin-bottom:4px;">Raw Text</div>
+    <div id="ntmModalRaw" style="font-family:var(--mono);font-size:.68rem;color:var(--tx);
+      line-height:1.6;white-space:pre-wrap;word-break:break-all;
+      padding:8px 10px;background:rgba(0,0,0,.4);border-radius:5px;border:1px solid var(--bd);"></div>
+    <div class="modal-btns" style="margin-top:14px;">
+      <button class="btn bs" onclick="closeNtmModal()" style="font-size:.72rem;">✕ Schließen</button>
     </div>
   </div>
 </div>
@@ -1195,6 +1219,7 @@ async function fetchNtm(dep, arr) {
         icao: n.icao || dep,
         src:  'Eurocontrol EAD',
         txt:  text.substring(0, 300),
+        raw:  (n.rawText || '').replace(/\*\*★/g,'').trim(),
         crit: crit
       });
     });
@@ -1222,7 +1247,30 @@ function getDemoNotams(dep, arr) {
 }
 
 
-function renderNtm(ntms){var el=document.getElementById('ntC');if(!ntms.length){el.innerHTML='<div class="empty"><div class="ico">✅</div>Keine NOTAMs</div>';return;}var src=[...new Set(ntms.map(function(n){return n.src;}))].join('+');el.innerHTML='<div class="meta">'+ntms.length+' NOTAM(s) · <b>'+src+'</b><br><a href="https://notams.aim.faa.gov/notamSearch/nsapp.html" target="_blank">FAA NOTAM Search ↗</a></div><div class="ntm-list">'+ntms.map(function(n){return '<div class="ntm '+(n.crit?'crit':'')+'"><div class="ntmid">'+esc(n.id)+' | '+esc(n.icao)+'</div><div class="ntmtxt">'+esc(n.txt)+'</div><div class="ntmsrc">'+esc(n.src)+'</div></div>';}).join('')+'</div>';}
+function renderNtm(ntms){
+  var el=document.getElementById('ntC');
+  if(!ntms.length){el.innerHTML='<div class="empty"><div class="ico">✅</div>Keine NOTAMs</div>';return;}
+  _ntmStore=ntms;
+  var src=[...new Set(ntms.map(function(n){return n.src;}))].join('+');
+  el.innerHTML=
+    '<div class="meta">'+ntms.length+' NOTAM(s) · <b>'+src+'</b><br>'+
+    '<a href="https://notams.aim.faa.gov/notamSearch/nsapp.html" target="_blank">FAA NOTAM Search ↗</a></div>'+
+    '<div class="ntm-list">'+
+    ntms.map(function(n,i){
+      return '<div class="ntm '+(n.crit?'crit':'')+' ntm-clickable" data-ntmidx="'+i+'">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;">'+
+          '<div class="ntmid">'+esc(n.id)+' | '+esc(n.icao)+'</div>'+
+          '<span style="font-family:var(--mono);font-size:.58rem;color:var(--mt);">🔍 Details</span>'+
+        '</div>'+
+        '<div class="ntmtxt">'+esc(n.txt)+'</div>'+
+        '<div class="ntmsrc">'+esc(n.src)+'</div>'+
+      '</div>';
+    }).join('')+
+    '</div>';
+  el.querySelectorAll('.ntm[data-ntmidx]').forEach(function(el2){
+    el2.addEventListener('click',function(){ showNtmModal(parseInt(this.dataset.ntmidx)); });
+  });
+}
 
 // ZONES
 function buildZones(dep,arr,alt){
@@ -1407,6 +1455,24 @@ async function deleteRoute(id){
 var editingRouteId=null;
 function openRouteModal(id){var r=loadRoutesSync().find(function(r){return r.id===id;});if(!r)return;editingRouteId=id;document.getElementById('modalName').value=r.name;document.getElementById('modalNotes').value=r.notes||'';document.getElementById('routeModal').classList.add('open');}
 function closeRouteModal(){document.getElementById('routeModal').classList.remove('open');editingRouteId=null;}
+
+// NOTAM detail modal
+var _ntmStore = [];
+function showNtmModal(idx) {
+  var n = _ntmStore[idx];
+  if (!n) return;
+  document.getElementById('ntmModalTitle').textContent = n.id;
+  document.getElementById('ntmModalIcao').textContent  = n.icao;
+  document.getElementById('ntmModalCrit').innerHTML    = n.crit
+    ? '<span style="color:var(--rd);">⚠️ KRITISCH</span>'
+    : '<span style="color:var(--gn);">● Normal</span>';
+  document.getElementById('ntmModalMsg').textContent   = n.txt;
+  document.getElementById('ntmModalRaw').textContent   = n.raw || n.txt;
+  document.getElementById('ntmModal').classList.add('open');
+}
+function closeNtmModal() {
+  document.getElementById('ntmModal').classList.remove('open');
+}
 async function saveModalEdit(){if(!editingRouteId)return;var routes=await loadRoutesAsync();var idx=routes.findIndex(function(r){return r.id===editingRouteId;});if(idx<0){closeRouteModal();return;}routes[idx].name=document.getElementById('modalName').value.trim()||routes[idx].name;routes[idx].notes=document.getElementById('modalNotes').value.trim();await saveRoutesAsync(routes);renderSavedRoutes();closeRouteModal();toast('Route aktualisiert ✓','ok');}
 
 async function loadRoute(id){
@@ -1587,7 +1653,7 @@ function saveAip(){var k=document.getElementById('aipKey').value.trim();localSto
 
 // CLOSE MODALS ON BG CLICK
 document.addEventListener('click',function(e){
-  ['routeModal','addWptModal'].forEach(function(id){var m=document.getElementById(id);if(m&&m.classList.contains('open')&&e.target===m){if(id==='routeModal')closeRouteModal();else closeAddWptModal();}});
+  ['routeModal','addWptModal','ntmModal'].forEach(function(id){var m=document.getElementById(id);if(m&&m.classList.contains('open')&&e.target===m){if(id==='routeModal')closeRouteModal();else if(id==='ntmModal')closeNtmModal();else closeAddWptModal();}});
 });
 
 // INIT
