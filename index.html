@@ -1953,7 +1953,7 @@ function renderFlightData(data) {
     '</div>' +
     '<div class="route-list">';
 
-  parsed.forEach(function(p) {
+  parsed.forEach(function(p, i) {
     var tags = '';
     if (p.hours)     tags += '<span class="route-tag hi">' + esc(p.hours) + ' h</span>';
     if (p.tsStart)   tags += '<span class="route-tag" style="color:var(--gn);">ON&nbsp;' + esc(p.tsStart) + '</span>';
